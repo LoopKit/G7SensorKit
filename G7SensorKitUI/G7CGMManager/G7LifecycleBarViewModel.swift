@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import CGMBLEKit
+import G7SensorKit
 
 public enum ColorStyle {
     case glucose, warning, critical, normal, dimmed
@@ -103,45 +103,6 @@ public struct G7LifecycleBarViewModel {
             return .dimmed
         case .sensorExpired:
             return .critical
-        }
-    }
-
-    public func progressBarPairs(now: Date) -> [(String, String)]? {
-        switch progressBarState(asOf: now) {
-        case .inWarmup:
-            return warmupCompletionDatePairs(now: now)
-        case .sessionInProgress, .sensorExpiringIn24Hrs:
-            return sessionExpirationDatePairs(now: now)
-        case .sensorFailure, .sensorTemporaryError, .transmitterFailure:
-            if let warmupCompletionDate = warmupCompletionDate,
-               warmupCompletionDate > now
-            {
-                return warmupCompletionDatePairs(now: now)
-            } else {
-                return sessionExpirationDatePairs(now: now)
-            }
-        case .sessionIsStarting, .sensorExpired, .noSensor:
-            return nil
-        }
-    }
-
-    private func warmupCompletionDatePairs(now: Date) -> [(String, String)]? {
-        guard let warmupCompletionDate = warmupCompletionDate else { return nil }
-        return calendar.dateComponents([.hour, .minute], from: now, to: max(now, warmupCompletionDate)).pairs
-    }
-
-    private func sessionExpirationDatePairs(now: Date) -> [(String, String)]? {
-        guard let sessionExpirationDate = sessionExpirationDate else { return nil }
-        let progressPoint = self.progressPoint(from: now)
-        return calendar.dateComponents([.day, .hour, .minute], from: progressPoint, to: max(progressPoint, sessionExpirationDate)).pairs
-    }
-
-    public func progressBarPairsValueColorStyle(now: Date) -> ColorStyle {
-        switch progressBarState(asOf: now) {
-        case .sensorFailure, .transmitterFailure, .noSensor:
-            return .dimmed
-        default:
-            return .normal
         }
     }
 

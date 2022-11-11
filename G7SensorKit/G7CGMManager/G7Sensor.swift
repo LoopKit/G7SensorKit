@@ -57,22 +57,17 @@ public enum G7SensorLifecycleState {
 }
 
 
-public final class G7Sensor: BluetoothManagerDelegate {
+public final class G7Sensor: G7BluetoothManagerDelegate {
 
     public static let lifetime = TimeInterval(hours: 10 * 24)
     public static let warmupDuration = TimeInterval(minutes: 25)
 
     public weak var delegate: G7SensorDelegate?
 
-    public weak var commandSource: TransmitterCommandSource?
-
     // MARK: - Passive observation state, confined to `bluetoothManager.managerQueue`
 
     /// The initial activation date of the sensor
     var activationDate: Date?
-
-    /// The last-observed calibration message
-    private var lastCalibrationMessage: CalibrationDataRxMessage?
 
     /// The date of last connection
     private var lastConnection: Date?
@@ -85,7 +80,7 @@ public final class G7Sensor: BluetoothManagerDelegate {
 
     private let log = OSLog(category: "G7Sensor")
 
-    private let bluetoothManager = BluetoothManager()
+    private let bluetoothManager = G7BluetoothManager()
 
     private let delegateQueue = DispatchQueue(label: "com.loudnate.CGMBLEKit.delegateQueue", qos: .unspecified)
 
@@ -151,7 +146,7 @@ public final class G7Sensor: BluetoothManagerDelegate {
 
     // MARK: - BluetoothManagerDelegate
 
-    func bluetoothManager(_ manager: BluetoothManager, peripheralManager: PeripheralManager, isReadyWithError error: Error?) {
+    func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, isReadyWithError error: Error?) {
         if let error = error {
             delegateQueue.async {
                 self.delegate?.sensor(self, didError: error)
@@ -177,7 +172,7 @@ public final class G7Sensor: BluetoothManagerDelegate {
         }
     }
 
-    func bluetoothManager(_ manager: BluetoothManager, shouldConnectPeripheral peripheral: CBPeripheral) -> Bool {
+    func bluetoothManager(_ manager: G7BluetoothManager, shouldConnectPeripheral peripheral: CBPeripheral) -> Bool {
 
         guard let name = peripheral.name else {
             self.log.debug("Not connecting to unnamed peripheral: %{public}@", String(describing: peripheral))
@@ -197,7 +192,7 @@ public final class G7Sensor: BluetoothManagerDelegate {
         return false
     }
 
-    func handleGlucoseMessage(message: G7GlucoseMessage, peripheralManager: PeripheralManager) {
+    func handleGlucoseMessage(message: G7GlucoseMessage, peripheralManager: G7PeripheralManager) {
         activationDate = Date().addingTimeInterval(-TimeInterval(message.glucoseTimestamp))
         peripheralManager.perform { (peripheral) in
             self.log.debug("Listening for backfill responses")
@@ -234,7 +229,7 @@ public final class G7Sensor: BluetoothManagerDelegate {
         }
     }
 
-    func bluetoothManager(_ manager: BluetoothManager, peripheralManager: PeripheralManager, didReceiveControlResponse response: Data) {
+    func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReceiveControlResponse response: Data) {
 
         guard response.count > 0 else { return }
 
@@ -262,7 +257,7 @@ public final class G7Sensor: BluetoothManagerDelegate {
         }
     }
 
-    func bluetoothManager(_ manager: BluetoothManager, didReceiveBackfillResponse response: Data) {
+    func bluetoothManager(_ manager: G7BluetoothManager, didReceiveBackfillResponse response: Data) {
 
         log.debug("Received backfill response: %{public}@", response.hexadecimalString)
 
@@ -275,20 +270,11 @@ public final class G7Sensor: BluetoothManagerDelegate {
         }
     }
 
-    func bluetoothManager(_ manager: BluetoothManager, peripheralManager: PeripheralManager, didReceiveAuthenticationResponse response: Data) {
+    func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReceiveAuthenticationResponse response: Data) {
 
         if let message = AuthChallengeRxMessage(data: response), message.isBonded, message.isAuthenticated {
             self.log.debug("Observed authenticated session. enabling notifications for control characteristic.")
             peripheralManager.perform { (peripheral) in
-                // Stopping updates from authentication simultaneously with Dexcom's app causes CoreBluetooth to get into a weird state.
-                /*
-                do {
-                    try peripheral.stopListeningToCharacteristic(.authentication)
-                } catch let error {
-                    self.log.error("Error trying to disable notifications on authentication characteristic: %{public}@", String(describing: error))
-                }
-                */
-
                 do {
                     try peripheral.listenToCharacteristic(.control)
                 } catch let error {
@@ -303,7 +289,7 @@ public final class G7Sensor: BluetoothManagerDelegate {
         }
     }
 
-    func bluetoothManagerScanningStatusDidChange(_ manager: BluetoothManager) {
+    func bluetoothManagerScanningStatusDidChange(_ manager: G7BluetoothManager) {
         self.delegateQueue.async {
             self.delegate?.sensorConnectionStatusDidUpdate(self)
         }
@@ -313,33 +299,13 @@ public final class G7Sensor: BluetoothManagerDelegate {
 
 
 // MARK: - Helpers
-fileprivate extension PeripheralManager {
-
-    func enableNotify(shouldWaitForBond: Bool = false) throws {
-        do {
-            if shouldWaitForBond {
-                try setNotifyValue(true, for: .control, timeout: 15)
-            } else {
-                try setNotifyValue(true, for: .control)
-            }
-        } catch let error {
-            throw TransmitterError.controlError("Error enabling notification: \(error)")
-        }
-    }
+fileprivate extension G7PeripheralManager {
 
     func listenToCharacteristic(_ characteristic: CGMServiceCharacteristicUUID) throws {
         do {
             try setNotifyValue(true, for: characteristic)
         } catch let error {
-            throw TransmitterError.controlError("Error enabling notification for \(characteristic): \(error)")
-        }
-    }
-
-    func stopListeningToCharacteristic(_ characteristic: CGMServiceCharacteristicUUID) throws {
-        do {
-            try setNotifyValue(false, for: characteristic)
-        } catch let error {
-            throw TransmitterError.controlError("Error disabling notification for \(characteristic): \(error)")
+            throw G7SensorError.controlError("Error enabling notification for \(characteristic): \(error)")
         }
     }
 }

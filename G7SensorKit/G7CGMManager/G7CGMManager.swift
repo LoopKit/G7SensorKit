@@ -200,7 +200,7 @@ public class G7CGMManager: CGMManager {
     public func getSoundBaseURL() -> URL? { return nil }
     public func getSounds() -> [Alert.Sound] { return [] }
 
-    public let managerIdentifier: String = "DexG7Transmitter"
+    public let managerIdentifier: String = "G7CGMManager"
 
     public let localizedTitle = LocalizedString("Dexcom G7", comment: "CGM display title")
 
@@ -227,7 +227,7 @@ public class G7CGMManager: CGMManager {
             model: "G7",
             hardwareVersion: nil,
             firmwareVersion: nil,
-            softwareVersion: String(CGMBLEKitVersionNumber),
+            softwareVersion: String(G7SensorKitVersionNumber),
             localIdentifier: nil,
             udiDeviceIdentifier: "00386270001863"
         )
@@ -306,7 +306,7 @@ extension G7CGMManager: G7SensorDelegate {
             return
         }
 
-        guard message.hasReliableGlucose  else {
+        guard message.hasReliableGlucose else {
             logDeviceCommunication("Sensor reading unreliable: \(message)", type: .receive)
             updateDelegate(with: .error(CalibrationError.unreliableState(message.algorithmState)))
             return

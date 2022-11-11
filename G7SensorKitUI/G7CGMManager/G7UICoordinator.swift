@@ -8,7 +8,7 @@
 
 import Foundation
 import LoopKitUI
-import CGMBLEKit
+import G7SensorKit
 
 class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionNotifying, UINavigationControllerDelegate {
     var cgmManagerOnboardingDelegate: LoopKitUI.CGMManagerOnboardingDelegate?

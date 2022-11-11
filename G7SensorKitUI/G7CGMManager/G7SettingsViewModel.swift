@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import CGMBLEKit
+import G7SensorKit
 import LoopKit
 
 enum G7ProgressBarState {
@@ -145,7 +145,7 @@ class G7SettingsViewModel: ObservableObject {
 }
 
 extension G7SettingsViewModel: G7StateObserver {
-    func g7StateDidUpdate(_ state: CGMBLEKit.G7CGMManagerState?) {
+    func g7StateDidUpdate(_ state: G7CGMManagerState?) {
         updateValues()
     }
 

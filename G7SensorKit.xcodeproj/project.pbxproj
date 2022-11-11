@@ -7,6 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C109F14A291ECCE2008EA5B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C109F149291ECCE2008EA5B6 /* Assets.xcassets */; };
+		C1409A07291EC21C006BE8D0 /* OSLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5126291EAF2F00555EB5 /* OSLog.swift */; };
+		C1409A09291EC22F006BE8D0 /* OSLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1409A08291EC22F006BE8D0 /* OSLog.swift */; };
+		C1409A0B291EC258006BE8D0 /* OSLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1409A0A291EC258006BE8D0 /* OSLog.swift */; };
+		C1409A0C291EC2F8006BE8D0 /* G7SensorKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; };
+		C1409A0D291EC2F8006BE8D0 /* G7SensorKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C1409A0F291EC2FB006BE8D0 /* G7SensorKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50F8291EAC9100555EB5 /* G7SensorKitUI.framework */; };
+		C1409A10291EC2FB006BE8D0 /* G7SensorKitUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50F8291EAC9100555EB5 /* G7SensorKitUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C17F50CF291EAC3800555EB5 /* G7SensorKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; };
 		C17F50D4291EAC3800555EB5 /* G7SensorKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F50D3291EAC3800555EB5 /* G7SensorKitTests.swift */; };
 		C17F50D5291EAC3800555EB5 /* G7SensorKit.h in Headers */ = {isa = PBXBuildFile; fileRef = C17F50C9291EAC3800555EB5 /* G7SensorKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -29,6 +37,23 @@
 		C17F510B291EAC9D00555EB5 /* G7LifecycleBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5105291EAC9D00555EB5 /* G7LifecycleBarViewModel.swift */; };
 		C17F5120291EACCD00555EB5 /* G7SensorPlugin.h in Headers */ = {isa = PBXBuildFile; fileRef = C17F511F291EACCD00555EB5 /* G7SensorPlugin.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C17F5125291EACE400555EB5 /* G7SensorPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5124291EACE400555EB5 /* G7SensorPlugin.swift */; };
+		C17F5135291EB06A00555EB5 /* CalibrationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5134291EB06A00555EB5 /* CalibrationState.swift */; };
+		C17F5138291EB0A800555EB5 /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5137291EB0A800555EB5 /* Data.swift */; };
+		C17F513A291EB0D900555EB5 /* GlucoseLimits.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5139291EB0D900555EB5 /* GlucoseLimits.swift */; };
+		C17F513C291EB13D00555EB5 /* Locked.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F513B291EB13D00555EB5 /* Locked.swift */; };
+		C17F513E291EB1A500555EB5 /* BluetoothServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F513D291EB1A500555EB5 /* BluetoothServices.swift */; };
+		C17F5140291EB27D00555EB5 /* TimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F513F291EB27D00555EB5 /* TimeInterval.swift */; };
+		C17F5143291EB36700555EB5 /* AuthChallengeRxMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5142291EB36700555EB5 /* AuthChallengeRxMessage.swift */; };
+		C17F5145291EB45900555EB5 /* CBPeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5144291EB45900555EB5 /* CBPeripheral.swift */; };
+		C17F5147291EB57700555EB5 /* SensorMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5146291EB57700555EB5 /* SensorMessage.swift */; };
+		C17F5149291EB6B600555EB5 /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5148291EB6B600555EB5 /* LocalizedString.swift */; };
+		C17F514B291EB6F000555EB5 /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F514A291EB6F000555EB5 /* HKUnit.swift */; };
+		C17F514D291EB79E00555EB5 /* CalibrationError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F514C291EB79E00555EB5 /* CalibrationError.swift */; };
+		C17F514E291EB86100555EB5 /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5148291EB6B600555EB5 /* LocalizedString.swift */; };
+		C17F514F291EB87600555EB5 /* G7SensorKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; };
+		C17F5150291EB87600555EB5 /* G7SensorKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C17F5156291EBD8600555EB5 /* Image.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5155291EBD8600555EB5 /* Image.swift */; };
+		C17F5157291EBD9900555EB5 /* TimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F513F291EB27D00555EB5 /* TimeInterval.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,9 +64,59 @@
 			remoteGlobalIDString = C17F50C5291EAC3800555EB5;
 			remoteInfo = G7SensorKit;
 		};
+		C17F512B291EAFA100555EB5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C17F50BD291EAC3800555EB5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C17F50C5291EAC3800555EB5;
+			remoteInfo = G7SensorKit;
+		};
+		C17F512F291EAFA100555EB5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C17F50BD291EAC3800555EB5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C17F50F7291EAC9100555EB5;
+			remoteInfo = G7SensorKitUI;
+		};
+		C17F5151291EB87600555EB5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C17F50BD291EAC3800555EB5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C17F50C5291EAC3800555EB5;
+			remoteInfo = G7SensorKit;
+		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		C1409A0E291EC2F8006BE8D0 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				C1409A0D291EC2F8006BE8D0 /* G7SensorKit.framework in Embed Frameworks */,
+				C1409A10291EC2FB006BE8D0 /* G7SensorKitUI.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C17F5153291EB87600555EB5 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				C17F5150291EB87600555EB5 /* G7SensorKit.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		C109F149291ECCE2008EA5B6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C1409A08291EC22F006BE8D0 /* OSLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
+		C1409A0A291EC258006BE8D0 /* OSLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
 		C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = G7SensorKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C17F50C9291EAC3800555EB5 /* G7SensorKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = G7SensorKit.h; sourceTree = "<group>"; };
 		C17F50CE291EAC3800555EB5 /* G7SensorKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = G7SensorKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -64,10 +139,24 @@
 		C17F5103291EAC9D00555EB5 /* G7CGMManager+UI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "G7CGMManager+UI.swift"; sourceTree = "<group>"; };
 		C17F5104291EAC9D00555EB5 /* G7UICoordinator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = G7UICoordinator.swift; sourceTree = "<group>"; };
 		C17F5105291EAC9D00555EB5 /* G7LifecycleBarViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = G7LifecycleBarViewModel.swift; sourceTree = "<group>"; };
-		C17F5113291EACB600555EB5 /* G7SensorPlugin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = G7SensorPlugin.h; sourceTree = "<group>"; };
-		C17F511D291EACCD00555EB5 /* G7SensorPlugin.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = G7SensorPlugin.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C17F511D291EACCD00555EB5 /* G7SensorPlugin.loopplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = G7SensorPlugin.loopplugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		C17F511F291EACCD00555EB5 /* G7SensorPlugin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = G7SensorPlugin.h; sourceTree = "<group>"; };
 		C17F5124291EACE400555EB5 /* G7SensorPlugin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = G7SensorPlugin.swift; sourceTree = "<group>"; };
+		C17F5126291EAF2F00555EB5 /* OSLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
+		C17F5134291EB06A00555EB5 /* CalibrationState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CalibrationState.swift; sourceTree = "<group>"; };
+		C17F5137291EB0A800555EB5 /* Data.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Data.swift; sourceTree = "<group>"; };
+		C17F5139291EB0D900555EB5 /* GlucoseLimits.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GlucoseLimits.swift; sourceTree = "<group>"; };
+		C17F513B291EB13D00555EB5 /* Locked.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Locked.swift; sourceTree = "<group>"; };
+		C17F513D291EB1A500555EB5 /* BluetoothServices.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BluetoothServices.swift; sourceTree = "<group>"; };
+		C17F513F291EB27D00555EB5 /* TimeInterval.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimeInterval.swift; sourceTree = "<group>"; };
+		C17F5142291EB36700555EB5 /* AuthChallengeRxMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthChallengeRxMessage.swift; sourceTree = "<group>"; };
+		C17F5144291EB45900555EB5 /* CBPeripheral.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CBPeripheral.swift; sourceTree = "<group>"; };
+		C17F5146291EB57700555EB5 /* SensorMessage.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; fileEncoding = 4; path = SensorMessage.swift; sourceTree = "<group>"; };
+		C17F5148291EB6B600555EB5 /* LocalizedString.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalizedString.swift; sourceTree = "<group>"; };
+		C17F514A291EB6F000555EB5 /* HKUnit.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HKUnit.swift; sourceTree = "<group>"; };
+		C17F514C291EB79E00555EB5 /* CalibrationError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationError.swift; sourceTree = "<group>"; };
+		C17F5155291EBD8600555EB5 /* Image.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Image.swift; sourceTree = "<group>"; };
+		C17F5158291EBE7500555EB5 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +179,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C17F514F291EB87600555EB5 /* G7SensorKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -97,6 +187,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C1409A0C291EC2F8006BE8D0 /* G7SensorKit.framework in Frameworks */,
+				C1409A0F291EC2FB006BE8D0 /* G7SensorKitUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -106,12 +198,13 @@
 		C17F50BC291EAC3800555EB5 = {
 			isa = PBXGroup;
 			children = (
+				C17F5136291EB07F00555EB5 /* Common */,
 				C17F50C8291EAC3800555EB5 /* G7SensorKit */,
 				C17F50D2291EAC3800555EB5 /* G7SensorKitTests */,
 				C17F50F9291EAC9100555EB5 /* G7SensorKitUI */,
-				C17F5112291EACB600555EB5 /* G7SensorPlugin */,
 				C17F511E291EACCD00555EB5 /* G7SensorPlugin */,
 				C17F50C7291EAC3800555EB5 /* Products */,
+				C17F5128291EAFA100555EB5 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -121,7 +214,7 @@
 				C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */,
 				C17F50CE291EAC3800555EB5 /* G7SensorKitTests.xctest */,
 				C17F50F8291EAC9100555EB5 /* G7SensorKitUI.framework */,
-				C17F511D291EACCD00555EB5 /* G7SensorPlugin.framework */,
+				C17F511D291EACCD00555EB5 /* G7SensorPlugin.loopplugin */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -129,8 +222,15 @@
 		C17F50C8291EAC3800555EB5 /* G7SensorKit */ = {
 			isa = PBXGroup;
 			children = (
+				C17F513D291EB1A500555EB5 /* BluetoothServices.swift */,
+				C17F514C291EB79E00555EB5 /* CalibrationError.swift */,
+				C17F5134291EB06A00555EB5 /* CalibrationState.swift */,
+				C17F5144291EB45900555EB5 /* CBPeripheral.swift */,
 				C17F50DE291EAC6500555EB5 /* G7CGMManager */,
 				C17F50C9291EAC3800555EB5 /* G7SensorKit.h */,
+				C17F5139291EB0D900555EB5 /* GlucoseLimits.swift */,
+				C17F5141291EB34800555EB5 /* Messages */,
+				C1409A08291EC22F006BE8D0 /* OSLog.swift */,
 			);
 			path = G7SensorKit;
 			sourceTree = "<group>";
@@ -147,15 +247,15 @@
 			isa = PBXGroup;
 			children = (
 				C17F50DF291EAC6500555EB5 /* G7BackfillMessage.swift */,
+				C17F50E7291EAC6500555EB5 /* G7BluetoothManager.swift */,
+				C17F50E5291EAC6500555EB5 /* G7CGMManager.swift */,
+				C17F50E6291EAC6500555EB5 /* G7CGMManagerState.swift */,
 				C17F50E0291EAC6500555EB5 /* G7DeviceStatus.swift */,
-				C17F50E1291EAC6500555EB5 /* G7Sensor.swift */,
+				C17F50E8291EAC6500555EB5 /* G7GlucoseMessage.swift */,
 				C17F50E2291EAC6500555EB5 /* G7LastReading.swift */,
 				C17F50E3291EAC6500555EB5 /* G7Opcode.swift */,
 				C17F50E4291EAC6500555EB5 /* G7PeripheralManager.swift */,
-				C17F50E5291EAC6500555EB5 /* G7CGMManager.swift */,
-				C17F50E6291EAC6500555EB5 /* G7CGMManagerState.swift */,
-				C17F50E7291EAC6500555EB5 /* G7BluetoothManager.swift */,
-				C17F50E8291EAC6500555EB5 /* G7GlucoseMessage.swift */,
+				C17F50E1291EAC6500555EB5 /* G7Sensor.swift */,
 			);
 			path = G7CGMManager;
 			sourceTree = "<group>";
@@ -163,8 +263,11 @@
 		C17F50F9291EAC9100555EB5 /* G7SensorKitUI */ = {
 			isa = PBXGroup;
 			children = (
-				C17F50FA291EAC9100555EB5 /* G7SensorKitUI.h */,
+				C109F149291ECCE2008EA5B6 /* Assets.xcassets */,
+				C17F5154291EBD7100555EB5 /* Extensions */,
 				C17F50FF291EAC9D00555EB5 /* G7CGMManager */,
+				C17F50FA291EAC9100555EB5 /* G7SensorKitUI.h */,
+				C17F5126291EAF2F00555EB5 /* OSLog.swift */,
 			);
 			path = G7SensorKitUI;
 			sourceTree = "<group>";
@@ -172,31 +275,61 @@
 		C17F50FF291EAC9D00555EB5 /* G7CGMManager */ = {
 			isa = PBXGroup;
 			children = (
+				C17F5103291EAC9D00555EB5 /* G7CGMManager+UI.swift */,
+				C17F5105291EAC9D00555EB5 /* G7LifecycleBarViewModel.swift */,
+				C17F5102291EAC9D00555EB5 /* G7SettingsView.swift */,
 				C17F5100291EAC9D00555EB5 /* G7SettingsViewModel.swift */,
 				C17F5101291EAC9D00555EB5 /* G7StartupView.swift */,
-				C17F5102291EAC9D00555EB5 /* G7SettingsView.swift */,
-				C17F5103291EAC9D00555EB5 /* G7CGMManager+UI.swift */,
 				C17F5104291EAC9D00555EB5 /* G7UICoordinator.swift */,
-				C17F5105291EAC9D00555EB5 /* G7LifecycleBarViewModel.swift */,
 			);
 			path = G7CGMManager;
-			sourceTree = "<group>";
-		};
-		C17F5112291EACB600555EB5 /* G7SensorPlugin */ = {
-			isa = PBXGroup;
-			children = (
-				C17F5113291EACB600555EB5 /* G7SensorPlugin.h */,
-			);
-			path = G7SensorPlugin;
 			sourceTree = "<group>";
 		};
 		C17F511E291EACCD00555EB5 /* G7SensorPlugin */ = {
 			isa = PBXGroup;
 			children = (
-				C17F5124291EACE400555EB5 /* G7SensorPlugin.swift */,
 				C17F511F291EACCD00555EB5 /* G7SensorPlugin.h */,
+				C17F5124291EACE400555EB5 /* G7SensorPlugin.swift */,
+				C17F5158291EBE7500555EB5 /* Info.plist */,
+				C1409A0A291EC258006BE8D0 /* OSLog.swift */,
 			);
 			path = G7SensorPlugin;
+			sourceTree = "<group>";
+		};
+		C17F5128291EAFA100555EB5 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C17F5136291EB07F00555EB5 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				C17F5137291EB0A800555EB5 /* Data.swift */,
+				C17F5148291EB6B600555EB5 /* LocalizedString.swift */,
+				C17F513B291EB13D00555EB5 /* Locked.swift */,
+				C17F514A291EB6F000555EB5 /* HKUnit.swift */,
+				C17F513F291EB27D00555EB5 /* TimeInterval.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		C17F5141291EB34800555EB5 /* Messages */ = {
+			isa = PBXGroup;
+			children = (
+				C17F5146291EB57700555EB5 /* SensorMessage.swift */,
+				C17F5142291EB36700555EB5 /* AuthChallengeRxMessage.swift */,
+			);
+			path = Messages;
+			sourceTree = "<group>";
+		};
+		C17F5154291EBD7100555EB5 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				C17F5155291EBD8600555EB5 /* Image.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -273,10 +406,12 @@
 				C17F50F4291EAC9100555EB5 /* Sources */,
 				C17F50F5291EAC9100555EB5 /* Frameworks */,
 				C17F50F6291EAC9100555EB5 /* Resources */,
+				C17F5153291EB87600555EB5 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C17F5152291EB87600555EB5 /* PBXTargetDependency */,
 			);
 			name = G7SensorKitUI;
 			productName = G7SensorKitUI;
@@ -291,14 +426,17 @@
 				C17F5119291EACCD00555EB5 /* Sources */,
 				C17F511A291EACCD00555EB5 /* Frameworks */,
 				C17F511B291EACCD00555EB5 /* Resources */,
+				C1409A0E291EC2F8006BE8D0 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C17F512C291EAFA100555EB5 /* PBXTargetDependency */,
+				C17F5130291EAFA100555EB5 /* PBXTargetDependency */,
 			);
 			name = G7SensorPlugin;
 			productName = G7SensorPlugin;
-			productReference = C17F511D291EACCD00555EB5 /* G7SensorPlugin.framework */;
+			productReference = C17F511D291EACCD00555EB5 /* G7SensorPlugin.loopplugin */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -366,6 +504,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C109F14A291ECCE2008EA5B6 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -384,12 +523,25 @@
 			buildActionMask = 2147483647;
 			files = (
 				C17F50EF291EAC6500555EB5 /* G7CGMManager.swift in Sources */,
+				C17F5147291EB57700555EB5 /* SensorMessage.swift in Sources */,
 				C17F50E9291EAC6500555EB5 /* G7BackfillMessage.swift in Sources */,
 				C17F50ED291EAC6500555EB5 /* G7Opcode.swift in Sources */,
+				C17F5140291EB27D00555EB5 /* TimeInterval.swift in Sources */,
 				C17F50F0291EAC6500555EB5 /* G7CGMManagerState.swift in Sources */,
+				C17F5145291EB45900555EB5 /* CBPeripheral.swift in Sources */,
+				C17F513A291EB0D900555EB5 /* GlucoseLimits.swift in Sources */,
+				C17F5143291EB36700555EB5 /* AuthChallengeRxMessage.swift in Sources */,
 				C17F50EA291EAC6500555EB5 /* G7DeviceStatus.swift in Sources */,
+				C1409A09291EC22F006BE8D0 /* OSLog.swift in Sources */,
+				C17F5135291EB06A00555EB5 /* CalibrationState.swift in Sources */,
 				C17F50F1291EAC6500555EB5 /* G7BluetoothManager.swift in Sources */,
+				C17F5138291EB0A800555EB5 /* Data.swift in Sources */,
+				C17F514B291EB6F000555EB5 /* HKUnit.swift in Sources */,
 				C17F50EC291EAC6500555EB5 /* G7LastReading.swift in Sources */,
+				C17F513C291EB13D00555EB5 /* Locked.swift in Sources */,
+				C17F513E291EB1A500555EB5 /* BluetoothServices.swift in Sources */,
+				C17F5149291EB6B600555EB5 /* LocalizedString.swift in Sources */,
+				C17F514D291EB79E00555EB5 /* CalibrationError.swift in Sources */,
 				C17F50EB291EAC6500555EB5 /* G7Sensor.swift in Sources */,
 				C17F50F2291EAC6500555EB5 /* G7GlucoseMessage.swift in Sources */,
 				C17F50EE291EAC6500555EB5 /* G7PeripheralManager.swift in Sources */,
@@ -409,10 +561,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				C17F5108291EAC9D00555EB5 /* G7SettingsView.swift in Sources */,
+				C17F5157291EBD9900555EB5 /* TimeInterval.swift in Sources */,
+				C17F5156291EBD8600555EB5 /* Image.swift in Sources */,
 				C17F510B291EAC9D00555EB5 /* G7LifecycleBarViewModel.swift in Sources */,
+				C1409A07291EC21C006BE8D0 /* OSLog.swift in Sources */,
 				C17F510A291EAC9D00555EB5 /* G7UICoordinator.swift in Sources */,
 				C17F5109291EAC9D00555EB5 /* G7CGMManager+UI.swift in Sources */,
 				C17F5107291EAC9D00555EB5 /* G7StartupView.swift in Sources */,
+				C17F514E291EB86100555EB5 /* LocalizedString.swift in Sources */,
 				C17F5106291EAC9D00555EB5 /* G7SettingsViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -421,6 +577,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C1409A0B291EC258006BE8D0 /* OSLog.swift in Sources */,
 				C17F5125291EACE400555EB5 /* G7SensorPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -432,6 +589,21 @@
 			isa = PBXTargetDependency;
 			target = C17F50C5291EAC3800555EB5 /* G7SensorKit */;
 			targetProxy = C17F50D0291EAC3800555EB5 /* PBXContainerItemProxy */;
+		};
+		C17F512C291EAFA100555EB5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C17F50C5291EAC3800555EB5 /* G7SensorKit */;
+			targetProxy = C17F512B291EAFA100555EB5 /* PBXContainerItemProxy */;
+		};
+		C17F5130291EAFA100555EB5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C17F50F7291EAC9100555EB5 /* G7SensorKitUI */;
+			targetProxy = C17F512F291EAFA100555EB5 /* PBXContainerItemProxy */;
+		};
+		C17F5152291EB87600555EB5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C17F50C5291EAC3800555EB5 /* G7SensorKit */;
+			targetProxy = C17F5151291EB87600555EB5 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -579,7 +751,9 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -614,7 +788,9 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -687,6 +863,9 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -717,6 +896,9 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -730,15 +912,17 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
+				DEFINES_MODULE = NO;
 				DEVELOPMENT_TEAM = UY678SP37Q;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = G7SensorPlugin/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_DYLIB_INSTALL_NAME = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -749,10 +933,14 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				WRAPPER_EXTENSION = loopplugin;
 			};
 			name = Debug;
 		};
@@ -762,15 +950,17 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
+				DEFINES_MODULE = NO;
 				DEVELOPMENT_TEAM = UY678SP37Q;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = G7SensorPlugin/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_DYLIB_INSTALL_NAME = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -781,10 +971,14 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
+				WRAPPER_EXTENSION = loopplugin;
 			};
 			name = Release;
 		};

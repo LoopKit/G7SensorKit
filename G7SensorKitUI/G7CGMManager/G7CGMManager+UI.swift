@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import CGMBLEKit
+import G7SensorKit
 import LoopKitUI
 import LoopKit
 
@@ -39,7 +39,7 @@ extension G7CGMManager: CGMManagerUI {
     }
 
     public var smallImage: UIImage? {
-        UIImage(named: "g7", in: Bundle(for: TransmitterSetupViewController.self), compatibleWith: nil)!
+        UIImage(named: "g7", in: Bundle(for: Self.self), compatibleWith: nil)!
     }
 
     // TODO Placeholder.

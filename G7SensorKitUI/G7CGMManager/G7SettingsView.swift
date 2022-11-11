@@ -8,7 +8,7 @@
 
 import Foundation
 import SwiftUI
-import CGMBLEKit
+import G7SensorKit
 
 struct G7SettingsView: View {
 

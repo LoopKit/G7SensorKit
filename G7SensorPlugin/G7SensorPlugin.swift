@@ -8,8 +8,8 @@
 
 import os.log
 import LoopKitUI
-import CGMBLEKit
-import CGMBLEKitUI
+import G7SensorKit
+import G7SensorKitUI
 
 class G7SensorPlugin: NSObject, CGMManagerUIPlugin {
     private let log = OSLog(category: "G7Plugin")

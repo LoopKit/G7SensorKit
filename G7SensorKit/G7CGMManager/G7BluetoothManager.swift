@@ -53,7 +53,7 @@ protocol G7BluetoothManagerDelegate: AnyObject {
     ///   - manager: The bluetooth manager
     ///   - peripheralManager: The peripheral manager
     ///   - response: The data received on the authentication characteristic
-    func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: PeripheralManager, didReceiveAuthenticationResponse response: Data)
+    func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReceiveAuthenticationResponse response: Data)
 
     /// Informs the delegate that the bluetooth manager started or stopped scanning
     ///
@@ -109,7 +109,7 @@ class G7BluetoothManager: NSObject {
             } else {
                 peripheralManager = G7PeripheralManager(
                     peripheral: peripheral,
-                    configuration: .dexcomG5,
+                    configuration: .dexcomG7,
                     centralManager: centralManager
                 )
             }
@@ -278,7 +278,7 @@ class G7BluetoothManager: NSObject {
 }
 
 
-extension BluetoothManager: CBCentralManagerDelegate {
+extension G7BluetoothManager: CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
@@ -377,21 +377,21 @@ extension BluetoothManager: CBCentralManagerDelegate {
 }
 
 
-extension BluetoothManager: PeripheralManagerDelegate {
-    func peripheralManager(_ manager: PeripheralManager, didReadRSSI RSSI: NSNumber, error: Error?) {
+extension G7BluetoothManager: G7PeripheralManagerDelegate {
+    func peripheralManager(_ manager: G7PeripheralManager, didReadRSSI RSSI: NSNumber, error: Error?) {
 
     }
 
-    func peripheralManagerDidUpdateName(_ manager: PeripheralManager) {
+    func peripheralManagerDidUpdateName(_ manager: G7PeripheralManager) {
     }
 
-    func peripheralManagerDidConnect(_ manager: PeripheralManager) {
+    func peripheralManagerDidConnect(_ manager: G7PeripheralManager) {
     }
 
-    func completeConfiguration(for manager: PeripheralManager) throws {
+    func completeConfiguration(for manager: G7PeripheralManager) throws {
     }
 
-    func peripheralManager(_ manager: PeripheralManager, didUpdateValueFor characteristic: CBCharacteristic) {
+    func peripheralManager(_ manager: G7PeripheralManager, didUpdateValueFor characteristic: CBCharacteristic) {
         guard let value = characteristic.value else {
             return
         }
