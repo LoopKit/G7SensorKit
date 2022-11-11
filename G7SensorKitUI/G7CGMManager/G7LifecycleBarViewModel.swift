@@ -24,7 +24,6 @@ public struct G7LifecycleBarViewModel {
         case sensorTemporaryError
         case sessionInProgress
         case sessionIsStarting
-        case transmitterFailure
     }
 
     private let sessionExpirationDate: Date?
@@ -80,7 +79,7 @@ public struct G7LifecycleBarViewModel {
             return LocalizedString("Warmup completes in", comment: "Sensor expiration label (warming up or about to warm up)")
         case .sessionInProgress, .sensorExpiringIn24Hrs:
             return LocalizedString("Sensor expires in", comment: "Sensor expiration label (expiration in the future)")
-        case .sensorFailure, .sensorTemporaryError, .transmitterFailure:
+        case .sensorFailure, .sensorTemporaryError:
             if let warmupCompletionDate = warmupCompletionDate,
                warmupCompletionDate > now
             {
@@ -99,7 +98,7 @@ public struct G7LifecycleBarViewModel {
 
     public func progressBarLabelColor(now: Date) -> ColorStyle {
         switch progressBarState(asOf: now) {
-        case .sessionIsStarting, .inWarmup, .sessionInProgress, .sensorExpiringIn24Hrs, .noSensor, .sensorFailure, .transmitterFailure, .sensorTemporaryError:
+        case .sessionIsStarting, .inWarmup, .sessionInProgress, .sensorExpiringIn24Hrs, .noSensor, .sensorFailure, .sensorTemporaryError:
             return .dimmed
         case .sensorExpired:
             return .critical
@@ -114,7 +113,7 @@ public struct G7LifecycleBarViewModel {
             return warmupProgress(now: now)
         case .sessionInProgress, .sensorExpiringIn24Hrs:
             return sessionProgress(now: now)
-        case .sensorFailure, .sensorTemporaryError, .transmitterFailure:
+        case .sensorFailure, .sensorTemporaryError:
             if let warmupCompletionDate = warmupCompletionDate,
                warmupCompletionDate > now
             {
@@ -182,8 +181,6 @@ public struct G7LifecycleBarViewModel {
         case .sessionInProgress:
             return .glucose
         case .sessionIsStarting:
-            return .dimmed
-        case .transmitterFailure:
             return .dimmed
         }
     }
