@@ -16,7 +16,7 @@ extension CBUUIDRawValue where RawValue == String {
 }
 
 
-enum TransmitterServiceUUID: String, CBUUIDRawValue {
+enum SensorServiceUUID: String, CBUUIDRawValue {
     case deviceInfo = "180A"
     case advertisement = "FEBC"
     case cgmService = "F8083532-849E-531C-C594-30F1F86A4EA5"
@@ -45,12 +45,6 @@ enum CGMServiceCharacteristicUUID: String, CBUUIDRawValue {
 
     // Read/Write/Notify
     case backfill = "F8083536-849E-531C-C594-30F1F86A4EA5"
-
-//    // Unknown attribute present on older G6 transmitters
-//    case unknown1 = "F8083537-849E-531C-C594-30F1F86A4EA5"
-//
-//    // Updated G6/G6 Key Exchange characteristic (read/notify)
-//    case keyExchange = "F8083538-849E-531C-C594-30F1F86A4EA5"
 }
 
 
@@ -66,7 +60,7 @@ extension G7PeripheralManager.Configuration {
     static var dexcomG7: G7PeripheralManager.Configuration {
         return G7PeripheralManager.Configuration(
             serviceCharacteristics: [
-                TransmitterServiceUUID.cgmService.cbUUID: [
+                SensorServiceUUID.cgmService.cbUUID: [
                     CGMServiceCharacteristicUUID.communication.cbUUID,
                     CGMServiceCharacteristicUUID.authentication.cbUUID,
                     CGMServiceCharacteristicUUID.control.cbUUID,

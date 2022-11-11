@@ -600,11 +600,11 @@ extension G7PeripheralManager {
 
 
 fileprivate extension CBPeripheral {
-    func getServiceWithUUID(_ uuid: TransmitterServiceUUID) -> CBService? {
+    func getServiceWithUUID(_ uuid: SensorServiceUUID) -> CBService? {
         return services?.itemWithUUIDString(uuid.rawValue)
     }
 
-    func getCharacteristicForServiceUUID(_ serviceUUID: TransmitterServiceUUID, withUUIDString UUIDString: String) -> CBCharacteristic? {
+    func getCharacteristicForServiceUUID(_ serviceUUID: SensorServiceUUID, withUUIDString UUIDString: String) -> CBCharacteristic? {
         guard let characteristics = getServiceWithUUID(serviceUUID)?.characteristics else {
             return nil
         }

@@ -27,6 +27,8 @@ struct G7SettingsView: View {
     var deleteCGM: (() -> Void)
     @ObservedObject var viewModel: G7SettingsViewModel
 
+    @State private var showingDeletionSheet = false
+
     init(didFinish: @escaping () -> Void, deleteCGM: @escaping () -> Void, viewModel: G7SettingsViewModel) {
         self.didFinish = didFinish
         self.deleteCGM = deleteCGM
@@ -107,9 +109,7 @@ struct G7SettingsView: View {
                     })
                 }
 
-                Button("Delete CGM", action: {
-                    self.deleteCGM()
-                })
+                deleteCGMButton
             }
         }
         .insetGroupedListStyle()
@@ -117,7 +117,26 @@ struct G7SettingsView: View {
         .navigationBarTitle(LocalizedString("Dexcom G7", comment: "Navigation bar title for G7SettingsView"))
     }
 
-    var headerImage: some View {
+    private var deleteCGMButton: some View {
+        Button(action: {
+            showingDeletionSheet = true
+        }, label: {
+            Text(LocalizedString("Delete CGM", comment: "Button label for removing CGM"))
+                .foregroundColor(.red)
+        }).actionSheet(isPresented: $showingDeletionSheet) {
+            ActionSheet(
+                title: Text("Are you sure you want to delete this CGM?"),
+                buttons: [
+                    .destructive(Text("Delete CGM")) {
+                        self.deleteCGM()
+                    },
+                    .cancel(),
+                ]
+            )
+        }
+    }
+
+    private var headerImage: some View {
         VStack(alignment: .center) {
             Image(frameworkImage: "g7")
                 .resizable()

@@ -13,7 +13,7 @@ import os.log
 
 
 public protocol G7SensorDelegate: AnyObject {
-    func sensorDidConnect(_ transmitter: G7Sensor)
+    func sensorDidConnect(_ sensor: G7Sensor)
 
     func sensor(_ sensor: G7Sensor, didError error: Error)
 

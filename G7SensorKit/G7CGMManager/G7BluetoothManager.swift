@@ -208,8 +208,8 @@ class G7BluetoothManager: NSObject {
             self.centralManager.connect(peripheral)
         } else {
             for peripheral in centralManager.retrieveConnectedPeripherals(withServices: [
-                TransmitterServiceUUID.advertisement.cbUUID,
-                TransmitterServiceUUID.cgmService.cbUUID
+                SensorServiceUUID.advertisement.cbUUID,
+                SensorServiceUUID.cgmService.cbUUID
             ]) {
                 if delegate == nil || delegate!.bluetoothManager(self, shouldConnectPeripheral: peripheral) {
                     log.debug("Found system-connected peripheral: %{public}@", peripheral.identifier.uuidString)
@@ -223,7 +223,7 @@ class G7BluetoothManager: NSObject {
         if peripheral == nil || scanWhileConnecting {
             log.debug("Scanning for peripherals")
             centralManager.scanForPeripherals(withServices: [
-                    TransmitterServiceUUID.advertisement.cbUUID
+                    SensorServiceUUID.advertisement.cbUUID
                 ],
                 options: nil
             )

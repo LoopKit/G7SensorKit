@@ -9,7 +9,7 @@
 import Foundation
 import LoopKit
 
-public struct G7GlucoseMessage: Equatable {
+public struct G7GlucoseMessage: SensorMessage, Equatable {
     //public let status: UInt8
     //public let sequence: UInt32
     public let glucose: UInt16?
