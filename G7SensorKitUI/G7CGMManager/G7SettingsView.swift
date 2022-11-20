@@ -98,7 +98,7 @@ struct G7SettingsView: View {
                     HStack {
                         Text(LocalizedString("Scanning", comment: "title for g7 settings connection status when scanning"))
                         Spacer()
-                        ProgressView()
+                        SwiftUI.ProgressView()
                     }
                 } else {
                     if viewModel.connected {
@@ -107,7 +107,7 @@ struct G7SettingsView: View {
                         HStack {
                             Text(LocalizedString("Connecting", comment: "title for g7 settings connection status when connecting"))
                             Spacer()
-                            ProgressView()
+                            SwiftUI.ProgressView()
                         }
                     }
                 }
