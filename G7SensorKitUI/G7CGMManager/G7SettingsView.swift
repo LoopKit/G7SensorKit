@@ -9,6 +9,7 @@
 import Foundation
 import SwiftUI
 import G7SensorKit
+import LoopKitUI
 
 struct G7SettingsView: View {
 
@@ -74,6 +75,17 @@ struct G7SettingsView: View {
                         .foregroundColor(.secondary)
                 }
             }
+
+            Section("Last Reading") {
+                LabeledValueView(label: LocalizedString("Glucose", comment: "Field label"),
+                                 value: String(format: "%@ %@", viewModel.lastGlucoseString, viewModel.displayGlucoseUnitObservable.displayGlucoseUnit.shortLocalizedUnitString()))
+                LabeledDateView(label: LocalizedString("Time", comment: "Field label"),
+                                date: viewModel.lastGlucoseDate,
+                                dateFormatter: viewModel.dateFormatter)
+                LabeledValueView(label: LocalizedString("Trend", comment: "Field label"),
+                                 value: viewModel.lastGlucoseTrendFormatted)
+            }
+
 
             Section {
                 if viewModel.scanning {

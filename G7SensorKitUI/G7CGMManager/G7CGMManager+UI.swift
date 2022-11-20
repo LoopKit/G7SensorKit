@@ -29,17 +29,17 @@ extension G7CGMManager: CGMManagerUI {
 
     public static func setupViewController(bluetoothProvider: BluetoothProvider, displayGlucoseUnitObservable: DisplayGlucoseUnitObservable, colorPalette: LoopUIColorPalette, allowDebugFeatures: Bool) -> SetupUIResult<CGMManagerViewController, CGMManagerUI> {
 
-        let vc = G7UICoordinator(colorPalette: colorPalette, allowDebugFeatures: allowDebugFeatures)
+        let vc = G7UICoordinator(colorPalette: colorPalette, displayGlucoseUnitObservable: displayGlucoseUnitObservable, allowDebugFeatures: allowDebugFeatures)
         return .userInteractionRequired(vc)
     }
 
     public func settingsViewController(bluetoothProvider: BluetoothProvider, displayGlucoseUnitObservable: DisplayGlucoseUnitObservable, colorPalette: LoopUIColorPalette, allowDebugFeatures: Bool) ->CGMManagerViewController {
 
-        return G7UICoordinator(cgmManager: self, colorPalette: colorPalette, allowDebugFeatures: allowDebugFeatures)
+        return G7UICoordinator(cgmManager: self, colorPalette: colorPalette, displayGlucoseUnitObservable: displayGlucoseUnitObservable, allowDebugFeatures: allowDebugFeatures)
     }
 
     public var smallImage: UIImage? {
-        UIImage(named: "g7", in: Bundle(for: Self.self), compatibleWith: nil)!
+        UIImage(named: "g7", in: Bundle(for: G7SettingsViewModel.self), compatibleWith: nil)!
     }
 
     // TODO Placeholder.

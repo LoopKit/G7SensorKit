@@ -133,6 +133,10 @@ public class G7CGMManager: CGMManager {
         return state.latestConnect
     }
 
+    public var latestReadingReceivedAt: Date? {
+        return state.latestReadingReceivedAt
+    }
+
     public let sensor: G7Sensor
 
     public var cgmManagerStatus: LoopKit.CGMManagerStatus {
@@ -162,9 +166,7 @@ public class G7CGMManager: CGMManager {
 
 
     public func fetchNewDataIfNeeded(_ completion: @escaping (LoopKit.CGMReadingResult) -> Void) {
-
         sensor.resumeScanning()
-
         completion(.noData)
     }
 
@@ -272,11 +274,18 @@ extension G7CGMManager: G7SensorDelegate {
         return shouldSwitchToNewSensor
     }
 
-    public func sensorDidConnect(_ sensor: G7Sensor) {
+    public func sensorDidConnect(_ sensor: G7Sensor, name: String) {
         mutateState { state in
             state.latestConnect = Date()
         }
-        logDeviceCommunication("Sensor \(String(describing: sensor.peripheralIdentifier)) did connect", type: .connection)
+        logDeviceCommunication("Sensor connected", type: .connection)
+    }
+
+    public func sensorDisconnected(_ sensor: G7Sensor, suspectedEndOfSession: Bool) {
+        logDeviceCommunication("Sensor disconnected: suspectedEndOfSession=\(suspectedEndOfSession)", type: .connection)
+        if suspectedEndOfSession {
+            scanForNewSensor()
+        }
     }
 
     public func sensor(_ sensor: G7Sensor, didError error: Error) {
@@ -404,6 +413,13 @@ extension G7GlucoseMessage: GlucoseDisplayable {
             return nil
         }
         return HKQuantity(unit: .milligramsPerDeciliterPerMinute, doubleValue: trend)
+    }
+
+    public var glucoseQuantity: HKQuantity? {
+        guard let glucose = glucose else {
+            return nil
+        }
+        return HKQuantity(unit: .milligramsPerDeciliter, doubleValue: Double(glucose))
     }
 
     public var isLocal: Bool {

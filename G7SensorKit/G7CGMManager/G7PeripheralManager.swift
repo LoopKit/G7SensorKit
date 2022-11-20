@@ -123,12 +123,6 @@ extension G7PeripheralManager {
                 do {
                     try self.applyConfiguration()
                     self.log.default("Peripheral configuration completed")
-                } catch let error {
-                    self.log.error("Error applying peripheral configuration: %@", String(describing: error))
-                    // Will retry
-                }
-
-                do {
                     if let delegate = self.delegate {
                         try delegate.completeConfiguration(for: self)
                         self.log.default("Delegate configuration completed")
@@ -137,9 +131,10 @@ extension G7PeripheralManager {
                         self.log.error("No delegate set configured")
                     }
                 } catch let error {
-                    self.log.error("Error applying delegate configuration: %@", String(describing: error))
+                    self.log.error("Error applying peripheral configuration: %@", String(describing: error))
                     // Will retry
                 }
+
             }
 
             block(self)
@@ -151,6 +146,7 @@ extension G7PeripheralManager {
     }
 
     private func assertConfiguration() {
+        log.debug("assertConfiguration")
         perform { (_) in
             // Intentionally empty to trigger configuration if necessary
         }
@@ -196,6 +192,7 @@ extension G7PeripheralManager {
         // Prelude
         dispatchPrecondition(condition: .onQueue(queue))
         guard central?.state == .poweredOn && peripheral.state == .connected else {
+            log.debug("Unable to run command: central state = %{public}@, peripheral state = %{public}@", String(describing: central?.state.rawValue.description), String(describing: peripheral.state))
             throw PeripheralManagerError.notReady
         }
 
@@ -245,6 +242,8 @@ extension G7PeripheralManager {
     func discoverServices(_ serviceUUIDs: [CBUUID], timeout: TimeInterval) throws {
         let servicesToDiscover = peripheral.servicesToDiscover(from: serviceUUIDs)
 
+        log.debug("Discovering servicesToDiscover %@", String(describing: servicesToDiscover))
+
         guard servicesToDiscover.count > 0 else {
             return
         }
@@ -252,12 +251,22 @@ extension G7PeripheralManager {
         try runCommand(timeout: timeout) {
             addCondition(.discoverServices)
 
+            log.debug("discoverServices %@", String(describing: discoverServices))
+
             peripheral.discoverServices(serviceUUIDs)
         }
     }
 
     func discoverCharacteristics(_ characteristicUUIDs: [CBUUID], for service: CBService, timeout: TimeInterval) throws {
+
+        log.debug("all uuids: %@", String(describing: characteristicUUIDs))
+
+        let knownCharacteristicUUIDs = service.characteristics?.compactMap({ $0.uuid }) ?? []
+        log.debug("knownCharacteristicUUIDs: %@", String(describing: knownCharacteristicUUIDs))
+
         let characteristicsToDiscover = peripheral.characteristicsToDiscover(from: characteristicUUIDs, for: service)
+
+        log.debug("characteristicsToDiscover: %@", String(describing: characteristicsToDiscover))
 
         guard characteristicsToDiscover.count > 0 else {
             return
@@ -450,6 +459,7 @@ extension G7PeripheralManager: CBCentralManagerDelegate {
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         switch central.state {
         case .poweredOn:
+            log.debug("centralManagerDidUpdateState to poweredOn")
             assertConfiguration()
         default:
             break
@@ -457,6 +467,7 @@ extension G7PeripheralManager: CBCentralManagerDelegate {
     }
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        log.debug("didConnect to %{public}@", peripheral.identifier.uuidString)
         switch peripheral.state {
         case .connected:
             assertConfiguration()

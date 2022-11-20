@@ -13,7 +13,9 @@ import os.log
 
 
 public protocol G7SensorDelegate: AnyObject {
-    func sensorDidConnect(_ sensor: G7Sensor)
+    func sensorDidConnect(_ sensor: G7Sensor, name: String)
+
+    func sensorDisconnected(_ sensor: G7Sensor, suspectedEndOfSession: Bool)
 
     func sensor(_ sensor: G7Sensor, didError error: Error)
 
@@ -58,7 +60,6 @@ public enum G7SensorLifecycleState {
 
 
 public final class G7Sensor: G7BluetoothManagerDelegate {
-
     public static let lifetime = TimeInterval(hours: 10 * 24)
     public static let warmupDuration = TimeInterval(minutes: 25)
 
@@ -72,6 +73,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     /// The date of last connection
     private var lastConnection: Date?
 
+    /// Used to detect connections that do not authenticate, signalling possible sensor switchover
+    private var pendingAuth: Bool = false
 
     /// The backfill data buffer
     private var backfillBuffer: [G7BackfillMessage] = []
@@ -82,7 +85,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     private let bluetoothManager = G7BluetoothManager()
 
-    private let delegateQueue = DispatchQueue(label: "com.loudnate.CGMBLEKit.delegateQueue", qos: .unspecified)
+    private let delegateQueue = DispatchQueue(label: "com.loopkit.G7Sensor.delegateQueue", qos: .unspecified)
 
     private var sensorID: String?
 
@@ -93,21 +96,17 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     public init(sensorID: String?) {
         self.sensorID = sensorID
         bluetoothManager.delegate = self
-        bluetoothManager.scanWhileConnecting = sensorID == nil
     }
 
     public func scanForNewSensor() {
         self.sensorID = nil
         bluetoothManager.disconnect()
         bluetoothManager.forgetPeripheral()
-        bluetoothManager.scanWhileConnecting = true
         bluetoothManager.scanForPeripheral()
     }
 
     public func resumeScanning() {
-        if stayConnected {
-            bluetoothManager.scanForPeripheral()
-        }
+        bluetoothManager.scanForPeripheral()
     }
 
     public func stopScanning() {
@@ -122,77 +121,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         return bluetoothManager.isConnected
     }
 
-    public var peripheralIdentifier: UUID? {
-        get {
-            return bluetoothManager.peripheralIdentifier
-        }
-        set {
-            bluetoothManager.peripheralIdentifier = newValue
-        }
-    }
-
-    public var stayConnected: Bool {
-        get {
-            return bluetoothManager.stayConnected
-        }
-        set {
-            bluetoothManager.stayConnected = newValue
-
-            if newValue {
-                bluetoothManager.scanForPeripheral()
-            }
-        }
-    }
-
-    // MARK: - BluetoothManagerDelegate
-
-    func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, isReadyWithError error: Error?) {
-        if let error = error {
-            delegateQueue.async {
-                self.delegate?.sensor(self, didError: error)
-            }
-            return
-        }
-
-        if sensorID == peripheralManager.peripheral.name {
-            delegateQueue.async {
-                self.delegate?.sensorDidConnect(self)
-            }
-        }
-
-        peripheralManager.perform { (peripheral) in
-            self.log.debug("Listening for authentication responses in passive mode")
-            do {
-                try peripheral.listenToCharacteristic(.authentication)
-            } catch let error {
-                self.delegateQueue.async {
-                    self.delegate?.sensor(self, didError: error)
-                }
-            }
-        }
-    }
-
-    func bluetoothManager(_ manager: G7BluetoothManager, shouldConnectPeripheral peripheral: CBPeripheral) -> Bool {
-
-        guard let name = peripheral.name else {
-            self.log.debug("Not connecting to unnamed peripheral: %{public}@", String(describing: peripheral))
-            return false
-        }
-
-        /// The Dexcom G7 advertises a peripheral name of "DXCMxx", and later reports a full name of "Dexcomxx"
-        if name.hasPrefix("DXCM") {
-            // If we're following this name or if we're scanning, connect
-            if let sensorName = sensorID, name.suffix(2) == sensorName.suffix(2) {
-                return true
-            } else if sensorID == nil {
-                return true
-            }
-        }
-        self.log.info("Not connecting to peripheral: %{public}@", name)
-        return false
-    }
-
-    func handleGlucoseMessage(message: G7GlucoseMessage, peripheralManager: G7PeripheralManager) {
+    private func handleGlucoseMessage(message: G7GlucoseMessage, peripheralManager: G7PeripheralManager) {
         activationDate = Date().addingTimeInterval(-TimeInterval(message.glucoseTimestamp))
         peripheralManager.perform { (peripheral) in
             self.log.debug("Listening for backfill responses")
@@ -216,7 +145,6 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                     self.sensorID = name
                     self.activationDate = activationDate
                     self.delegate?.sensor(self, didRead: message)
-                    self.bluetoothManager.scanWhileConnecting = false
                     self.bluetoothManager.stopScanning()
                 }
             }
@@ -227,6 +155,76 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         } else {
             self.log.error("Dropping unhandled glucose message: %{public}@", String(describing: message))
         }
+    }
+
+    // MARK: - BluetoothManagerDelegate
+
+    func bluetoothManager(_ manager: G7BluetoothManager, readied peripheralManager: G7PeripheralManager) -> Bool {
+        var shouldStopScanning = false;
+
+        if let sensorID = sensorID, sensorID == peripheralManager.peripheral.name {
+            shouldStopScanning = true
+            delegateQueue.async {
+                self.delegate?.sensorDidConnect(self, name: sensorID)
+            }
+        }
+
+        peripheralManager.perform { (peripheral) in
+            self.log.info("Listening for authentication responses for %{public}@", String(describing: peripheralManager.peripheral.name))
+            do {
+                try peripheral.listenToCharacteristic(.authentication)
+                self.pendingAuth = true
+            } catch let error {
+                self.delegateQueue.async {
+                    self.delegate?.sensor(self, didError: error)
+                }
+            }
+        }
+        return shouldStopScanning
+    }
+
+    func bluetoothManager(_ manager: G7BluetoothManager, readyingFailed peripheralManager: G7PeripheralManager, with error: Error) {
+        delegateQueue.async {
+            self.delegate?.sensor(self, didError: error)
+        }
+    }
+
+    func peripheralDidDisconnect(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, wasRemoteDisconnect: Bool) {
+        if let sensorID = sensorID, sensorID == peripheralManager.peripheral.name {
+
+            let suspectedEndOfSession: Bool
+            if pendingAuth && wasRemoteDisconnect {
+                suspectedEndOfSession = true // Normal disconnect without auth is likely that G7 app stopped this session
+            } else {
+                suspectedEndOfSession = false
+            }
+            pendingAuth = false
+
+            delegateQueue.async {
+                self.delegate?.sensorDisconnected(self, suspectedEndOfSession: suspectedEndOfSession)
+            }
+        }
+    }
+
+    func bluetoothManager(_ manager: G7BluetoothManager, shouldConnectPeripheral peripheral: CBPeripheral) -> PeripheralConnectionCommand {
+
+        guard let name = peripheral.name else {
+            log.debug("Not connecting to unnamed peripheral: %{public}@", String(describing: peripheral))
+            return .ignore
+        }
+
+        /// The Dexcom G7 advertises a peripheral name of "DXCMxx", and later reports a full name of "Dexcomxx"
+        if name.hasPrefix("DXCM") {
+            // If we're following this name or if we're scanning, connect
+            if let sensorName = sensorID, name.suffix(2) == sensorName.suffix(2) {
+                return .makeActive
+            } else if sensorID == nil {
+                return .connect
+            }
+        }
+
+        log.info("Not connecting to peripheral: %{public}@", name)
+        return .ignore
     }
 
     func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReceiveControlResponse response: Data) {
@@ -273,7 +271,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReceiveAuthenticationResponse response: Data) {
 
         if let message = AuthChallengeRxMessage(data: response), message.isBonded, message.isAuthenticated {
-            self.log.debug("Observed authenticated session. enabling notifications for control characteristic.")
+            log.debug("Observed authenticated session. enabling notifications for control characteristic.")
+            pendingAuth = false
             peripheralManager.perform { (peripheral) in
                 do {
                     try peripheral.listenToCharacteristic(.control)
@@ -285,7 +284,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 }
             }
         } else {
-            self.log.debug("Ignoring authentication response: %{public}@", response.hexadecimalString)
+            log.debug("Ignoring authentication response: %{public}@", response.hexadecimalString)
         }
     }
 
@@ -294,7 +293,6 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             self.delegate?.sensorConnectionStatusDidUpdate(self)
         }
     }
-
 }
 
 

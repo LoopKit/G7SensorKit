@@ -9,6 +9,8 @@
 import Foundation
 import G7SensorKit
 import LoopKit
+import LoopKitUI
+import HealthKit
 
 enum G7ProgressBarState {
     case warmupProgress
@@ -59,11 +61,33 @@ enum G7ProgressBarState {
 }
 
 class G7SettingsViewModel: ObservableObject {
-    @Published var scanning: Bool = false
-    @Published var connected: Bool = false
-    @Published var sensorName: String?
-    @Published var activatedAt: Date?
-    @Published var lastConnect: Date?
+    @Published private(set) var scanning: Bool = false
+    @Published private(set) var connected: Bool = false
+    @Published private(set) var sensorName: String?
+    @Published private(set) var activatedAt: Date?
+    @Published private(set) var lastConnect: Date?
+    @Published private(set) var lastGlucoseDate: Date?
+    @Published private(set) var lastGlucoseTrendFormatted: String?
+
+    var displayGlucoseUnitObservable: DisplayGlucoseUnitObservable
+
+    private var lastReading: G7GlucoseMessage?
+
+    lazy var dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    private lazy var glucoseFormatter: QuantityFormatter = {
+        let formatter = QuantityFormatter()
+        formatter.setPreferredNumberFormatter(for: displayGlucoseUnitObservable.displayGlucoseUnit)
+        formatter.numberFormatter.notANumberSymbol = "–"
+        return formatter
+    }()
+
+    private let quantityFormatter = QuantityFormatter()
 
     private var cgmManager: G7CGMManager
 
@@ -71,8 +95,9 @@ class G7SettingsViewModel: ObservableObject {
         return G7ProgressBarState(lifecycle: cgmManager.lifecycleState)
     }
 
-    init(cgmManager: G7CGMManager) {
+    init(cgmManager: G7CGMManager, displayGlucoseUnitObservable: DisplayGlucoseUnitObservable) {
         self.cgmManager = cgmManager
+        self.displayGlucoseUnitObservable = displayGlucoseUnitObservable
         updateValues()
 
         self.cgmManager.addStateObserver(self, queue: DispatchQueue.main)
@@ -84,6 +109,18 @@ class G7SettingsViewModel: ObservableObject {
         activatedAt = cgmManager.sensorActivatedAt
         connected = cgmManager.isConnected
         lastConnect = cgmManager.lastConnect
+        lastReading = cgmManager.latestReading
+        lastGlucoseDate = cgmManager.latestReadingReceivedAt
+
+        if let trendRate = lastReading?.trendRate {
+            let glucoseUnitPerMinute = displayGlucoseUnitObservable.displayGlucoseUnit.unitDivided(by: .minute())
+            // This seemingly strange replacement of glucose units is only to display the unit string correctly
+            let trendPerMinute = HKQuantity(unit: displayGlucoseUnitObservable.displayGlucoseUnit, doubleValue: trendRate.doubleValue(for: glucoseUnitPerMinute))
+            if let formatted = glucoseFormatter.string(from: trendPerMinute, for: displayGlucoseUnitObservable.displayGlucoseUnit) {
+                lastGlucoseTrendFormatted = String(format: LocalizedString("%@/min", comment: "Format string for glucose trend per minute. (1: glucose value and unit)"), formatted)
+            }
+        }
+
     }
 
     var progressBarColorStyle: ColorStyle {
@@ -97,7 +134,14 @@ class G7SettingsViewModel: ObservableObject {
         case .sensorFailed:
             return .dimmed
         case .expirationProgress:
-            return .glucose
+            guard let remaining = progressValue else {
+                return .dimmed
+            }
+            if remaining > .hours(24) {
+                return .glucose
+            } else {
+                return .warning
+            }
         }
     }
 
@@ -142,6 +186,22 @@ class G7SettingsViewModel: ObservableObject {
     func scanForNewSensor() {
         cgmManager.scanForNewSensor()
     }
+
+    var lastGlucoseString: String {
+        guard let lastReading = lastReading, let quantity = lastReading.glucoseQuantity else {
+            return LocalizedString("– – –", comment: "No glucose value representation (3 dashes for mg/dL)")
+        }
+        switch lastReading.glucoseRangeCategory {
+        case .some(.belowRange):
+            return LocalizedString("LOW", comment: "String displayed instead of a glucose value below the CGM range")
+        case .some(.aboveRange):
+            return LocalizedString("HIGH", comment: "String displayed instead of a glucose value above the CGM range")
+        default:
+            quantityFormatter.setPreferredNumberFormatter(for: displayGlucoseUnitObservable.displayGlucoseUnit)
+            return quantityFormatter.string(from: quantity, for: displayGlucoseUnitObservable.displayGlucoseUnit, includeUnit: false) ?? ""
+        }
+    }
+
 }
 
 extension G7SettingsViewModel: G7StateObserver {
