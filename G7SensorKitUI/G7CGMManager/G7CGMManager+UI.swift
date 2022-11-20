@@ -66,30 +66,67 @@ extension G7CGMManager: CGMManagerUI {
                 state: .warning)
         }
 
-        switch lifecycleState {
-        case .warmup:
-            return G7DeviceStatusHighlight(
-                localizedMessage: LocalizedString("Sensor\nWarmup", comment: "G7 Status highlight text for sensor warmup"),
-                imageName: "clock",
-                state: .normalCGM)
-        case .error:
+        if let latestReading = latestReading, latestReading.algorithmState.isInSensorError {
             return G7DeviceStatusHighlight(
                 localizedMessage: LocalizedString("Sensor\nError", comment: "G7 Status highlight text for sensor error"),
                 imageName: "exclamationmark.circle.fill",
                 state: .warning)
-        default:
-            return nil
         }
 
+        if lifecycleState == .warmup {
+            return G7DeviceStatusHighlight(
+                localizedMessage: LocalizedString("Sensor\nWarmup", comment: "G7 Status highlight text for sensor warmup"),
+                imageName: "clock",
+                state: .normalCGM)
+        }
+        return nil
     }
 
     // TODO Placeholder.
     public var cgmStatusBadge: DeviceStatusBadge? {
+        if lifecycleState == .gracePeriod {
+            return G7DeviceStatusBadge(image: UIImage(systemName: "clock"), state: .critical)
+        }
         return nil
     }
 
     // TODO Placeholder.
     public var cgmLifecycleProgress: DeviceLifecycleProgress? {
-        return nil
+        switch lifecycleState {
+        case .ok:
+            // show remaining lifetime, if < 24 hours
+            guard let expiration = sensorExpiresAt else {
+                return nil
+            }
+            let remaining = max(0, expiration.timeIntervalSinceNow)
+
+            if remaining < .hours(24) {
+                return G7LifecycleProgress(percentComplete: 1-(remaining/G7Sensor.lifetime), progressState: .warning)
+            }
+            return nil
+        case .gracePeriod:
+            guard let endTime = sensorEndsAt else {
+                return nil
+            }
+            let remaining = max(0, endTime.timeIntervalSinceNow)
+            return G7LifecycleProgress(percentComplete: 1-(remaining/G7Sensor.gracePeriod), progressState: .critical)
+        case .expired:
+            return G7LifecycleProgress(percentComplete: 1, progressState: .critical)
+        default:
+            return nil
+        }
     }
+}
+
+struct G7DeviceStatusBadge: DeviceStatusBadge {
+    var image: UIImage?
+
+    var state: LoopKitUI.DeviceStatusBadgeState
+}
+
+
+struct G7LifecycleProgress: DeviceLifecycleProgress {
+    var percentComplete: Double
+
+    var progressState: LoopKit.DeviceLifecycleProgressState
 }

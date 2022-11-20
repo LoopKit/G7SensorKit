@@ -61,7 +61,7 @@ extension G7PeripheralManager.Configuration {
         return G7PeripheralManager.Configuration(
             serviceCharacteristics: [
                 SensorServiceUUID.cgmService.cbUUID: [
-                    CGMServiceCharacteristicUUID.communication.cbUUID,
+                    //CGMServiceCharacteristicUUID.communication.cbUUID, // Unused for now
                     CGMServiceCharacteristicUUID.authentication.cbUUID,
                     CGMServiceCharacteristicUUID.control.cbUUID,
                     CGMServiceCharacteristicUUID.backfill.cbUUID,

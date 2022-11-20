@@ -61,17 +61,15 @@ struct G7SettingsView: View {
                         .foregroundColor(.secondary)
                 }
                 HStack {
-                    Text(LocalizedString("Sensor Expires", comment: "title for g7 settings row showing sensor expiration time"))
+                    Text(LocalizedString("Sensor Expiration", comment: "title for g7 settings row showing sensor expiration time"))
                     Spacer()
                     Text(timeFormatter.string(from: activatedAt.addingTimeInterval(G7Sensor.lifetime)))
                         .foregroundColor(.secondary)
                 }
-            }
-            if let name = viewModel.sensorName {
                 HStack {
-                    Text(LocalizedString("Name", comment: "title for g7 settings row showing BLE Name"))
+                    Text(LocalizedString("Grace Period End", comment: "title for g7 settings row showing sensor grace period end time"))
                     Spacer()
-                    Text(name)
+                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod)))
                         .foregroundColor(.secondary)
                 }
             }
@@ -87,7 +85,15 @@ struct G7SettingsView: View {
             }
 
 
-            Section {
+            Section("Bluetooth") {
+                if let name = viewModel.sensorName {
+                    HStack {
+                        Text(LocalizedString("Name", comment: "title for g7 settings row showing BLE Name"))
+                        Spacer()
+                        Text(name)
+                            .foregroundColor(.secondary)
+                    }
+                }
                 if viewModel.scanning {
                     HStack {
                         Text(LocalizedString("Scanning", comment: "title for g7 settings connection status when scanning"))
@@ -106,11 +112,8 @@ struct G7SettingsView: View {
                     }
                 }
                 if let lastConnect = viewModel.lastConnect {
-                    HStack {
-                        Text(LocalizedString("Last Connect", comment: "title for g7 settings row showing sensor last connect time"))
-                        Spacer()
-                        Text(timeFormatter.string(from: lastConnect))
-                    }
+                    LabeledValueView(label: LocalizedString("Last Connect", comment: "title for g7 settings row showing sensor last connect time"),
+                                     value: timeFormatter.string(from: lastConnect))
                 }
             }
 

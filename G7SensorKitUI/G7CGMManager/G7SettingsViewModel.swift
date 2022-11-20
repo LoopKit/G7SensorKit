@@ -14,26 +14,11 @@ import HealthKit
 
 enum G7ProgressBarState {
     case warmupProgress
-    case expirationProgress
+    case lifetimeRemaining
+    case gracePeriodRemaining
     case sensorFailed
     case sensorExpired
     case searchingForSensor
-
-    init(lifecycle: G7SensorLifecycleState) {
-        switch lifecycle {
-        case .searching:
-            self = .searchingForSensor
-        case .error, .ok:
-            self = .expirationProgress
-        case .warmup:
-            self = .warmupProgress
-        case .failed:
-            self = .sensorFailed
-        case .expired:
-            self = .sensorExpired
-
-        }
-    }
 
     var label: String {
         switch self {
@@ -45,8 +30,10 @@ enum G7ProgressBarState {
             return LocalizedString("Warmup completes in", comment: "G7 Progress bar label when sensor in warmup")
         case .sensorFailed:
             return LocalizedString("Sensor failed", comment: "G7 Progress bar label when sensor failed")
-        case .expirationProgress:
-            return LocalizedString("Sensor expires in", comment: "G7 Progress bar label when sensor failed")
+        case .lifetimeRemaining:
+            return LocalizedString("Sensor expires in", comment: "G7 Progress bar label when sensor lifetime progress showing")
+        case .gracePeriodRemaining:
+            return LocalizedString("Grace period remaining", comment: "G7 Progress bar label when sensor grace period progress showing")
         }
     }
 
@@ -92,7 +79,20 @@ class G7SettingsViewModel: ObservableObject {
     private var cgmManager: G7CGMManager
 
     var progressBarState: G7ProgressBarState {
-        return G7ProgressBarState(lifecycle: cgmManager.lifecycleState)
+        switch cgmManager.lifecycleState {
+        case .searching:
+            return .searchingForSensor
+        case .ok:
+            return .lifetimeRemaining
+        case .warmup:
+            return .warmupProgress
+        case .failed:
+            return .sensorFailed
+        case .gracePeriod:
+            return .gracePeriodRemaining
+        case .expired:
+            return .sensorExpired
+        }
     }
 
     init(cgmManager: G7CGMManager, displayGlucoseUnitObservable: DisplayGlucoseUnitObservable) {
@@ -133,7 +133,7 @@ class G7SettingsViewModel: ObservableObject {
             return .critical
         case .sensorFailed:
             return .dimmed
-        case .expirationProgress:
+        case .lifetimeRemaining:
             guard let remaining = progressValue else {
                 return .dimmed
             }
@@ -142,6 +142,8 @@ class G7SettingsViewModel: ObservableObject {
             } else {
                 return .warning
             }
+        case .gracePeriodRemaining:
+            return .critical
         }
     }
 
@@ -154,11 +156,16 @@ class G7SettingsViewModel: ObservableObject {
                 return 0
             }
             return 1 - value / G7Sensor.warmupDuration
-        case .expirationProgress:
+        case .lifetimeRemaining:
             guard let value = progressValue, value > 0 else {
                 return 0
             }
             return 1 - value / G7Sensor.lifetime
+        case .gracePeriodRemaining:
+            guard let value = progressValue, value > 0 else {
+                return 0
+            }
+            return 1 - value / G7Sensor.gracePeriod
         case .sensorExpired:
             return 1
         default:
@@ -174,12 +181,17 @@ class G7SettingsViewModel: ObservableObject {
             guard let warmupFinishedAt = cgmManager.sensorFinishesWarmupAt else {
                 return nil
             }
-            return warmupFinishedAt.timeIntervalSinceNow
-        case .expirationProgress:
+            return max(0, warmupFinishedAt.timeIntervalSinceNow)
+        case .lifetimeRemaining:
             guard let expiration = cgmManager.sensorExpiresAt else {
                 return nil
             }
-            return expiration.timeIntervalSinceNow
+            return max(0, expiration.timeIntervalSinceNow)
+        case .gracePeriodRemaining:
+            guard let sensorEndsAt = cgmManager.sensorEndsAt else {
+                return nil
+            }
+            return max(0, sensorEndsAt.timeIntervalSinceNow)
         }
     }
 

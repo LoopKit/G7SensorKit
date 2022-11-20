@@ -117,6 +117,14 @@ public class G7CGMManager: CGMManager {
         return activatedAt.addingTimeInterval(G7Sensor.lifetime)
     }
 
+    public var sensorEndsAt: Date? {
+        guard let activatedAt = sensorActivatedAt else {
+            return nil
+        }
+        return activatedAt.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod)
+    }
+
+
     public var sensorFinishesWarmupAt: Date? {
         guard let activatedAt = sensorActivatedAt else {
             return nil
@@ -147,7 +155,7 @@ public class G7CGMManager: CGMManager {
         if state.sensorID == nil {
             return .searching
         }
-        if let sensorExpiresAt = sensorExpiresAt, sensorExpiresAt.timeIntervalSinceNow < 0 {
+        if let sensorEndsAt = sensorEndsAt, sensorEndsAt.timeIntervalSinceNow < 0 {
             return .expired
         }
         if let algorithmState = latestReading?.algorithmState {
@@ -157,9 +165,9 @@ public class G7CGMManager: CGMManager {
             if algorithmState.sensorFailed {
                 return .failed
             }
-            if algorithmState.isInSensorError {
-                return .error
-            }
+        }
+        if let sensorExpiresAt = sensorExpiresAt, sensorExpiresAt.timeIntervalSinceNow < 0 {
+            return .gracePeriod
         }
         return .ok
     }
