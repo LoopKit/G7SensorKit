@@ -78,7 +78,7 @@ struct G7SettingsView: View {
                 LabeledValueView(label: LocalizedString("Glucose", comment: "Field label"),
                                  value: String(format: "%@ %@", viewModel.lastGlucoseString, viewModel.displayGlucoseUnitObservable.displayGlucoseUnit.shortLocalizedUnitString()))
                 LabeledDateView(label: LocalizedString("Time", comment: "Field label"),
-                                date: viewModel.lastGlucoseDate,
+                                date: viewModel.latestReadingTimestamp,
                                 dateFormatter: viewModel.dateFormatter)
                 LabeledValueView(label: LocalizedString("Trend", comment: "Field label"),
                                  value: viewModel.lastGlucoseTrendFormatted)

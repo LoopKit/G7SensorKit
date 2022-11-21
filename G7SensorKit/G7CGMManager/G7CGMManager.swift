@@ -141,8 +141,8 @@ public class G7CGMManager: CGMManager {
         return state.latestConnect
     }
 
-    public var latestReadingReceivedAt: Date? {
-        return state.latestReadingReceivedAt
+    public var latestReadingTimestamp: Date? {
+        return state.latestReadingTimestamp
     }
 
     public let sensor: G7Sensor
@@ -308,18 +308,8 @@ extension G7CGMManager: G7SensorDelegate {
             return
         }
 
-        mutateState { state in
-            state.latestReading = message
-            state.latestReadingReceivedAt = Date()
-        }
-
         guard let activationDate = sensor.activationDate else {
             logDeviceCommunication("Unable to process sensor reading without activation date.", type: .error)
-            return
-        }
-
-        guard let glucose = message.glucose else {
-            updateDelegate(with: .noData)
             return
         }
 
@@ -329,12 +319,24 @@ extension G7CGMManager: G7SensorDelegate {
             return
         }
 
+        guard let glucose = message.glucose else {
+            updateDelegate(with: .noData)
+            return
+        }
+
+        let latestReadingTimestamp = activationDate.addingTimeInterval(TimeInterval(message.glucoseTimestamp))
+
+        mutateState { state in
+            state.latestReading = message
+            state.latestReadingTimestamp = latestReadingTimestamp
+        }
+
         let unit = HKUnit.milligramsPerDeciliter
         let quantity = HKQuantity(unit: unit, doubleValue: Double(min(max(glucose, GlucoseLimits.minimum), GlucoseLimits.maximum)))
 
         updateDelegate(with: .newData([
             NewGlucoseSample(
-                date: activationDate.addingTimeInterval(TimeInterval(message.glucoseTimestamp)),
+                date: latestReadingTimestamp,
                 quantity: quantity,
                 condition: message.condition,
                 trend: message.trendType,

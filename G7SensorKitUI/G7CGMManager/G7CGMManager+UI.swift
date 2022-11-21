@@ -59,7 +59,7 @@ extension G7CGMManager: CGMManagerUI {
                 state: .normalCGM)
         }
 
-        if let latestReadingReceivedAt = state.latestReadingReceivedAt, latestReadingReceivedAt.timeIntervalSinceNow < -.minutes(15) {
+        if let latestReadingReceivedAt = state.latestReadingTimestamp, latestReadingReceivedAt.timeIntervalSinceNow < -.minutes(15) {
             return G7DeviceStatusHighlight(
                 localizedMessage: LocalizedString("Signal\nLoss", comment: "G7 Status highlight text for signal loss"),
                 imageName: "exclamationmark.circle.fill",

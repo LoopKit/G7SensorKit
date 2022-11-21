@@ -53,7 +53,7 @@ class G7SettingsViewModel: ObservableObject {
     @Published private(set) var sensorName: String?
     @Published private(set) var activatedAt: Date?
     @Published private(set) var lastConnect: Date?
-    @Published private(set) var lastGlucoseDate: Date?
+    @Published private(set) var latestReadingTimestamp: Date?
     @Published private(set) var lastGlucoseTrendFormatted: String?
 
     var displayGlucoseUnitObservable: DisplayGlucoseUnitObservable
@@ -110,7 +110,7 @@ class G7SettingsViewModel: ObservableObject {
         connected = cgmManager.isConnected
         lastConnect = cgmManager.lastConnect
         lastReading = cgmManager.latestReading
-        lastGlucoseDate = cgmManager.latestReadingReceivedAt
+        latestReadingTimestamp = cgmManager.latestReadingTimestamp
 
         if let trendRate = lastReading?.trendRate {
             let glucoseUnitPerMinute = displayGlucoseUnitObservable.displayGlucoseUnit.unitDivided(by: .minute())
