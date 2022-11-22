@@ -132,7 +132,6 @@ public class G7CGMManager: CGMManager {
         return activatedAt.addingTimeInterval(G7Sensor.warmupDuration)
     }
 
-
     public var latestReading: G7GlucoseMessage? {
         return state.latestReading
     }
@@ -301,9 +300,9 @@ extension G7CGMManager: G7SensorDelegate {
     }
 
     public func sensor(_ sensor: G7Sensor, didRead message: G7GlucoseMessage) {
-        logDeviceCommunication("Sensor didRead \(message)", type: .receive)
 
         guard message != latestReading else {
+            logDeviceCommunication("Sensor reading duplicate: \(message)", type: .error)
             updateDelegate(with: .noData)
             return
         }
@@ -313,10 +312,13 @@ extension G7CGMManager: G7SensorDelegate {
             return
         }
 
-        guard message.hasReliableGlucose else {
-            logDeviceCommunication("Sensor reading unreliable: \(message)", type: .receive)
-            updateDelegate(with: .error(CalibrationError.unreliableState(message.algorithmState)))
-            return
+        logDeviceCommunication("Sensor didRead \(message)", type: .receive)
+
+        let latestReadingTimestamp = activationDate.addingTimeInterval(TimeInterval(message.glucoseTimestamp))
+
+        mutateState { state in
+            state.latestReading = message
+            state.latestReadingTimestamp = latestReadingTimestamp
         }
 
         guard let glucose = message.glucose else {
@@ -324,11 +326,9 @@ extension G7CGMManager: G7SensorDelegate {
             return
         }
 
-        let latestReadingTimestamp = activationDate.addingTimeInterval(TimeInterval(message.glucoseTimestamp))
-
-        mutateState { state in
-            state.latestReading = message
-            state.latestReadingTimestamp = latestReadingTimestamp
+        guard message.hasReliableGlucose else {
+            updateDelegate(with: .error(AlgorithmError.unreliableState(message.algorithmState)))
+            return
         }
 
         let unit = HKUnit.milligramsPerDeciliter

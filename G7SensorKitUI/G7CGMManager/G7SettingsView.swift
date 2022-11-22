@@ -13,11 +13,9 @@ import LoopKitUI
 
 struct G7SettingsView: View {
 
-    private var durationFormatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.day, .hour, .minute]
+    private var durationFormatter: RelativeDateTimeFormatter = {
+        let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full
-        formatter.maximumUnitCount = 1
         return formatter
     }()
 
@@ -76,14 +74,13 @@ struct G7SettingsView: View {
 
             Section("Last Reading") {
                 LabeledValueView(label: LocalizedString("Glucose", comment: "Field label"),
-                                 value: String(format: "%@ %@", viewModel.lastGlucoseString, viewModel.displayGlucoseUnitObservable.displayGlucoseUnit.shortLocalizedUnitString()))
+                                 value: viewModel.lastGlucoseString)
                 LabeledDateView(label: LocalizedString("Time", comment: "Field label"),
                                 date: viewModel.latestReadingTimestamp,
                                 dateFormatter: viewModel.dateFormatter)
                 LabeledValueView(label: LocalizedString("Trend", comment: "Field label"),
-                                 value: viewModel.lastGlucoseTrendFormatted)
+                                 value: viewModel.lastGlucoseTrendString)
             }
-
 
             Section("Bluetooth") {
                 if let name = viewModel.sensorName {
@@ -170,8 +167,8 @@ struct G7SettingsView: View {
                     .foregroundColor(color(for: viewModel.progressBarState.labelColor))
 
                 Spacer()
-                if let duration = viewModel.progressValue {
-                    Text(durationFormatter.string(from: duration)!)
+                if let referenceDate = viewModel.progressReferenceDate {
+                    Text(durationFormatter.localizedString(for: referenceDate, relativeTo: Date()))
                         .foregroundColor(.secondary)
                 }
             }

@@ -16,7 +16,7 @@ public struct G7GlucoseMessage: SensorMessage, Equatable {
     public let predicted: UInt16?
     public let glucoseIsDisplayOnly: Bool
     public let messageTimestamp: UInt32 // Seconds since pairing of the *message*. Subtract age to get timestamp of glucose
-    public let algorithmState: CalibrationState
+    public let algorithmState: AlgorithmState
     public let sequence: UInt16
     public let trend: Double?
     public let data: Data
@@ -110,7 +110,7 @@ public struct G7GlucoseMessage: SensorMessage, Equatable {
             predicted = nil
         }
 
-        algorithmState = CalibrationState(rawValue: data[14])
+        algorithmState = AlgorithmState(rawValue: data[14])
 
         if data[15] == 0x7f {
             trend = nil

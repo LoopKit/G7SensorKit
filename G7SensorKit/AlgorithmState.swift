@@ -9,28 +9,16 @@
 import Foundation
 
 
-public enum CalibrationState: RawRepresentable {
+public enum AlgorithmState: RawRepresentable {
     public typealias RawValue = UInt8
 
     public enum State: RawValue {
         case stopped = 1
         case warmup = 2
-        case needFirstInitialCalibration = 4
-        case needSecondInitialCalibration = 5
         case ok = 6
-        case needCalibration7 = 7
-        case calibrationError8 = 8
-        case calibrationError9 = 9
-        case calibrationError10 = 10
-        case sensorFailure11 = 11
-        case sensorFailure12 = 12
-        case calibrationError13 = 13
-        case needCalibration14 = 14
-        case sessionFailure15 = 15
-        case sessionFailure16 = 16
-        case sessionFailure17 = 17
         case questionMarks = 18
         case expired = 24
+        case sensorFailed = 25
     }
 
     case known(State)
@@ -60,7 +48,7 @@ public enum CalibrationState: RawRepresentable {
         }
 
         switch state {
-        case .sensorFailure11, .sensorFailure12, .sessionFailure15, .sessionFailure16, .sessionFailure17:
+        case .sensorFailed:
             return true
         default:
             return false
@@ -86,7 +74,7 @@ public enum CalibrationState: RawRepresentable {
         }
 
         switch state {
-        case .calibrationError8, .calibrationError9, .calibrationError10, .calibrationError13, .questionMarks:
+        case .questionMarks:
             return true
         default:
             return false
@@ -102,28 +90,18 @@ public enum CalibrationState: RawRepresentable {
         switch state {
         case .stopped,
              .warmup,
-             .needFirstInitialCalibration,
-             .needSecondInitialCalibration,
-             .calibrationError8,
-             .calibrationError9,
-             .calibrationError10,
-             .sensorFailure11,
-             .sensorFailure12,
-             .calibrationError13,
-             .sessionFailure15,
-             .sessionFailure16,
-             .sessionFailure17,
              .questionMarks,
-             .expired:
+             .expired,
+             .sensorFailed:
             return false
-        case .ok, .needCalibration7, .needCalibration14:
+        case .ok:
             return true
         }
     }
 }
 
-extension CalibrationState: Equatable {
-    public static func ==(lhs: CalibrationState, rhs: CalibrationState) -> Bool {
+extension AlgorithmState: Equatable {
+    public static func ==(lhs: AlgorithmState, rhs: AlgorithmState) -> Bool {
         switch (lhs, rhs) {
         case (.known(let lhs), .known(let rhs)):
             return lhs == rhs
@@ -135,7 +113,7 @@ extension CalibrationState: Equatable {
     }
 }
 
-extension CalibrationState: CustomStringConvertible {
+extension AlgorithmState: CustomStringConvertible {
     public var description: String {
         switch self {
         case .known(let state):

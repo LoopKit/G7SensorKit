@@ -59,6 +59,13 @@ extension G7CGMManager: CGMManagerUI {
                 state: .normalCGM)
         }
 
+        if lifecycleState == .failed {
+            return G7DeviceStatusHighlight(
+                localizedMessage: LocalizedString("Sensor\nFailed", comment: "G7 Status highlight text for sensor failed"),
+                imageName: "exclamationmark.circle.fill",
+                state: .critical)
+        }
+
         if let latestReadingReceivedAt = state.latestReadingTimestamp, latestReadingReceivedAt.timeIntervalSinceNow < -.minutes(15) {
             return G7DeviceStatusHighlight(
                 localizedMessage: LocalizedString("Signal\nLoss", comment: "G7 Status highlight text for signal loss"),
@@ -68,7 +75,7 @@ extension G7CGMManager: CGMManagerUI {
 
         if let latestReading = latestReading, latestReading.algorithmState.isInSensorError {
             return G7DeviceStatusHighlight(
-                localizedMessage: LocalizedString("Sensor\nError", comment: "G7 Status highlight text for sensor error"),
+                localizedMessage: LocalizedString("Sensor\nIssue", comment: "G7 Status highlight text for sensor error"),
                 imageName: "exclamationmark.circle.fill",
                 state: .warning)
         }

@@ -14,7 +14,7 @@ public struct G7BackfillMessage: Equatable {
     public let timestamp: UInt32 // Seconds since pairing
     public let glucose: UInt16?
     public let glucoseIsDisplayOnly: Bool
-    public let algorithmState: CalibrationState
+    public let algorithmState: AlgorithmState
     public let trend: Double?
 
     public let data: Data
@@ -44,7 +44,7 @@ public struct G7BackfillMessage: Equatable {
             glucoseIsDisplayOnly = false
         }
 
-        algorithmState = CalibrationState(rawValue: data[6])
+        algorithmState = AlgorithmState(rawValue: data[6])
 
         if data[8] == 0x7f {
             trend = nil
