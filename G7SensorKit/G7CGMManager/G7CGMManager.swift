@@ -211,6 +211,11 @@ public class G7CGMManager: CGMManager {
         let lines = [
             "## G7CGMManager",
             "sensorID: \(String(describing: state.sensorID))",
+            "activatedAt: \(String(describing: state.activatedAt))",
+            "latestReading: \(String(describing: state.latestReading))",
+            "latestReadingTimestamp: \(String(describing: state.latestReadingTimestamp))",
+            "latestConnect: \(String(describing: state.latestConnect))",
+            "uploadReadings: \(String(describing: state.uploadReadings))",
         ]
         return lines.joined(separator: "\n")
     }
