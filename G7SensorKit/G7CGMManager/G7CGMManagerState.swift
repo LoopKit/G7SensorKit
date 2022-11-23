@@ -18,6 +18,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     public var latestReading: G7GlucoseMessage?
     public var latestReadingTimestamp: Date?
     public var latestConnect: Date?
+    public var uploadReadings: Bool = false
 
     init() {
     }
@@ -30,6 +31,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         }
         self.latestReadingTimestamp = rawValue["latestReadingTimestamp"] as? Date
         self.latestConnect = rawValue["latestConnect"] as? Date
+        self.uploadReadings = rawValue["uploadReadings"] as? Bool ?? false
     }
 
     public var rawValue: RawValue {
@@ -39,6 +41,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["latestReading"] = latestReading?.data
         rawValue["latestReadingTimestamp"] = latestReadingTimestamp
         rawValue["latestConnect"] = latestConnect
+        rawValue["uploadReadings"] = uploadReadings
         return rawValue
     }
 }

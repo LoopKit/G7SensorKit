@@ -184,6 +184,44 @@ extension G7PeripheralManager {
     }
 }
 
+extension CBManagerState {
+    var description: String {
+        switch self {
+        case .poweredOff:
+            return "poweredOff"
+        case .poweredOn:
+            return "poweredOff"
+        case .resetting:
+            return "resetting"
+        case .unauthorized:
+            return "unauthorized"
+        case .unknown:
+            return "unknown"
+        case .unsupported:
+            return "unsupported"
+        @unknown default:
+            return "unknown(\(rawValue))"
+        }
+    }
+}
+
+extension CBPeripheralState {
+    var description: String {
+        switch self {
+        case .connected:
+            return "connected"
+        case .disconnected:
+            return "disconnected"
+        case .connecting:
+            return "connecting"
+        case .disconnecting:
+            return "disconnecting"
+        @unknown default:
+            return "unknown(\(rawValue))"
+        }
+    }
+}
+
 
 // MARK: - Synchronous Commands
 extension G7PeripheralManager {
@@ -192,7 +230,7 @@ extension G7PeripheralManager {
         // Prelude
         dispatchPrecondition(condition: .onQueue(queue))
         guard central?.state == .poweredOn && peripheral.state == .connected else {
-            log.debug("Unable to run command: central state = %{public}@, peripheral state = %{public}@", String(describing: central?.state.rawValue.description), String(describing: peripheral.state))
+            log.debug("Unable to run command: central state = %{public}@, peripheral state = %{public}@", String(describing: central?.state.description), String(describing: peripheral.state))
             throw PeripheralManagerError.notReady
         }
 
@@ -251,7 +289,7 @@ extension G7PeripheralManager {
         try runCommand(timeout: timeout) {
             addCondition(.discoverServices)
 
-            log.debug("discoverServices %@", String(describing: discoverServices))
+            log.debug("discoverServices %@", String(describing: serviceUUIDs))
 
             peripheral.discoverServices(serviceUUIDs)
         }

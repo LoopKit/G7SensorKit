@@ -16,41 +16,6 @@ public enum ColorStyle {
     case glucose, warning, critical, normal, dimmed
 }
 
-enum G7ProgressBarState {
-    case warmupProgress
-    case lifetimeRemaining
-    case gracePeriodRemaining
-    case sensorFailed
-    case sensorExpired
-    case searchingForSensor
-
-    var label: String {
-        switch self {
-        case .searchingForSensor:
-            return LocalizedString("Searching for sensor", comment: "G7 Progress bar label when searching for sensor")
-        case .sensorExpired:
-            return LocalizedString("Sensor expired", comment: "G7 Progress bar label when sensor expired")
-        case .warmupProgress:
-            return LocalizedString("Warmup completes in", comment: "G7 Progress bar label when sensor in warmup")
-        case .sensorFailed:
-            return LocalizedString("Sensor failed", comment: "G7 Progress bar label when sensor failed")
-        case .lifetimeRemaining:
-            return LocalizedString("Sensor expires in", comment: "G7 Progress bar label when sensor lifetime progress showing")
-        case .gracePeriodRemaining:
-            return LocalizedString("Grace period remaining", comment: "G7 Progress bar label when sensor grace period progress showing")
-        }
-    }
-
-    var labelColor: ColorStyle {
-        switch self {
-        case .sensorExpired:
-            return .critical
-        default:
-            return .normal
-        }
-    }
-}
-
 class G7SettingsViewModel: ObservableObject {
     @Published private(set) var scanning: Bool = false
     @Published private(set) var connected: Bool = false
@@ -58,7 +23,12 @@ class G7SettingsViewModel: ObservableObject {
     @Published private(set) var activatedAt: Date?
     @Published private(set) var lastConnect: Date?
     @Published private(set) var latestReadingTimestamp: Date?
-
+    @Published var uploadReadings: Bool = false {
+        didSet {
+            cgmManager.uploadReadings = uploadReadings
+        }
+    }
+    
     var displayGlucoseUnitObservable: DisplayGlucoseUnitObservable
 
     private var lastReading: G7GlucoseMessage?
@@ -114,6 +84,7 @@ class G7SettingsViewModel: ObservableObject {
         lastConnect = cgmManager.lastConnect
         lastReading = cgmManager.latestReading
         latestReadingTimestamp = cgmManager.latestReadingTimestamp
+        uploadReadings = cgmManager.state.uploadReadings
     }
 
     var progressBarColorStyle: ColorStyle {

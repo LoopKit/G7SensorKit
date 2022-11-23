@@ -88,7 +88,9 @@ public class G7CGMManager: CGMManager {
         return .hours(3)
     }
 
-    public var shouldSyncToRemoteService = false
+    public var shouldSyncToRemoteService: Bool {
+        return state.uploadReadings
+    }
 
     public var glucoseDisplay: GlucoseDisplayable? {
         return latestReading
@@ -142,6 +144,17 @@ public class G7CGMManager: CGMManager {
 
     public var latestReadingTimestamp: Date? {
         return state.latestReadingTimestamp
+    }
+
+    public var uploadReadings: Bool {
+        get {
+            return state.uploadReadings
+        }
+        set {
+            mutateState { state in
+                state.uploadReadings = newValue
+            }
+        }
     }
 
     public let sensor: G7Sensor

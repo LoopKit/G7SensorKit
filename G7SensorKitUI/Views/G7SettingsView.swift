@@ -114,6 +114,12 @@ struct G7SettingsView: View {
                 }
             }
 
+            Section("Configuration") {
+                HStack {
+                    Toggle(LocalizedString("Upload Readings", comment: "title for g7 config settings to upload readings"), isOn: $viewModel.uploadReadings)
+                }
+            }
+
             Section () {
                 if !self.viewModel.scanning {
                     Button("Scan for new sensor", action: {
