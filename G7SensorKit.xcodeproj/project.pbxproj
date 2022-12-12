@@ -52,7 +52,6 @@
 		C17F514D291EB79E00555EB5 /* AlgorithmError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F514C291EB79E00555EB5 /* AlgorithmError.swift */; };
 		C17F514E291EB86100555EB5 /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5148291EB6B600555EB5 /* LocalizedString.swift */; };
 		C17F514F291EB87600555EB5 /* G7SensorKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; };
-		C17F5150291EB87600555EB5 /* G7SensorKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C17F5156291EBD8600555EB5 /* Image.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5155291EBD8600555EB5 /* Image.swift */; };
 		C17F5157291EBD9900555EB5 /* TimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F513F291EB27D00555EB5 /* TimeInterval.swift */; };
 		C1E71720292D84FE00DA646F /* G7ProgressBarState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E7171F292D84FE00DA646F /* G7ProgressBarState.swift */; };
@@ -98,17 +97,6 @@
 			files = (
 				C1409A0D291EC2F8006BE8D0 /* G7SensorKit.framework in Embed Frameworks */,
 				C1409A10291EC2FB006BE8D0 /* G7SensorKitUI.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C17F5153291EB87600555EB5 /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				C17F5150291EB87600555EB5 /* G7SensorKit.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -418,7 +406,6 @@
 				C17F50F4291EAC9100555EB5 /* Sources */,
 				C17F50F5291EAC9100555EB5 /* Frameworks */,
 				C17F50F6291EAC9100555EB5 /* Resources */,
-				C17F5153291EB87600555EB5 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
