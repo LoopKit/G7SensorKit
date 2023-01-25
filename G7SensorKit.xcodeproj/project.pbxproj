@@ -54,6 +54,7 @@
 		C17F514F291EB87600555EB5 /* G7SensorKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; };
 		C17F5156291EBD8600555EB5 /* Image.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5155291EBD8600555EB5 /* Image.swift */; };
 		C17F5157291EBD9900555EB5 /* TimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F513F291EB27D00555EB5 /* TimeInterval.swift */; };
+		C1821672297E55A7001EB097 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = C1821670297E55A7001EB097 /* Localizable.strings */; };
 		C1E71720292D84FE00DA646F /* G7ProgressBarState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E7171F292D84FE00DA646F /* G7ProgressBarState.swift */; };
 /* End PBXBuildFile section */
 
@@ -147,6 +148,7 @@
 		C17F514C291EB79E00555EB5 /* AlgorithmError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlgorithmError.swift; sourceTree = "<group>"; };
 		C17F5155291EBD8600555EB5 /* Image.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Image.swift; sourceTree = "<group>"; };
 		C17F5158291EBE7500555EB5 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C1821671297E55A7001EB097 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1E7171F292D84FE00DA646F /* G7ProgressBarState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = G7ProgressBarState.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -213,6 +215,7 @@
 		C17F50C8291EAC3800555EB5 /* G7SensorKit */ = {
 			isa = PBXGroup;
 			children = (
+				C1821670297E55A7001EB097 /* Localizable.strings */,
 				C17F513D291EB1A500555EB5 /* BluetoothServices.swift */,
 				C17F514C291EB79E00555EB5 /* AlgorithmError.swift */,
 				C17F5134291EB06A00555EB5 /* AlgorithmState.swift */,
@@ -470,6 +473,7 @@
 			knownRegions = (
 				en,
 				Base,
+				es,
 			);
 			mainGroup = C17F50BC291EAC3800555EB5;
 			productRefGroup = C17F50C7291EAC3800555EB5 /* Products */;
@@ -504,6 +508,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C109F14A291ECCE2008EA5B6 /* Assets.xcassets in Resources */,
+				C1821672297E55A7001EB097 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -607,6 +612,18 @@
 			targetProxy = C17F5151291EB87600555EB5 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		C1821670297E55A7001EB097 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C1821671297E55A7001EB097 /* es */,
+			);
+			name = Localizable.strings;
+			path = ../G7SensorKitUI;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		C17F50D6291EAC3800555EB5 /* Debug */ = {
