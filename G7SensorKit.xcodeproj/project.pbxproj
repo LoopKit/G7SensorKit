@@ -482,6 +482,20 @@
 				it,
 				fr,
 				nl,
+				de,
+				ar,
+				"zh-Hans",
+				da,
+				fi,
+				he,
+				ja,
+				pl,
+				"pt-BR",
+				ro,
+				ru,
+				sv,
+				tr,
+				vi,
 			);
 			mainGroup = C17F50BC291EAC3800555EB5;
 			productRefGroup = C17F50C7291EAC3800555EB5 /* Products */;
