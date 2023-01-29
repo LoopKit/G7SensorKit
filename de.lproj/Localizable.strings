@@ -1,0 +1,6 @@
+/* CGM display title */
+"Dexcom G7" = "Dexcom G7";
+
+/* Error description for unreliable state */
+"Glucose data is unavailable" = "Blutzuckerdaten sind nicht verfügbar";
+

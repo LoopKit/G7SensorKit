@@ -1,0 +1,42 @@
+/* No glucose value representation (3 dashes for mg/dL) */
+"– – –" = "– – –";
+
+/* G7 Status highlight text for sensor expired */
+"Sensor\nExpired" = "Senzorul a expirat";
+
+/* G7 Status highlight text for sensor failed */
+"Sensor\nFailed" = "Senzorul a eșuat";
+
+/* G7 Status highlight text for sensor warmup */
+"Sensor\nWarmup" = "Senzorul se încălzește";
+
+/* title for g7 settings row showing sensor expiration time */
+"Sensor Expiration" = "Expirarea senzorului";
+
+/* G7 Progress bar label when sensor expired */
+"Sensor expired" = "Senzorul a expirat";
+
+/* G7 Progress bar label when sensor lifetime progress showing */
+"Sensor expires" = "Senzorul expiră";
+
+/* G7 Progress bar label when sensor failed */
+"Sensor failed" = "Senzorul a eșuat";
+
+/* title for g7 settings row showing sensor start time */
+"Sensor Start" = "Pornirea senzorului";
+
+/* G7 Status highlight text for signal loss */
+"Signal\nLoss" = "Pierdere de semnal";
+
+/* Field label */
+"Time" = "Timp";
+
+/* Field label */
+"Trend" = "Tendinţă";
+
+/* title for g7 config settings to upload readings */
+"Upload Readings" = "Urcă citirile";
+
+/* G7 Progress bar label when sensor in warmup */
+"Warmup completes" = "Încălzirea s-a încheiat";
+

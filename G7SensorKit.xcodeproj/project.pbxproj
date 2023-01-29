@@ -17,6 +17,7 @@
 		C1409A0D291EC2F8006BE8D0 /* G7SensorKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C1409A0F291EC2FB006BE8D0 /* G7SensorKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50F8291EAC9100555EB5 /* G7SensorKitUI.framework */; };
 		C1409A10291EC2FB006BE8D0 /* G7SensorKitUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50F8291EAC9100555EB5 /* G7SensorKitUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C155A8F12986396E009BD257 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = C155A8EF2986396E009BD257 /* Localizable.strings */; };
 		C17F50CF291EAC3800555EB5 /* G7SensorKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; };
 		C17F50D4291EAC3800555EB5 /* G7SensorKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F50D3291EAC3800555EB5 /* G7SensorKitTests.swift */; };
 		C17F50D5291EAC3800555EB5 /* G7SensorKit.h in Headers */ = {isa = PBXBuildFile; fileRef = C17F50C9291EAC3800555EB5 /* G7SensorKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -109,8 +110,15 @@
 		C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = G7GlucoseMessageTests.swift; sourceTree = "<group>"; };
 		C11613462983096D00777E7C /* nb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nb; path = nb.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C11A2BCD29830A3100AC5135 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C13408EC298639C900FC2059 /* ro */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ro; path = ro.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1409A08291EC22F006BE8D0 /* OSLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
 		C1409A0A291EC258006BE8D0 /* OSLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
+		C155A8F02986396E009BD257 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C155A8F22986396E009BD257 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C16EF1F9298639B800A944BB /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C1782C99298639B100D43E74 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C17BC37929863998003F2BC5 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C17D557D298639A800364431 /* nb */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nb; path = nb.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = G7SensorKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C17F50C9291EAC3800555EB5 /* G7SensorKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = G7SensorKit.h; sourceTree = "<group>"; };
 		C17F50CE291EAC3800555EB5 /* G7SensorKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = G7SensorKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -152,8 +160,12 @@
 		C17F5158291EBE7500555EB5 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C1821671297E55A7001EB097 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C18886E529830A5E004C982D /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C19E387A298638CE00851444 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C1AD48CD298639890013B994 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1BCB5AE298309C4001C50FF /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1E7171F292D84FE00DA646F /* G7ProgressBarState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = G7ProgressBarState.swift; sourceTree = "<group>"; };
+		C1F28BCE298639D800B53AB1 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C1F28BCF298639D800B53AB1 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -195,6 +207,7 @@
 		C17F50BC291EAC3800555EB5 = {
 			isa = PBXGroup;
 			children = (
+				C155A8EF2986396E009BD257 /* Localizable.strings */,
 				C17F5136291EB07F00555EB5 /* Common */,
 				C17F50C8291EAC3800555EB5 /* G7SensorKit */,
 				C17F50D2291EAC3800555EB5 /* G7SensorKitTests */,
@@ -496,6 +509,7 @@
 				sv,
 				tr,
 				vi,
+				sk,
 			);
 			mainGroup = C17F50BC291EAC3800555EB5;
 			productRefGroup = C17F50C7291EAC3800555EB5 /* Products */;
@@ -515,6 +529,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C155A8F12986396E009BD257 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -636,6 +651,19 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		C155A8EF2986396E009BD257 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C155A8F02986396E009BD257 /* de */,
+				C1AD48CD298639890013B994 /* fr */,
+				C17BC37929863998003F2BC5 /* it */,
+				C17D557D298639A800364431 /* nb */,
+				C1782C99298639B100D43E74 /* nl */,
+				C1F28BCE298639D800B53AB1 /* sk */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
 		C1821670297E55A7001EB097 /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -644,6 +672,11 @@
 				C1BCB5AE298309C4001C50FF /* it */,
 				C11A2BCD29830A3100AC5135 /* fr */,
 				C18886E529830A5E004C982D /* nl */,
+				C19E387A298638CE00851444 /* tr */,
+				C155A8F22986396E009BD257 /* de */,
+				C16EF1F9298639B800A944BB /* pl */,
+				C13408EC298639C900FC2059 /* ro */,
+				C1F28BCF298639D800B53AB1 /* sk */,
 			);
 			name = Localizable.strings;
 			path = ../G7SensorKitUI;
