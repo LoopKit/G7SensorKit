@@ -1,0 +1,49 @@
+/* No glucose value representation (3 dashes for mg/dL) */
+"– – –" = "– – –";
+
+/* Button title for starting setup */
+"Continue" = "Kontynuować";
+
+/* Navigation bar title for G7SettingsView
+   Title on WelcomeView */
+"Dexcom G7" = "Dexcom G7";
+
+/* Field label */
+"Glucose" = "Glukoza";
+
+/* Descriptive text on G7StartupView */
+"Loop can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management." = "Pętla może odczytywać dane G7 CGM, ale nadal musisz używać aplikacji Dexcom G7 do parowania, kalibracji i zarządzania innymi czujnikami.";
+
+/* G7 Status highlight text for sensor failed */
+"Sensor\nFailed" = "Błąd sensora";
+
+/* title for g7 settings row showing sensor expiration time */
+"Sensor Expiration" = "Sensor ważny do";
+
+/* G7 Progress bar label when sensor expired */
+"Sensor expired" = "Ważność sensora";
+
+/* G7 Progress bar label when sensor lifetime progress showing */
+"Sensor expires" = "Ważność sensora";
+
+/* G7 Progress bar label when sensor failed */
+"Sensor failed" = "Błąd sensora";
+
+/* title for g7 settings row showing sensor start time */
+"Sensor Start" = "Sensor uruchomiony";
+
+/* G7 Status highlight text for signal loss */
+"Signal\nLoss" = "Utracono sygnał";
+
+/* Field label */
+"Time" = "Czas";
+
+/* Field label */
+"Trend" = "Trend";
+
+/* title for g7 config settings to upload readings */
+"Upload Readings" = "Wysyłaj odczyty";
+
+/* G7 Progress bar label when sensor in warmup */
+"Warmup completes" = "Rozgrzewanie G7 zakończone";
+
