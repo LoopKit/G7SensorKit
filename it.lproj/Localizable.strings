@@ -17,7 +17,7 @@
 "Sensor is OK" = "Sensore è OK";
 
 /* The description of sensor algorithm state when sensor is stopped. */
-"Sensor is stopped" = "I Sensore e' fermato";
+"Sensor is stopped" = "Il Sensore e' fermato";
 
 /* The description of sensor algorithm state when sensor is warming up. */
 "Sensor is warming up" = "Il Sensore si sta riscaldando";

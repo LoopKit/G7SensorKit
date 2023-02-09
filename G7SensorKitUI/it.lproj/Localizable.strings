@@ -26,7 +26,7 @@
 "Continue" = "Continua";
 
 /* Button label for removing CGM */
-"Delete CGM" = "Cancella CGM";
+"Delete CGM" = "Elimina CGM";
 
 /* Navigation bar title for G7SettingsView
    Title on WelcomeView */
@@ -54,7 +54,7 @@
 "Last Reading" = "Ultima Lettura";
 
 /* Descriptive text on G7StartupView */
-"Loop can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management." = "Loop puo'leggere i dati del G7, ma  e' comunque sempre necessario usare la App Dexcom G7 per fare l'Abbinamento, Calibrazioni, e le altre operazioni relative al Sensore. ";
+"Loop can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management." = "Loop può leggere i dati del G7, ma è comunque sempre necessario usare la App Dexcom G7 per fare l'abbinamento, la calibrazione e le altre operazioni di gestione del sensore.";
 
 /* String displayed instead of a glucose value below the CGM range */
 "LOW" = "BASSO";
