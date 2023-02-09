@@ -1,0 +1,42 @@
+/* No glucose value representation (3 dashes for mg/dL) */
+"– – –" = "---";
+
+/* String displayed instead of a glucose value above the CGM range */
+"HIGH" = "גבוה";
+
+/* title for g7 settings row showing sensor last connect time */
+"Last Connect" = "חיבור אחרון";
+
+/* String displayed instead of a glucose value below the CGM range */
+"LOW" = "נמוך";
+
+/* title for g7 settings row showing BLE Name */
+"Name" = "שם";
+
+/* G7 Status highlight text for searching for sensor */
+"Searching for\nSensor" = "מחפש חיישן";
+
+/* G7 Progress bar label when searching for sensor */
+"Searching for sensor" = "מחפש חיישן";
+
+/* G7 Status highlight text for sensor expired */
+"Sensor\nExpired" = "חיישן פג";
+
+/* G7 Status highlight text for sensor failed */
+"Sensor\nFailed" = "כשל בחיישן";
+
+/* G7 Status highlight text for sensor error */
+"Sensor\nIssue" = "בעיה בחיישן";
+
+/* G7 Status highlight text for sensor warmup */
+"Sensor\nWarmup" = "חיישן מתחמם";
+
+/* title for g7 settings row showing sensor expiration time */
+"Sensor Expiration" = "תוקף חיישן";
+
+/* Field label */
+"Time" = "שעה";
+
+/* Field label */
+"Trend" = "מגמה";
+

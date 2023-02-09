@@ -68,6 +68,12 @@
 /* title for g7 settings connection status when scanning */
 "Scanning" = "Scannen";
 
+/* G7 Status highlight text for searching for sensor */
+"Searching for\nSensor" = "Suche nach\nSensor";
+
+/* G7 Progress bar label when searching for sensor */
+"Searching for sensor" = "Suche nach Sensor";
+
 /* G7 Status highlight text for sensor expired */
 "Sensor\nExpired" = "Sensor\nabgelaufen";
 
@@ -79,6 +85,21 @@
 
 /* G7 Status highlight text for sensor warmup */
 "Sensor\nWarmup" = "Sensor\nAufwärmphase";
+
+/* title for g7 settings row showing sensor expiration time */
+"Sensor Expiration" = "Sensor-Ablaufzeitpunkt";
+
+/* G7 Progress bar label when sensor expired */
+"Sensor expired" = "Sensor abgelaufen";
+
+/* G7 Progress bar label when sensor lifetime progress showing */
+"Sensor expires" = "Sensor-Ablaufzeitpunkt";
+
+/* G7 Progress bar label when sensor failed */
+"Sensor failed" = "Sensorfehler";
+
+/* title for g7 settings row showing sensor start time */
+"Sensor Start" = "Sensor gestartet";
 
 /* G7 Status highlight text for signal loss */
 "Signal\nLoss" = "Signalverlust";

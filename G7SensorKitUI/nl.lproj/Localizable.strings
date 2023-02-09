@@ -39,10 +39,10 @@
 "Glucose" = "Glucose";
 
 /* title for g7 settings row showing sensor grace period end time */
-"Grace Period End" = "Einde respijtperiode";
+"Grace Period End" = "Einde Verlenging";
 
 /* G7 Progress bar label when sensor grace period progress showing */
-"Grace period remaining" = "Resterende respijtperiode";
+"Grace period remaining" = "Verlenging resterend";
 
 /* String displayed instead of a glucose value above the CGM range */
 "HIGH" = "HOOG";
@@ -54,7 +54,7 @@
 "Last Reading" = "Laatste Meting";
 
 /* Descriptive text on G7StartupView */
-"Loop can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management." = "Loop kan G7 CGM-waarden lezen, maar je moet nog steeds de Dexcom G7 App gebruiken om te koppelen, te kalibreren en voor andere sensorinstellingen.";
+"Loop can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management." = "Loop kan G7 CGM waarden lezen, maar je moet nog steeds de Dexcom G7 App gebruiken om te koppelen, te kalibreren en voor andere sensorinstellingen.";
 
 /* String displayed instead of a glucose value below the CGM range */
 "LOW" = "LAAG";
@@ -63,22 +63,22 @@
 "Name" = "Naam";
 
 /* No comment provided by engineer. */
-"Scan for new sensor" = "Scannen op nieuwe sensor";
+"Scan for new sensor" = "Zoeken naar nieuwe sensor";
 
 /* title for g7 settings connection status when scanning */
-"Scanning" = "Aan het scannen";
+"Scanning" = "Scannen";
 
 /* G7 Status highlight text for searching for sensor */
-"Searching for\nSensor" = "Zoekt naar Sensor";
+"Searching for\nSensor" = "Zoekt naar\nSensor";
 
 /* G7 Progress bar label when searching for sensor */
 "Searching for sensor" = "Zoekt naar sensor";
 
 /* G7 Status highlight text for sensor expired */
-"Sensor\nExpired" = "Sensor Verlopen";
+"Sensor\nExpired" = "Sensor\nVerlopen";
 
 /* G7 Status highlight text for sensor failed */
-"Sensor\nFailed" = "Sensor Gefaald";
+"Sensor\nFailed" = "Sensor\nMislukt";
 
 /* G7 Status highlight text for sensor error */
 "Sensor\nIssue" = "Sensorprobleem";
@@ -87,16 +87,16 @@
 "Sensor\nWarmup" = "Sensoropwarming";
 
 /* title for g7 settings row showing sensor expiration time */
-"Sensor Expiration" = "Vervaldatum Sensor";
+"Sensor Expiration" = "Sensor Vervaldatum ";
 
 /* G7 Progress bar label when sensor expired */
 "Sensor expired" = "Sensor verlopen";
 
 /* G7 Progress bar label when sensor lifetime progress showing */
-"Sensor expires" = "Sensor Verloopt";
+"Sensor expires" = "Sensor verloopt";
 
 /* G7 Progress bar label when sensor failed */
-"Sensor failed" = "Sensor defect";
+"Sensor failed" = "Sensor mislukt";
 
 /* title for g7 settings row showing sensor start time */
 "Sensor Start" = "Sensorstart";
@@ -111,8 +111,8 @@
 "Trend" = "Trend";
 
 /* title for g7 config settings to upload readings */
-"Upload Readings" = "Upload Waarden";
+"Upload Readings" = "Upload Metingen";
 
 /* G7 Progress bar label when sensor in warmup */
-"Warmup completes" = "Opwarming voltooid";
+"Warmup completes" = "Opwarmen voltooien";
 
