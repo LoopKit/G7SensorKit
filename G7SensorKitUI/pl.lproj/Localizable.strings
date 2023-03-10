@@ -38,6 +38,12 @@
 /* Field label */
 "Glucose" = "Glukoza";
 
+/* title for g7 settings row showing sensor grace period end time */
+"Grace Period End" = "Sensor zakończy działanie";
+
+/* G7 Progress bar label when sensor grace period progress showing */
+"Grace period remaining" = "Wiek sensora";
+
 /* String displayed instead of a glucose value above the CGM range */
 "HIGH" = "WYSOKI";
 
@@ -73,6 +79,9 @@
 
 /* G7 Status highlight text for sensor failed */
 "Sensor\nFailed" = "Błąd sensora";
+
+/* G7 Status highlight text for sensor error */
+"Sensor\nIssue" = "Błąd Sensora";
 
 /* G7 Status highlight text for sensor warmup */
 "Sensor\nWarmup" = "Rozgrzewanie sensora";
