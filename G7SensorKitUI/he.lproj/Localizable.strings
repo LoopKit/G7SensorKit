@@ -1,6 +1,15 @@
 /* No glucose value representation (3 dashes for mg/dL) */
 "– – –" = "---";
 
+/* title for g7 settings connection status when connected */
+"Connected" = "מחובר";
+
+/* title for g7 settings connection status when connecting */
+"Connecting" = "מתחבר";
+
+/* Button title for starting setup */
+"Continue" = "המשך";
+
 /* String displayed instead of a glucose value above the CGM range */
 "HIGH" = "גבוה";
 
