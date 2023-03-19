@@ -90,13 +90,13 @@
 "Sensor Expiration" = "Scadenza Sensore";
 
 /* G7 Progress bar label when sensor expired */
-"Sensor expired" = "Il Sensore e' scaduto";
+"Sensor expired" = "Sensore scaduto";
 
 /* G7 Progress bar label when sensor lifetime progress showing */
 "Sensor expires" = "Il Sensore Scade";
 
 /* G7 Progress bar label when sensor failed */
-"Sensor failed" = "Il Sensore ha Fallito";
+"Sensor failed" = "Sensore Fallito";
 
 /* title for g7 settings row showing sensor start time */
 "Sensor Start" = "Inizializzazione  Sensore";

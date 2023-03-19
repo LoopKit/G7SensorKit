@@ -26,7 +26,7 @@
 "Continue" = "Continuer";
 
 /* Button label for removing CGM */
-"Delete CGM" = "Supprimer le CGM";
+"Delete CGM" = "Effacer le CGM";
 
 /* Navigation bar title for G7SettingsView
    Title on WelcomeView */

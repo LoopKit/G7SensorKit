@@ -23,7 +23,7 @@
 "Connecting" = "Łączenie";
 
 /* Button title for starting setup */
-"Continue" = "Kontynuować";
+"Continue" = "Kontynuuj";
 
 /* Button label for removing CGM */
 "Delete CGM" = "Usuń CGM";
@@ -69,10 +69,10 @@
 "Scanning" = "Skanowanie";
 
 /* G7 Status highlight text for searching for sensor */
-"Searching for\nSensor" = "Poszukiwanie sensora";
+"Searching for\nSensor" = "Wyszukiwanie sensora";
 
 /* G7 Progress bar label when searching for sensor */
-"Searching for sensor" = "Poszukiwanie sensora";
+"Searching for sensor" = "Wyszukiwanie sensora";
 
 /* G7 Status highlight text for sensor expired */
 "Sensor\nExpired" = "Sensor stracił ważność";
@@ -90,7 +90,7 @@
 "Sensor Expiration" = "Sensor ważny do";
 
 /* G7 Progress bar label when sensor expired */
-"Sensor expired" = "Ważność sensora";
+"Sensor expired" = "Sensor stracił ważność";
 
 /* G7 Progress bar label when sensor lifetime progress showing */
 "Sensor expires" = "Ważność sensora";

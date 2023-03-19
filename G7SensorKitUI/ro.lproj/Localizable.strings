@@ -5,13 +5,13 @@
 "%@/min" = "/min";
 
 /* No comment provided by engineer. */
-"Are you sure you want to delete this CGM?" = "Ești sigur că vrei să ștergi acest CGM?";
+"Are you sure you want to delete this CGM?" = "Sunteți sigur că doriți să ștergeți acest CGM?";
 
 /* No comment provided by engineer. */
 "Bluetooth" = "Bluetooth";
 
 /* Button text to cancel G7 setup */
-"Cancel" = "Anulare";
+"Cancel" = "Renunță";
 
 /* No comment provided by engineer. */
 "Configuration" = "Configurare";
@@ -26,7 +26,7 @@
 "Continue" = "Continuă";
 
 /* Button label for removing CGM */
-"Delete CGM" = "Șterge CGM";
+"Delete CGM" = "Ștergeți CGM";
 
 /* Navigation bar title for G7SettingsView
    Title on WelcomeView */
