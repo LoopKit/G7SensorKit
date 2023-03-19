@@ -7,6 +7,9 @@
 /* Button text to cancel G7 setup */
 "Cancel" = "Zrušit";
 
+/* No comment provided by engineer. */
+"Configuration" = "Konfigurace";
+
 /* title for g7 settings connection status when connected */
 "Connected" = "Připojeno";
 
@@ -20,6 +23,9 @@
    Title on WelcomeView */
 "Dexcom G7" = "Dexcom G7";
 
+/* No comment provided by engineer. */
+"Done" = "Hotovo";
+
 /* Field label */
 "Glucose" = "Glukóza";
 
@@ -28,4 +34,13 @@
 
 /* G7 Progress bar label when sensor grace period progress showing */
 "Grace period remaining" = "Zbývající dodatečná lhůta";
+
+/* title for g7 settings row showing BLE Name */
+"Name" = "Název";
+
+/* G7 Progress bar label when sensor expired */
+"Sensor expired" = "Platnost senzoru vypršela";
+
+/* G7 Progress bar label when sensor failed */
+"Sensor failed" = "Senzor selhal";
 

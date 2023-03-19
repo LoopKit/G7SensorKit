@@ -1,6 +1,18 @@
 /* No glucose value representation (3 dashes for mg/dL) */
 "– – –" = "---";
 
+/* Format string for glucose trend per minute. (1: glucose value and unit) */
+"%@/min" = "%@/min";
+
+/* No comment provided by engineer. */
+"Are you sure you want to delete this CGM?" = "Are you sure you want to delete this CGM?";
+
+/* Button text to cancel G7 setup */
+"Cancel" = "Cancel";
+
+/* No comment provided by engineer. */
+"Configuration" = "Configuration";
+
 /* title for g7 settings connection status when connected */
 "Connected" = "מחובר";
 
@@ -8,7 +20,13 @@
 "Connecting" = "מתחבר";
 
 /* Button title for starting setup */
-"Continue" = "המשך";
+"Continue" = "Continue";
+
+/* Button label for removing CGM */
+"Delete CGM" = "Delete CGM";
+
+/* Field label */
+"Glucose" = "Glucose";
 
 /* String displayed instead of a glucose value above the CGM range */
 "HIGH" = "גבוה";
@@ -20,7 +38,7 @@
 "LOW" = "נמוך";
 
 /* title for g7 settings row showing BLE Name */
-"Name" = "שם";
+"Name" = "Name";
 
 /* G7 Status highlight text for searching for sensor */
 "Searching for\nSensor" = "מחפש חיישן";

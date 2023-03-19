@@ -96,7 +96,7 @@
 "Sensor expires" = "Sensörün süresi doluyor";
 
 /* G7 Progress bar label when sensor failed */
-"Sensor failed" = "Sensör Hatası";
+"Sensor failed" = "Sensör hatası";
 
 /* title for g7 settings row showing sensor start time */
 "Sensor Start" = "Sensör başlangıcı";

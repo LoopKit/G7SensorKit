@@ -108,7 +108,7 @@
 "Trend" = "Trend";
 
 /* title for g7 config settings to upload readings */
-"Upload Readings" = "Nahrať čítania";
+"Upload Readings" = "Načítať údaje";
 
 /* G7 Progress bar label when sensor in warmup */
 "Warmup completes" = "Zahrieva sa";
