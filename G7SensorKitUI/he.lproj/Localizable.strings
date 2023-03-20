@@ -5,13 +5,16 @@
 "%@/min" = "%@/min";
 
 /* No comment provided by engineer. */
-"Are you sure you want to delete this CGM?" = "Are you sure you want to delete this CGM?";
+"Are you sure you want to delete this CGM?" = "האם למחוק את מד הסוכר הרציף?";
+
+/* No comment provided by engineer. */
+"Bluetooth" = "Bluetooth";
 
 /* Button text to cancel G7 setup */
 "Cancel" = "Cancel";
 
 /* No comment provided by engineer. */
-"Configuration" = "Configuration";
+"Configuration" = "הגדרות";
 
 /* title for g7 settings connection status when connected */
 "Connected" = "מחובר";
@@ -23,7 +26,10 @@
 "Continue" = "Continue";
 
 /* Button label for removing CGM */
-"Delete CGM" = "Delete CGM";
+"Delete CGM" = "מחק מד סוכר רציף";
+
+/* No comment provided by engineer. */
+"Done" = "בוצע";
 
 /* Field label */
 "Glucose" = "Glucose";
