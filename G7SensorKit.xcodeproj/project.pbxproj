@@ -174,6 +174,7 @@
 		C19277AF29C916C200311AB7 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C19C9F4629C9115B00A6D3D0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C19C9F4D29C91C4C00A6D3D0 /* LocalizedString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizedString.swift; sourceTree = "<group>"; };
+		C19C9F4F29C91ED400A6D3D0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1AEF8AF29C916CA001F6F41 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1AEF8B029C916CA001F6F41 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1B6638F29C916EC001556A8 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -736,6 +737,7 @@
 				C1CE705F29C916FE00E70F9D /* tr */,
 				C1E3B30029C9170800A06681 /* vi */,
 				C1E9A8EB29C9170F00478AA9 /* zh-Hans */,
+				C19C9F4F29C91ED400A6D3D0 /* en */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
