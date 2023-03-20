@@ -179,6 +179,7 @@
 		C1B0CFD329C786BF0045B04D /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1B267982995824000BCB7C1 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1BCB5AE298309C4001C50FF /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C1E0E71729C809E800D4B750 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		C1E5A6DC29C7870100703C90 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1E5A6DD29C7870100703C90 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1E693C829C786E200410918 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -729,6 +730,7 @@
 				C1E693C929C786E200410918 /* pt-BR */,
 				C1E5A6DD29C7870100703C90 /* sv */,
 				C192C5FD29C78711001EFEA6 /* vi */,
+				C1E0E71729C809E800D4B750 /* zh-Hans */,
 			);
 			name = Localizable.strings;
 			path = ../G7SensorKitUI;
