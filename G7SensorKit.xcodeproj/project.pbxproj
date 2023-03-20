@@ -50,12 +50,12 @@
 		C17F5149291EB6B600555EB5 /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5148291EB6B600555EB5 /* LocalizedString.swift */; };
 		C17F514B291EB6F000555EB5 /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F514A291EB6F000555EB5 /* HKUnit.swift */; };
 		C17F514D291EB79E00555EB5 /* AlgorithmError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F514C291EB79E00555EB5 /* AlgorithmError.swift */; };
-		C17F514E291EB86100555EB5 /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5148291EB6B600555EB5 /* LocalizedString.swift */; };
 		C17F514F291EB87600555EB5 /* G7SensorKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */; };
 		C17F5156291EBD8600555EB5 /* Image.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5155291EBD8600555EB5 /* Image.swift */; };
 		C17F5157291EBD9900555EB5 /* TimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F513F291EB27D00555EB5 /* TimeInterval.swift */; };
 		C19C9F4529C9115B00A6D3D0 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = C19C9F4729C9115B00A6D3D0 /* Localizable.strings */; };
 		C19C9F4A29C9117500A6D3D0 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = C19C9F4C29C9117500A6D3D0 /* Localizable.strings */; };
+		C19C9F4E29C91C4C00A6D3D0 /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19C9F4D29C91C4C00A6D3D0 /* LocalizedString.swift */; };
 		C1E71720292D84FE00DA646F /* G7ProgressBarState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E7171F292D84FE00DA646F /* G7ProgressBarState.swift */; };
 /* End PBXBuildFile section */
 
@@ -173,7 +173,7 @@
 		C19277AE29C916C200311AB7 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C19277AF29C916C200311AB7 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C19C9F4629C9115B00A6D3D0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		C19C9F4B29C9117500A6D3D0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C19C9F4D29C91C4C00A6D3D0 /* LocalizedString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizedString.swift; sourceTree = "<group>"; };
 		C1AEF8AF29C916CA001F6F41 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1AEF8B029C916CA001F6F41 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1B6638F29C916EC001556A8 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -307,6 +307,7 @@
 				C17F50FF291EAC9D00555EB5 /* G7CGMManager */,
 				C17F50FA291EAC9100555EB5 /* G7SensorKitUI.h */,
 				C17F5126291EAF2F00555EB5 /* OSLog.swift */,
+				C19C9F4D29C91C4C00A6D3D0 /* LocalizedString.swift */,
 			);
 			path = G7SensorKitUI;
 			sourceTree = "<group>";
@@ -495,6 +496,7 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1410;
 				LastUpgradeCheck = 1410;
+				ORGANIZATIONNAME = "LoopKit Authors";
 				TargetAttributes = {
 					C17F50C5291EAC3800555EB5 = {
 						CreatedOnToolsVersion = 14.1;
@@ -634,6 +636,7 @@
 			files = (
 				C17F5108291EAC9D00555EB5 /* G7SettingsView.swift in Sources */,
 				C17F5157291EBD9900555EB5 /* TimeInterval.swift in Sources */,
+				C19C9F4E29C91C4C00A6D3D0 /* LocalizedString.swift in Sources */,
 				C17F5156291EBD8600555EB5 /* Image.swift in Sources */,
 				C139829829295D7D0047DB5F /* HKUnit.swift in Sources */,
 				C1409A07291EC21C006BE8D0 /* OSLog.swift in Sources */,
@@ -641,7 +644,6 @@
 				C17F5109291EAC9D00555EB5 /* G7CGMManager+UI.swift in Sources */,
 				C17F5107291EAC9D00555EB5 /* G7StartupView.swift in Sources */,
 				C1E71720292D84FE00DA646F /* G7ProgressBarState.swift in Sources */,
-				C17F514E291EB86100555EB5 /* LocalizedString.swift in Sources */,
 				C17F5106291EAC9D00555EB5 /* G7SettingsViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -712,7 +714,6 @@
 		C19C9F4C29C9117500A6D3D0 /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
-				C19C9F4B29C9117500A6D3D0 /* en */,
 				C14BF96629C916560055FA98 /* ar */,
 				C1F6C1FB29C9166000C74579 /* cs */,
 				C12E6F0829C9166900E6FDBE /* da */,
