@@ -18,7 +18,7 @@ struct G7SettingsView: View {
         formatter.unitsStyle = .full
         return formatter
     }()
-
+    
     @Environment(\.guidanceColors) private var guidanceColors
     @Environment(\.glucoseTintColor) private var glucoseTintColor
 
@@ -39,6 +39,7 @@ struct G7SettingsView: View {
 
         formatter.dateStyle = .short
         formatter.timeStyle = .short
+        formatter.dateFormat = "E, MMM d, h:mm a"
 
         return formatter
     }()
@@ -173,8 +174,15 @@ struct G7SettingsView: View {
                     .foregroundColor(color(for: viewModel.progressBarState.labelColor))
 
                 Spacer()
+                var sessionLengthFormatter: DateComponentsFormatter = {
+                    let formatter = DateComponentsFormatter()
+                    formatter.allowedUnits = [.day, .hour, .minute]
+                    formatter.unitsStyle = .full
+                    formatter.maximumUnitCount = 2
+                    return formatter
+                }()
                 if let referenceDate = viewModel.progressReferenceDate {
-                    Text(durationFormatter.localizedString(for: referenceDate, relativeTo: Date()))
+                    Text(sessionLengthFormatter.string(from: referenceDate.timeIntervalSince(Date())) ?? "")
                         .foregroundColor(.secondary)
                 }
             }
