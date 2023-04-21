@@ -23,7 +23,7 @@
 "Connecting" = "Łączenie";
 
 /* Button title for starting setup */
-"Continue" = "Kontynuować";
+"Continue" = "Kontynuuj";
 
 /* Button label for removing CGM */
 "Delete CGM" = "Usuń CGM";
@@ -37,6 +37,12 @@
 
 /* Field label */
 "Glucose" = "Glukoza";
+
+/* title for g7 settings row showing sensor grace period end time */
+"Grace Period End" = "Sensor zakończy działanie";
+
+/* G7 Progress bar label when sensor grace period progress showing */
+"Grace period remaining" = "Wiek sensora";
 
 /* String displayed instead of a glucose value above the CGM range */
 "HIGH" = "WYSOKI";
@@ -63,16 +69,19 @@
 "Scanning" = "Skanowanie";
 
 /* G7 Status highlight text for searching for sensor */
-"Searching for\nSensor" = "Poszukiwanie sensora";
+"Searching for\nSensor" = "Wyszukiwanie sensora";
 
 /* G7 Progress bar label when searching for sensor */
-"Searching for sensor" = "Poszukiwanie sensora";
+"Searching for sensor" = "Wyszukiwanie sensora";
 
 /* G7 Status highlight text for sensor expired */
 "Sensor\nExpired" = "Sensor stracił ważność";
 
 /* G7 Status highlight text for sensor failed */
 "Sensor\nFailed" = "Błąd sensora";
+
+/* G7 Status highlight text for sensor error */
+"Sensor\nIssue" = "Błąd Sensora";
 
 /* G7 Status highlight text for sensor warmup */
 "Sensor\nWarmup" = "Rozgrzewanie sensora";
@@ -81,7 +90,7 @@
 "Sensor Expiration" = "Sensor ważny do";
 
 /* G7 Progress bar label when sensor expired */
-"Sensor expired" = "Ważność sensora";
+"Sensor expired" = "Sensor stracił ważność";
 
 /* G7 Progress bar label when sensor lifetime progress showing */
 "Sensor expires" = "Ważność sensora";
