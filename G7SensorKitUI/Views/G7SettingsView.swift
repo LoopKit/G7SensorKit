@@ -39,7 +39,8 @@ struct G7SettingsView: View {
 
         formatter.dateStyle = .short
         formatter.timeStyle = .short
-        formatter.dateFormat = "E, MMM d, h:mm a"
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("E, MMM d, hh:mm")
 
         return formatter
     }()
