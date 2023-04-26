@@ -12,10 +12,12 @@ import G7SensorKit
 import LoopKitUI
 
 struct G7SettingsView: View {
-
-    private var durationFormatter: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
+    
+    private var sessionLengthFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.day, .hour, .minute]
         formatter.unitsStyle = .full
+        formatter.maximumUnitCount = 2
         return formatter
     }()
     
@@ -175,13 +177,6 @@ struct G7SettingsView: View {
                     .foregroundColor(color(for: viewModel.progressBarState.labelColor))
 
                 Spacer()
-                var sessionLengthFormatter: DateComponentsFormatter = {
-                    let formatter = DateComponentsFormatter()
-                    formatter.allowedUnits = [.day, .hour, .minute]
-                    formatter.unitsStyle = .full
-                    formatter.maximumUnitCount = 2
-                    return formatter
-                }()
                 if let referenceDate = viewModel.progressReferenceDate {
                     Text(sessionLengthFormatter.string(from: referenceDate.timeIntervalSince(Date())) ?? "")
                         .foregroundColor(.secondary)
