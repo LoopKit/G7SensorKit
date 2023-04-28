@@ -12,13 +12,15 @@ import G7SensorKit
 import LoopKitUI
 
 struct G7SettingsView: View {
-
-    private var durationFormatter: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
+    
+    private var sessionLengthFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.day, .hour, .minute]
         formatter.unitsStyle = .full
+        formatter.maximumUnitCount = 2
         return formatter
     }()
-
+    
     @Environment(\.guidanceColors) private var guidanceColors
     @Environment(\.glucoseTintColor) private var glucoseTintColor
 
@@ -39,6 +41,8 @@ struct G7SettingsView: View {
 
         formatter.dateStyle = .short
         formatter.timeStyle = .short
+        formatter.locale = Locale.current
+        formatter.setLocalizedDateFormatFromTemplate("E, MMM d, hh:mm")
 
         return formatter
     }()
@@ -174,7 +178,7 @@ struct G7SettingsView: View {
 
                 Spacer()
                 if let referenceDate = viewModel.progressReferenceDate {
-                    Text(durationFormatter.localizedString(for: referenceDate, relativeTo: Date()))
+                    Text(sessionLengthFormatter.string(from: referenceDate.timeIntervalSince(Date())) ?? "")
                         .foregroundColor(.secondary)
                 }
             }
