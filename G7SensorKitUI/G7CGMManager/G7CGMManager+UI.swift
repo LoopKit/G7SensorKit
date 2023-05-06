@@ -23,12 +23,13 @@ public struct G7DeviceStatusHighlight: DeviceStatusHighlight, Equatable {
 }
 
 extension G7CGMManager: CGMManagerUI {
+
     public static var onboardingImage: UIImage? {
         return nil
     }
 
-    public static func setupViewController(bluetoothProvider: BluetoothProvider, displayGlucoseUnitObservable: DisplayGlucoseUnitObservable, colorPalette: LoopUIColorPalette, allowDebugFeatures: Bool) -> SetupUIResult<CGMManagerViewController, CGMManagerUI> {
-
+    public static func setupViewController(bluetoothProvider: LoopKit.BluetoothProvider, displayGlucoseUnitObservable: LoopKitUI.DisplayGlucoseUnitObservable, colorPalette: LoopKitUI.LoopUIColorPalette, allowDebugFeatures: Bool, prefersToSkipUserInteraction: Bool) -> LoopKitUI.SetupUIResult<LoopKitUI.CGMManagerViewController, LoopKitUI.CGMManagerUI>
+    {
         let vc = G7UICoordinator(colorPalette: colorPalette, displayGlucoseUnitObservable: displayGlucoseUnitObservable, allowDebugFeatures: allowDebugFeatures)
         return .userInteractionRequired(vc)
     }
