@@ -28,15 +28,15 @@ extension G7CGMManager: CGMManagerUI {
         return nil
     }
 
-    public static func setupViewController(bluetoothProvider: LoopKit.BluetoothProvider, displayGlucoseUnitObservable: LoopKitUI.DisplayGlucoseUnitObservable, colorPalette: LoopKitUI.LoopUIColorPalette, allowDebugFeatures: Bool, prefersToSkipUserInteraction: Bool) -> LoopKitUI.SetupUIResult<LoopKitUI.CGMManagerViewController, LoopKitUI.CGMManagerUI>
+    public static func setupViewController(bluetoothProvider: LoopKit.BluetoothProvider, displayGlucosePreference: DisplayGlucosePreference, colorPalette: LoopKitUI.LoopUIColorPalette, allowDebugFeatures: Bool, prefersToSkipUserInteraction: Bool) -> LoopKitUI.SetupUIResult<LoopKitUI.CGMManagerViewController, LoopKitUI.CGMManagerUI>
     {
-        let vc = G7UICoordinator(colorPalette: colorPalette, displayGlucoseUnitObservable: displayGlucoseUnitObservable, allowDebugFeatures: allowDebugFeatures)
+        let vc = G7UICoordinator(colorPalette: colorPalette, displayGlucosePreference: displayGlucosePreference, allowDebugFeatures: allowDebugFeatures)
         return .userInteractionRequired(vc)
     }
 
-    public func settingsViewController(bluetoothProvider: BluetoothProvider, displayGlucoseUnitObservable: DisplayGlucoseUnitObservable, colorPalette: LoopUIColorPalette, allowDebugFeatures: Bool) ->CGMManagerViewController {
+    public func settingsViewController(bluetoothProvider: BluetoothProvider, displayGlucosePreference: DisplayGlucosePreference, colorPalette: LoopUIColorPalette, allowDebugFeatures: Bool) ->CGMManagerViewController {
 
-        return G7UICoordinator(cgmManager: self, colorPalette: colorPalette, displayGlucoseUnitObservable: displayGlucoseUnitObservable, allowDebugFeatures: allowDebugFeatures)
+        return G7UICoordinator(cgmManager: self, colorPalette: colorPalette, displayGlucosePreference: displayGlucosePreference, allowDebugFeatures: allowDebugFeatures)
     }
 
     public var smallImage: UIImage? {
