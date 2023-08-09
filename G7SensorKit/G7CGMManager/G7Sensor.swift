@@ -123,7 +123,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     }
 
     private func handleGlucoseMessage(message: G7GlucoseMessage, peripheralManager: G7PeripheralManager) {
-        activationDate = Date().addingTimeInterval(-TimeInterval(message.glucoseTimestamp))
+        activationDate = Date().addingTimeInterval(-TimeInterval(message.messageTimestamp))
         peripheralManager.perform { (peripheral) in
             self.log.debug("Listening for backfill responses")
             // Subscribe to backfill updates

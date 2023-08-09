@@ -247,14 +247,14 @@ public class G7CGMManager: CGMManager {
         sensor.scanForNewSensor()
     }
 
-    public var device: HKDevice? {
+    private var device: HKDevice? {
         return HKDevice(
-            name: "CGMBLEKit",
+            name: state.sensorID ?? "Unknown",
             manufacturer: "Dexcom",
             model: "G7",
             hardwareVersion: nil,
             firmwareVersion: nil,
-            softwareVersion: String(G7SensorKitVersionNumber),
+            softwareVersion: "CGMBLEKit" + String(G7SensorKitVersionNumber),
             localIdentifier: nil,
             udiDeviceIdentifier: "00386270001863"
         )

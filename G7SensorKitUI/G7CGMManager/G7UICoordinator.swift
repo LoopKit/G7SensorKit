@@ -14,18 +14,18 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
     var cgmManagerOnboardingDelegate: LoopKitUI.CGMManagerOnboardingDelegate?
     var completionDelegate: LoopKitUI.CompletionDelegate?
     var cgmManager: G7CGMManager?
-    var displayGlucoseUnitObservable: DisplayGlucoseUnitObservable
+    var displayGlucosePreference: DisplayGlucosePreference
 
     var colorPalette: LoopUIColorPalette
 
     init(cgmManager: G7CGMManager? = nil,
          colorPalette: LoopUIColorPalette,
-         displayGlucoseUnitObservable: DisplayGlucoseUnitObservable,
+         displayGlucosePreference: DisplayGlucosePreference,
          allowDebugFeatures: Bool)
     {
         self.cgmManager = cgmManager
         self.colorPalette = colorPalette
-        self.displayGlucoseUnitObservable = displayGlucoseUnitObservable
+        self.displayGlucosePreference = displayGlucosePreference
         super.init(navigationBarClass: UINavigationBar.self, toolbarClass: UIToolbar.self)
     }
 
@@ -75,7 +75,7 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
                         }
                     }
                 },
-                viewModel: G7SettingsViewModel(cgmManager: cgmManager!, displayGlucoseUnitObservable: displayGlucoseUnitObservable)
+                viewModel: G7SettingsViewModel(cgmManager: cgmManager!, displayGlucosePreference: displayGlucosePreference)
             )
             let hostingController = DismissibleHostingController(rootView: view, colorPalette: colorPalette)
             return hostingController
