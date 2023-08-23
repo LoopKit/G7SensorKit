@@ -54,7 +54,7 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
                     }
                 }
             )
-            let hostingController = DismissibleHostingController(rootView: rootView, colorPalette: colorPalette)
+            let hostingController = DismissibleHostingController(content: rootView, colorPalette: colorPalette)
             hostingController.navigationItem.largeTitleDisplayMode = .never
             hostingController.title = nil
             return hostingController
@@ -77,7 +77,7 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
                 },
                 viewModel: G7SettingsViewModel(cgmManager: cgmManager!, displayGlucosePreference: displayGlucosePreference)
             )
-            let hostingController = DismissibleHostingController(rootView: view, colorPalette: colorPalette)
+            let hostingController = DismissibleHostingController(content: view, colorPalette: colorPalette)
             return hostingController
         }
     }
