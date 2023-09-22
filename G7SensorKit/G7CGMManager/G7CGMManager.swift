@@ -294,6 +294,16 @@ extension G7CGMManager: G7SensorDelegate {
                 state.sensorID = name
                 state.activatedAt = activatedAt
             }
+            let event = PersistedCgmEvent(
+                date: activatedAt,
+                type: .sensorStart,
+                deviceIdentifier: name,
+                expectedLifetime: .hours(24 * 10 + 12),
+                warmupPeriod: .hours(2)
+            )
+            delegate.notify { delegate in
+                delegate?.cgmManager(self, hasNew: [event])
+            }
         }
 
         return shouldSwitchToNewSensor
