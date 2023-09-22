@@ -227,7 +227,7 @@ public class G7CGMManager: CGMManager {
     public func getSoundBaseURL() -> URL? { return nil }
     public func getSounds() -> [Alert.Sound] { return [] }
 
-    public let managerIdentifier: String = "G7CGMManager"
+    public static let pluginIdentifier: String = "G7CGMManager"
 
     public let localizedTitle = LocalizedString("Dexcom G7", comment: "CGM display title")
 
