@@ -123,6 +123,14 @@ struct G7SettingsView: View {
                     Toggle(LocalizedString("Upload Readings", comment: "title for g7 config settings to upload readings"), isOn: $viewModel.uploadReadings)
                 }
             }
+            
+            Section () {
+                Button(LocalizedString("Open Dexcom App", comment:"Opens the dexcom G7 app to allow users to manage active sensors"), action: {
+                    if let appURL = URL(string: "dexcomg7://") {
+                        UIApplication.shared.open(appURL)
+                    }
+                })
+            }
 
             Section () {
                 if !self.viewModel.scanning {
