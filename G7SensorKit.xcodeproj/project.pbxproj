@@ -320,7 +320,6 @@
 			children = (
 				C17F5103291EAC9D00555EB5 /* G7CGMManager+UI.swift */,
 				C17F5104291EAC9D00555EB5 /* G7UICoordinator.swift */,
-				B60BB2E32BC649DA00D2BB39 /* Bundle.swift */,
 			);
 			path = G7CGMManager;
 			sourceTree = "<group>";
@@ -369,6 +368,7 @@
 		C17F5154291EBD7100555EB5 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				B60BB2E32BC649DA00D2BB39 /* Bundle.swift */,
 				C17F5155291EBD8600555EB5 /* Image.swift */,
 			);
 			path = Extensions;

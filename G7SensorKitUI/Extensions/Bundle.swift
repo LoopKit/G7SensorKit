@@ -1,6 +1,6 @@
 //
 //  Bundle.swift
-//  LoopOnboardingKitUI
+//  G7SensorKit
 //
 //  Created by Darin Krauss on 1/23/21.
 //  Copyright © 2021 LoopKit Authors. All rights reserved.
