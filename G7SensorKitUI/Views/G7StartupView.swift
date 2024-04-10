@@ -28,7 +28,7 @@ struct G7StartupView: View {
                     .frame(height: 120)
                     .padding(.horizontal)
             }.frame(maxWidth: .infinity)
-            Text(LocalizedString("\(self.appName) can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management.", comment: "Descriptive text on G7StartupView"))
+            Text(String(format: LocalizedString("%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management.", comment: "Descriptive text on G7StartupView  (1: appName)"), self.appName))
                 .fixedSize(horizontal: false, vertical: true)
                 .foregroundColor(.secondary)
             Spacer()
