@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B60BB2E42BC649DA00D2BB39 /* Bundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60BB2E32BC649DA00D2BB39 /* Bundle.swift */; };
 		C109F14A291ECCE2008EA5B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C109F149291ECCE2008EA5B6 /* Assets.xcassets */; };
 		C109F14C291ED66F008EA5B6 /* G7GlucoseMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */; };
 		C139829829295D7D0047DB5F /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F514A291EB6F000555EB5 /* HKUnit.swift */; };
@@ -106,6 +107,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B60BB2E32BC649DA00D2BB39 /* Bundle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Bundle.swift; path = G7SensorKitUI/Extensions/Bundle.swift; sourceTree = SOURCE_ROOT; };
 		C1086B0E29C9169100D46E65 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1086B0F29C9169100D46E65 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C109F149291ECCE2008EA5B6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -366,6 +368,7 @@
 		C17F5154291EBD7100555EB5 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				B60BB2E32BC649DA00D2BB39 /* Bundle.swift */,
 				C17F5155291EBD8600555EB5 /* Image.swift */,
 			);
 			path = Extensions;
@@ -636,6 +639,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C17F5108291EAC9D00555EB5 /* G7SettingsView.swift in Sources */,
+				B60BB2E42BC649DA00D2BB39 /* Bundle.swift in Sources */,
 				C17F5157291EBD9900555EB5 /* TimeInterval.swift in Sources */,
 				C19C9F4E29C91C4C00A6D3D0 /* LocalizedString.swift in Sources */,
 				C17F5156291EBD8600555EB5 /* Image.swift in Sources */,
