@@ -10,7 +10,6 @@ import Foundation
 import G7SensorKit
 import LoopKit
 import LoopKitUI
-import HealthKit
 
 public enum ColorStyle {
     case glucose, warning, critical, normal, dimmed
