@@ -261,7 +261,7 @@ class G7BluetoothManager: NSObject {
      */
     fileprivate func scanAfterDelay() {
         DispatchQueue.global(qos: .utility).async {
-            Thread.sleep(forTimeInterval: 2)
+            Thread.sleep(forTimeInterval: 5)
 
             self.scanForPeripheral()
         }
