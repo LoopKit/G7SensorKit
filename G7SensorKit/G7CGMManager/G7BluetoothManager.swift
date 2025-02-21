@@ -259,7 +259,7 @@ class G7BluetoothManager: NSObject {
      The sleep gives the transmitter time to shut down, but keeps the app running.
 
      */
-    fileprivate func scanAfterDelay() {
+    func scanAfterDelay() {
         DispatchQueue.global(qos: .utility).async {
             Thread.sleep(forTimeInterval: 5)
 
