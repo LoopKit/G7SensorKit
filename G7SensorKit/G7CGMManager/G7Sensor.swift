@@ -194,7 +194,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         if let sensorID = sensorID, sensorID == peripheralManager.peripheral.name {
 
             let suspectedEndOfSession: Bool
-            if pendingAuth && wasRemoteDisconnect {
+
+            if let activationDate = activationDate, Date() > activationDate.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod), pendingAuth, wasRemoteDisconnect
+            {
+                self.log.info("Sensor disconnected at %{public}@", activationDate.description)
                 suspectedEndOfSession = true // Normal disconnect without auth is likely that G7 app stopped this session
             } else {
                 suspectedEndOfSession = false
@@ -233,7 +236,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
         guard response.count > 0 else { return }
 
-        log.debug("Received control response: %{public}@", response.hexadecimalString)
+        log.default("Received control response: %{public}@", response.hexadecimalString)
 
         switch G7Opcode(rawValue: response[0]) {
         case .glucoseTx?:
