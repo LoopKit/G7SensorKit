@@ -19,6 +19,8 @@ public protocol G7SensorDelegate: AnyObject {
 
     func sensor(_ sensor: G7Sensor, didError error: Error)
 
+    func sensor(_ sensor: G7Sensor, logComms comms: String)
+
     func sensor(_ sensor: G7Sensor, didRead glucose: G7GlucoseMessage)
 
     func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage])
@@ -255,7 +257,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 }
             }
         default:
-            // We ignore all other known opcodes
+            self.delegate?.sensor(self, logComms: response.hexadecimalString)
             break
         }
     }

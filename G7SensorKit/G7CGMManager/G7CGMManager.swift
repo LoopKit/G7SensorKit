@@ -323,6 +323,11 @@ extension G7CGMManager: G7SensorDelegate {
         }
     }
 
+    public func sensor(_ sensor: G7Sensor, logComms comms: String) {
+        logDeviceCommunication("Sensor comms \(comms)", type: .receive)
+    }
+
+
     public func sensor(_ sensor: G7Sensor, didError error: Error) {
         logDeviceCommunication("Sensor error \(error)", type: .error)
     }
@@ -333,6 +338,11 @@ extension G7CGMManager: G7SensorDelegate {
             logDeviceCommunication("Sensor reading duplicate: \(message)", type: .error)
             updateDelegate(with: .noData)
             return
+        }
+
+        if message.algorithmState.sensorFailed {
+            logDeviceCommunication("Detected failed sensor... scanning for new sensor.", type: .receive)
+            scanForNewSensor()
         }
 
         guard let activationDate = sensor.activationDate else {
