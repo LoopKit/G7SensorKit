@@ -37,6 +37,7 @@ public enum AlgorithmState: RawRepresentable {
         case sensorFailedDueToRestart = 22
         case expired = 24
         case sensorFailed = 25
+        case sessionEnded = 26
     }
 
     case known(State)

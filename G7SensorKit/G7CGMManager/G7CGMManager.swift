@@ -345,6 +345,10 @@ extension G7CGMManager: G7SensorDelegate {
             scanForNewSensor()
         }
 
+        if message.algorithmState == .known(.sessionEnded) {
+            logDeviceCommunication("Detected session ended... scanning for new sensor.", type: .receive)
+            scanForNewSensor()
+        }
 
         guard let activationDate = sensor.activationDate else {
             logDeviceCommunication("Unable to process sensor reading without activation date.", type: .error)
