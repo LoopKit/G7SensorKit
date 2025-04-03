@@ -191,19 +191,20 @@ class G7BluetoothManager: NSObject {
         }
 
         if let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
-            log.debug("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
+            log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
             handleDiscoveredPeripheral(peripheral)
         } else {
             for peripheral in centralManager.retrieveConnectedPeripherals(withServices: [
                 SensorServiceUUID.advertisement.cbUUID,
                 SensorServiceUUID.cgmService.cbUUID
             ]) {
+                log.default("Found system-connected peripheral: %{public}@", peripheral.identifier.uuidString)
                 handleDiscoveredPeripheral(peripheral)
             }
         }
 
         if activePeripheral == nil {
-            log.debug("Scanning for peripherals")
+            log.default("Scanning for peripherals")
             centralManager.scanForPeripherals(withServices: [
                     SensorServiceUUID.advertisement.cbUUID
                 ],
@@ -257,7 +258,7 @@ class G7BluetoothManager: NSObject {
         if let delegate = delegate {
             switch delegate.bluetoothManager(self, shouldConnectPeripheral: peripheral) {
             case .makeActive:
-                log.debug("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
+                log.default("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
 
                 if let peripheralManager = activePeripheralManager {
                     peripheralManager.peripheral = peripheral
@@ -273,7 +274,7 @@ class G7BluetoothManager: NSObject {
                 self.centralManager.connect(peripheral)
 
             case .connect:
-                log.debug("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
+                log.default("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
                 self.centralManager.connect(peripheral)
                 let peripheralManager = G7PeripheralManager(
                     peripheral: peripheral,

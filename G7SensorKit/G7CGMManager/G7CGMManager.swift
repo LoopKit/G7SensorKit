@@ -350,6 +350,7 @@ extension G7CGMManager: G7SensorDelegate {
             scanForNewSensor()
         }
 
+
         guard let activationDate = sensor.activationDate else {
             logDeviceCommunication("Unable to process sensor reading without activation date.", type: .error)
             return
