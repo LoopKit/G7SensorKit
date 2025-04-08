@@ -184,7 +184,7 @@ class G7SettingsViewModel: ObservableObject {
 
     var lastGlucoseTrendString: String {
         if let lastReading = lastReading, lastReading.hasReliableGlucose, let trendRate = lastReading.trendRate {
-            return displayGlucosePreference.minuteRateFormatter.string(from: trendRate)!
+            return displayGlucosePreference.formatMinuteRate(trendRate)
         } else {
             return ""
         }
