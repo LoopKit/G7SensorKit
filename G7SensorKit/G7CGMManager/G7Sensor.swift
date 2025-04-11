@@ -197,9 +197,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
             let suspectedEndOfSession: Bool
 
-            if let activationDate = activationDate, Date() > activationDate.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod), pendingAuth, wasRemoteDisconnect
-            {
-                self.log.info("Sensor disconnected at %{public}@", activationDate.description)
+            self.log.info("Sensor disconnected: wasRemoteDisconnect:%{public}@", String(describing: wasRemoteDisconnect))
+            if pendingAuth, wasRemoteDisconnect {
                 suspectedEndOfSession = true // Normal disconnect without auth is likely that G7 app stopped this session
             } else {
                 suspectedEndOfSession = false
