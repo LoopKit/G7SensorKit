@@ -19,6 +19,8 @@ public protocol G7SensorDelegate: AnyObject {
 
     func sensor(_ sensor: G7Sensor, didError error: Error)
 
+    func sensor(_ sensor: G7Sensor, logComms comms: String)
+
     func sensor(_ sensor: G7Sensor, didRead glucose: G7GlucoseMessage)
 
     func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage])
@@ -194,7 +196,9 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         if let sensorID = sensorID, sensorID == peripheralManager.peripheral.name {
 
             let suspectedEndOfSession: Bool
-            if pendingAuth && wasRemoteDisconnect {
+
+            self.log.info("Sensor disconnected: wasRemoteDisconnect:%{public}@", String(describing: wasRemoteDisconnect))
+            if pendingAuth, wasRemoteDisconnect {
                 suspectedEndOfSession = true // Normal disconnect without auth is likely that G7 app stopped this session
             } else {
                 suspectedEndOfSession = false
@@ -233,7 +237,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
         guard response.count > 0 else { return }
 
-        log.debug("Received control response: %{public}@", response.hexadecimalString)
+        log.default("Received control response: %{public}@", response.hexadecimalString)
 
         switch G7Opcode(rawValue: response[0]) {
         case .glucoseTx?:
@@ -252,7 +256,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 }
             }
         default:
-            // We ignore all other known opcodes
+            self.delegate?.sensor(self, logComms: response.hexadecimalString)
             break
         }
     }
