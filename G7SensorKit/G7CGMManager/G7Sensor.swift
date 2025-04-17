@@ -195,6 +195,9 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     func peripheralDidDisconnect(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, wasRemoteDisconnect: Bool) {
         if let sensorID = sensorID, sensorID == peripheralManager.peripheral.name {
 
+            // Sometimes we do not receive the backfillFinished message before disconnect
+            flushBackfillBuffer()
+
             let suspectedEndOfSession: Bool
 
             self.log.info("Sensor disconnected: wasRemoteDisconnect:%{public}@", String(describing: wasRemoteDisconnect))
@@ -249,15 +252,20 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 }
             }
         case .backfillFinished:
-            if backfillBuffer.count > 0 {
-                delegateQueue.async {
-                    self.delegate?.sensor(self, didReadBackfill: self.backfillBuffer)
-                    self.backfillBuffer = []
-                }
-            }
+            flushBackfillBuffer()
         default:
             self.delegate?.sensor(self, logComms: response.hexadecimalString)
             break
+        }
+    }
+
+    func flushBackfillBuffer() {
+        if backfillBuffer.count > 0 {
+            let backfill = backfillBuffer
+            self.backfillBuffer = []
+            delegateQueue.async {
+                self.delegate?.sensor(self, didReadBackfill: backfill)
+            }
         }
     }
 
