@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3B0FD2A52D803BF100E5E921 /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3B0FD2A42D803BF000E5E921 /* LoopKitUI.framework */; };
 		B60BB2E42BC649DA00D2BB39 /* Bundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60BB2E32BC649DA00D2BB39 /* Bundle.swift */; };
 		C109F14A291ECCE2008EA5B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C109F149291ECCE2008EA5B6 /* Assets.xcassets */; };
 		C109F14C291ED66F008EA5B6 /* G7GlucoseMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */; };
@@ -107,6 +108,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3B0FD2A42D803BF000E5E921 /* LoopKitUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKitUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B60BB2E32BC649DA00D2BB39 /* Bundle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Bundle.swift; path = G7SensorKitUI/Extensions/Bundle.swift; sourceTree = SOURCE_ROOT; };
 		C1086B0E29C9169100D46E65 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C1086B0F29C9169100D46E65 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -204,6 +206,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3B0FD2A52D803BF100E5E921 /* LoopKitUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -338,6 +341,7 @@
 		C17F5128291EAFA100555EB5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				3B0FD2A42D803BF000E5E921 /* LoopKitUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
