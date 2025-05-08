@@ -74,7 +74,7 @@ extension G7CGMManager: CGMManagerUI {
                 state: .warning)
         }
 
-        if let latestReading = latestReading, latestReading.algorithmState.isInSensorError {
+        if let latestReading = latestReading, latestReading.algorithmState.hasTemporaryError {
             return G7DeviceStatusHighlight(
                 localizedMessage: LocalizedString("Sensor\nIssue", comment: "G7 Status highlight text for sensor error"),
                 imageName: "exclamationmark.circle.fill",

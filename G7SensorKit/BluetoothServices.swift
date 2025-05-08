@@ -15,22 +15,12 @@ extension CBUUIDRawValue where RawValue == String {
     }
 }
 
-
 enum SensorServiceUUID: String, CBUUIDRawValue {
-    case deviceInfo = "180A"
     case advertisement = "FEBC"
     case cgmService = "F8083532-849E-531C-C594-30F1F86A4EA5"
 
     case serviceB = "F8084532-849E-531C-C594-30F1F86A4EA5"
 }
-
-
-enum DeviceInfoCharacteristicUUID: String, CBUUIDRawValue {
-    // Read
-    // "DexcomUN"
-    case manufacturerNameString = "2A29"
-}
-
 
 enum CGMServiceCharacteristicUUID: String, CBUUIDRawValue {
 
@@ -61,7 +51,6 @@ extension G7PeripheralManager.Configuration {
         return G7PeripheralManager.Configuration(
             serviceCharacteristics: [
                 SensorServiceUUID.cgmService.cbUUID: [
-                    //CGMServiceCharacteristicUUID.communication.cbUUID, // Unused for now
                     CGMServiceCharacteristicUUID.authentication.cbUUID,
                     CGMServiceCharacteristicUUID.control.cbUUID,
                     CGMServiceCharacteristicUUID.backfill.cbUUID,

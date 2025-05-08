@@ -13,6 +13,8 @@ struct G7StartupView: View {
     var didContinue: (() -> Void)?
     var didCancel: (() -> Void)?
 
+    @Environment(\.appName) private var appName
+
     var body: some View {
         VStack(alignment: .center, spacing: 20) {
             Spacer()
@@ -26,7 +28,7 @@ struct G7StartupView: View {
                     .frame(height: 120)
                     .padding(.horizontal)
             }.frame(maxWidth: .infinity)
-            Text(LocalizedString("Loop can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management.", comment: "Descriptive text on G7StartupView"))
+            Text(String(format: LocalizedString("%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management.", comment: "Descriptive text on G7StartupView  (1: appName)"), self.appName))
                 .fixedSize(horizontal: false, vertical: true)
                 .foregroundColor(.secondary)
             Spacer()

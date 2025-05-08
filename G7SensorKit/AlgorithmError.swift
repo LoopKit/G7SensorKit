@@ -37,12 +37,14 @@ extension AlgorithmState {
                 return LocalizedString("Sensor is OK", comment: "The description of sensor algorithm state when sensor is ok.")
             case .stopped:
                 return LocalizedString("Sensor is stopped", comment: "The description of sensor algorithm state when sensor is stopped.")
-            case .warmup, .questionMarks:
+            case .warmup, .temporarySensorIssue:
                 return LocalizedString("Sensor is warming up", comment: "The description of sensor algorithm state when sensor is warming up.")
             case .expired:
                 return LocalizedString("Sensor expired", comment: "The description of sensor algorithm state when sensor is expired.")
             case .sensorFailed:
                 return LocalizedString("Sensor failed", comment: "The description of sensor algorithm state when sensor failed.")
+            default:
+                return "Sensor state: \(String(describing: state))"
             }
         case .unknown(let rawValue):
             return String(format: LocalizedString("Sensor is in unknown state %1$d", comment: "The description of sensor algorithm state when raw value is unknown. (1: missing data details)"), rawValue)

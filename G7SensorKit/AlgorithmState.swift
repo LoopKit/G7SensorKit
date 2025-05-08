@@ -15,10 +15,29 @@ public enum AlgorithmState: RawRepresentable {
     public enum State: RawValue {
         case stopped = 1
         case warmup = 2
+        case excessNoise = 3
+        case firstOfTwoBGsNeeded = 4
+        case secondOfTwoBGsNeeded = 5
         case ok = 6
-        case questionMarks = 18
+        case needsCalibration = 7
+        case calibrationError1 = 8
+        case calibrationError2 = 9
+        case calibrationLinearityFitFailure = 10
+        case sensorFailedDuetoCountsAberration = 11
+        case sensorFailedDuetoResidualAberration = 12
+        case outOfCalibrationDueToOutlier = 13
+        case outlierCalibrationRequest = 14
+        case sessionExpired = 15
+        case sessionFailedDueToUnrecoverableError = 16
+        case sessionFailedDueToTransmitterError = 17
+        case temporarySensorIssue = 18
+        case sensorFailedDueToProgressiveSensorDecline = 19
+        case sensorFailedDueToHighCountsAberration = 20
+        case sensorFailedDueToLowCountsAberration = 21
+        case sensorFailedDueToRestart = 22
         case expired = 24
         case sensorFailed = 25
+        case sessionEnded = 26
     }
 
     case known(State)
@@ -48,7 +67,7 @@ public enum AlgorithmState: RawRepresentable {
         }
 
         switch state {
-        case .sensorFailed:
+        case .sensorFailed, .sensorFailedDuetoCountsAberration, .sensorFailedDuetoResidualAberration, .sessionFailedDueToTransmitterError, .sessionFailedDueToUnrecoverableError, .sensorFailedDueToProgressiveSensorDecline, .sensorFailedDueToHighCountsAberration, .sensorFailedDueToLowCountsAberration, .sensorFailedDueToRestart:
             return true
         default:
             return false
@@ -68,13 +87,13 @@ public enum AlgorithmState: RawRepresentable {
         }
     }
 
-    public var isInSensorError: Bool {
+    public var hasTemporaryError: Bool {
         guard case .known(let state) = self else {
             return false
         }
 
         switch state {
-        case .questionMarks:
+        case .temporarySensorIssue:
             return true
         default:
             return false
@@ -88,14 +107,10 @@ public enum AlgorithmState: RawRepresentable {
         }
 
         switch state {
-        case .stopped,
-             .warmup,
-             .questionMarks,
-             .expired,
-             .sensorFailed:
-            return false
         case .ok:
             return true
+        default:
+            return false
         }
     }
 }
