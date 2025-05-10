@@ -28,7 +28,7 @@ struct G7StartupView: View {
                     .frame(height: 120)
                     .padding(.horizontal)
             }.frame(maxWidth: .infinity)
-            Text(String(format: LocalizedString("%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management.", comment: "Descriptive text on G7StartupView  (1: appName)"), self.appName))
+            Text(String(format: LocalizedString("%1$@ can read CGM data from the G7 platform, but you must still use the Dexcom App for pairing, calibration, alarms and other sensor management available to the sensor series (G7, ONE+, Stelo).\n\nWARNING: Dexcom Stelo app provides no alerts and alarms. Glucose alerts and alarms are not provided by %2$@.", comment: "Descriptive text on G7StartupView  (1: appName, 2: appName)"), self.appName, self.appName))
                 .fixedSize(horizontal: false, vertical: true)
                 .foregroundColor(.secondary)
             Spacer()
