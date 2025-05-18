@@ -54,6 +54,7 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
                     }
                 }
             )
+            .environment(\.appName, Bundle.main.bundleDisplayName)
             let hostingController = DismissibleHostingController(content: rootView, colorPalette: colorPalette)
             hostingController.navigationItem.largeTitleDisplayMode = .never
             hostingController.title = nil
