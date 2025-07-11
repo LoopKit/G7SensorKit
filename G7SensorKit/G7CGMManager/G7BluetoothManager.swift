@@ -156,7 +156,7 @@ class G7BluetoothManager: NSObject {
 
     private func managerQueue_stopScanning() {
         if centralManager.isScanning {
-            log.debug("Stopping scan")
+            log.default("Stopping scan")
             centralManager.stopScan()
             delegate?.bluetoothManagerScanningStatusDidChange(self)
         }
@@ -167,13 +167,22 @@ class G7BluetoothManager: NSObject {
 
         managerQueue.sync {
             if centralManager.isScanning {
-                log.debug("Stopping scan on disconnect")
+                log.default("Stopping scan on disconnect")
                 centralManager.stopScan()
                 delegate?.bluetoothManagerScanningStatusDidChange(self)
             }
 
             if let peripheral = activePeripheral {
                 centralManager.cancelPeripheralConnection(peripheral)
+            }
+        }
+    }
+
+    func centralManager(_ central: CBCentralManager, connectionEventDidOccur event: CBConnectionEvent, for peripheral: CBPeripheral) {
+        managerQueue.async {
+            if self.activePeripheralIdentifier == nil {
+                self.log.default("Discovered peripheral from connectionEventDidOccur %{public}@", peripheral.identifier.uuidString)
+                self.handleDiscoveredPeripheral(peripheral)
             }
         }
     }
@@ -191,19 +200,26 @@ class G7BluetoothManager: NSObject {
         }
 
         if let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
-            log.debug("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
+            log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
             handleDiscoveredPeripheral(peripheral)
         } else {
             for peripheral in centralManager.retrieveConnectedPeripherals(withServices: [
                 SensorServiceUUID.advertisement.cbUUID,
                 SensorServiceUUID.cgmService.cbUUID
             ]) {
+                log.default("Found system-connected peripheral: %{public}@", peripheral.identifier.uuidString)
                 handleDiscoveredPeripheral(peripheral)
             }
         }
 
         if activePeripheral == nil {
-            log.debug("Scanning for peripherals")
+            log.default("Scanning for peripherals and listening for connection events")
+
+            centralManager.registerForConnectionEvents(options: [CBConnectionEventMatchingOption.serviceUUIDs: [
+                SensorServiceUUID.advertisement.cbUUID,
+                SensorServiceUUID.cgmService.cbUUID
+            ]])
+
             centralManager.scanForPeripherals(withServices: [
                     SensorServiceUUID.advertisement.cbUUID
                 ],
@@ -257,7 +273,7 @@ class G7BluetoothManager: NSObject {
         if let delegate = delegate {
             switch delegate.bluetoothManager(self, shouldConnectPeripheral: peripheral) {
             case .makeActive:
-                log.debug("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
+                log.default("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
 
                 if let peripheralManager = activePeripheralManager {
                     peripheralManager.peripheral = peripheral
@@ -273,7 +289,7 @@ class G7BluetoothManager: NSObject {
                 self.centralManager.connect(peripheral)
 
             case .connect:
-                log.debug("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
+                log.default("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
                 self.centralManager.connect(peripheral)
                 let peripheralManager = G7PeripheralManager(
                     peripheral: peripheral,
@@ -311,7 +327,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
             fallthrough
         @unknown default:
             if central.isScanning {
-                log.debug("Stopping scan on central not powered on")
+                log.default("Stopping scan on central not powered on")
                 central.stopScan()
                 delegate?.bluetoothManagerScanningStatusDidChange(self)
             }
@@ -332,7 +348,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
-        log.info("%{public}@: %{public}@, data = %{public}@", #function, peripheral, String(describing: advertisementData))
+        log.default("%{public}@: %{public}@, data = %{public}@", #function, peripheral, String(describing: advertisementData))
 
         managerQueue.async {
             self.handleDiscoveredPeripheral(peripheral)
