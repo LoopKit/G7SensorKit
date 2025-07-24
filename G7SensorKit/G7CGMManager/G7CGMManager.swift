@@ -221,9 +221,7 @@ public class G7CGMManager: CGMManager {
         return lines.joined(separator: "\n")
     }
 
-    public func acknowledgeAlert(alertIdentifier: LoopKit.Alert.AlertIdentifier, completion: @escaping (Error?) -> Void) {
-        completion(nil)
-    }
+    public func acknowledgeAlert(alertIdentifier: Alert.AlertIdentifier) async throws { }
 
     public func getSoundBaseURL() -> URL? { return nil }
     public func getSounds() -> [Alert.Sound] { return [] }
