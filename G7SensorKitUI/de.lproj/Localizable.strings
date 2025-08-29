@@ -50,6 +50,9 @@ Title on WelcomeView */
 /* No comment provided by engineer. */
 "Last Reading" = "Letzter Wert";
 
+/* Descriptive text on G7StartupView (1: appName) */
+"%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management." = "%1$@ kann Dexcom G7 CGM-Daten lesen, aber Du musst trotzdem die Dexcom G7 App für die Kopplung, Kalibrierung und andere Sensorverwaltung verwenden.";
+
 /* String displayed instead of a glucose value below the CGM range */
 "LOW" = "NIEDRIG";
 
