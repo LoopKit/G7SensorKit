@@ -26,7 +26,7 @@
 "Delete CGM" = "CGM Sil";
 
 /* Navigation bar title for G7SettingsView
-   Title on WelcomeView */
+Title on WelcomeView */
 "Dexcom G7" = "Dexcom G7";
 
 /* No comment provided by engineer. */
@@ -50,8 +50,8 @@
 /* No comment provided by engineer. */
 "Last Reading" = "Son Okuma";
 
-/* Descriptive text on G7StartupView */
-"Loop can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management." = "Loop, G7 CGM verilerini okuyabilir, ancak eşleştirme, kalibrasyon ve diğer sensör yönetimi için yine de Dexcom G7 Uygulamasını kullanmanız gerekir.";
+/* Descriptive text on G7StartupView (1: appName) */
+"%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management." = "%1$@, G7 CGM verilerini okuyabilir, ancak eşleştirme, kalibrasyon ve diğer sensör yönetimi için yine de Dexcom G7 Uygulamasını kullanmanız gerekir.";
 
 /* String displayed instead of a glucose value below the CGM range */
 "LOW" = "DÜŞÜK";
