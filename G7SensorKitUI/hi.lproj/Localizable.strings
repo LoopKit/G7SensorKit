@@ -1,6 +1,9 @@
 /* No glucose value representation (3 dashes for mg/dL) */
 "– – –" = "– – –";
 
+/* Descriptive text on G7StartupView (1: appName) */
+"%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management." = "%1$@ G7 सीजीएम की रीडिंग्स पढ़ सकता है लेकिन सीजीएम सेन्सर के मैनज्मेंट, सेन्सर पैरिंग और कैलिब्रेशन की लिए dexcom का G7 ऐप ही इस्तेमाल करना चाहिए।";
+
 /* Button text to cancel G7 setup */
 "Cancel" = "निरस्त";
 
@@ -14,7 +17,7 @@
 "Continue" = "जारी";
 
 /* Navigation bar title for G7SettingsView
-   Title on WelcomeView */
+Title on WelcomeView */
 "Dexcom G7" = "Dexcom G7";
 
 /* Field label */
@@ -31,9 +34,6 @@
 
 /* title for g7 settings row showing sensor last connect time */
 "Last Connect" = "लास्ट  कनेक्ट";
-
-/* Descriptive text on G7StartupView */
-"Loop can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management." = "लूप G7 सीजीएम की रीडिंग्स पढ़ सकता है लेकिन सीजीएम सेन्सर के मैनज्मेंट, सेन्सर पैरिंग और कैलिब्रेशन की लिए dexcom का G7 ऐप ही इस्तेमाल करना चाहिए।";
 
 /* String displayed instead of a glucose value below the CGM range */
 "LOW" = "LOW";

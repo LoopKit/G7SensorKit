@@ -131,6 +131,23 @@ final class G7GlucoseMessageTests: XCTestCase {
         let data = Data(hexadecimalString: "cf5802008f00060f10")!
         let message = G7BackfillMessage(data: data)!
         XCTAssertEqual(153807, message.timestamp)
+        XCTAssertEqual(143, message.glucose)
+        XCTAssertEqual(.known(.ok), message.algorithmState)
+        XCTAssertNil(message.condition)
+        XCTAssertEqual(false, message.glucoseIsDisplayOnly)
+        XCTAssertEqual(true, message.hasReliableGlucose)
+    }
+
+    func testBackfillTimestampWithHighByte() {
+        let data = Data(hexadecimalString: "f20e0d00ba00060ffb")!
+        let message = G7BackfillMessage(data: data)!
+        XCTAssertEqual(855794, message.timestamp)
+    }
+
+    func testBackfillCalibration() {
+        let data = Data(hexadecimalString: "f63d00008500061efe")!
+        let message = G7BackfillMessage(data: data)!
+        XCTAssertEqual(true, message.glucoseIsDisplayOnly)
     }
 
 }
