@@ -20,6 +20,7 @@ class G7SettingsViewModel: ObservableObject {
     @Published private(set) var scanning: Bool = false
     @Published private(set) var connected: Bool = false
     @Published private(set) var sensorName: String?
+    @Published private(set) var sensorType: G7SensorType = .unknown
     @Published private(set) var activatedAt: Date?
     @Published private(set) var lastConnect: Date?
     @Published private(set) var latestReadingTimestamp: Date?
@@ -67,9 +68,14 @@ class G7SettingsViewModel: ObservableObject {
         self.cgmManager.addStateObserver(self, queue: DispatchQueue.main)
     }
 
+    var sensorTypeDisplayName: String {
+        return sensorType.displayName
+    }
+    
     func updateValues() {
         scanning = cgmManager.isScanning
         sensorName = cgmManager.sensorName
+        sensorType = cgmManager.state.sensorType
         activatedAt = cgmManager.sensorActivatedAt
         connected = cgmManager.isConnected
         lastConnect = cgmManager.lastConnect
@@ -108,17 +114,17 @@ class G7SettingsViewModel: ObservableObject {
             guard let value = progressValue, value > 0 else {
                 return 0
             }
-            return 1 - value / G7Sensor.warmupDuration
+            return 1 - value / sensorType.warmupDuration
         case .lifetimeRemaining:
             guard let value = progressValue, value > 0 else {
                 return 0
             }
-            return 1 - value / G7Sensor.lifetime
+            return 1 - value / sensorType.lifetime
         case .gracePeriodRemaining:
             guard let value = progressValue, value > 0 else {
                 return 0
             }
-            return 1 - value / G7Sensor.gracePeriod
+            return 1 - value / sensorType.gracePeriod
         case .sensorExpired, .sensorFailed:
             return 1
         }
