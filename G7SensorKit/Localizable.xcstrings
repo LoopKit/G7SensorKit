@@ -218,6 +218,12 @@
             "state" : "translated",
             "value" : "Dữ liệu glucose không có sẵn"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "葡萄糖数据不可用"
+          }
         }
       }
     },
@@ -527,6 +533,12 @@
             "state" : "translated",
             "value" : "Cảm biến ở trạng thái không xác định %1$d"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器处于未知状态 %1$d"
+          }
         }
       }
     },
@@ -747,6 +759,12 @@
             "state" : "translated",
             "value" : "Cảm biến bị dừng"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器停止"
+          }
         }
       }
     },
@@ -871,6 +889,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cảm biến đang nóng lên"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器在启动中"
           }
         }
       }

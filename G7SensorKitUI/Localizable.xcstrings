@@ -339,6 +339,12 @@
             "state" : "translated",
             "value" : "Bạn có chắc sẽ xóa CGM này?"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确认要删除该CGM吗？"
+          }
         }
       }
     },
@@ -1188,6 +1194,12 @@
             "state" : "translated",
             "value" : "Xóa CGM"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除CGM"
+          }
         }
       }
     },
@@ -1513,6 +1525,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Đường huyết"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "葡萄糖"
           }
         }
       }
@@ -3683,6 +3701,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Xu hướng"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "趋势"
           }
         }
       }
