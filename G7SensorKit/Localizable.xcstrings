@@ -319,6 +319,12 @@
             "state" : "translated",
             "value" : "Sensörün süresi doldu"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器已过期"
+          }
         }
       }
     },
@@ -413,6 +419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sensör hatası"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器故障"
           }
         }
       }
@@ -633,6 +645,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sensör iyi durumda"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器正常"
           }
         }
       }
