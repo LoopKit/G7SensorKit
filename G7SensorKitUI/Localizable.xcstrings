@@ -221,6 +221,12 @@
             "state" : "translated",
             "value" : "%1$@, G7 CGM verilerini okuyabilir, ancak eşleştirme, kalibrasyon ve diğer sensör yönetimi için yine de Dexcom G7 Uygulamasını kullanmanız gerekir."
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@可以读取 G7 CGM 数据，但您仍然必须使用 Dexcom G7 应用程序进行配对、校准和其他传感器管理。"
+          }
         }
       }
     },
@@ -426,6 +432,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bluetooth"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "蓝牙"
           }
         }
       }
@@ -2237,6 +2249,12 @@
             "state" : "translated",
             "value" : "Åpne Dexcom-appen"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开 德康（Dexcom）应用"
+          }
         }
       }
     },
@@ -2579,6 +2597,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sensör aranıyor"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在搜索传感器"
           }
         }
       }
@@ -3120,6 +3144,12 @@
             "state" : "translated",
             "value" : "Sensörün süresi doldu"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器已过期"
+          }
         }
       }
     },
@@ -3303,6 +3333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sensör hatası"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "传感器故障"
           }
         }
       }
@@ -3583,6 +3619,12 @@
             "state" : "translated",
             "value" : "Zaman"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时间"
+          }
         }
       }
     },
@@ -3809,6 +3851,12 @@
             "state" : "translated",
             "value" : "Okumaları Yükle"
           }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上传读数"
+          }
         }
       }
     },
@@ -3897,6 +3945,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Isınma tamamlandı"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预热完成"
           }
         }
       }
