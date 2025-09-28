@@ -4,10 +4,10 @@
     "Dexcom G7" : {
       "comment" : "CGM display title",
       "localizations" : {
-        "cs" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dexcom G7"
+            "value" : "ديكسكوم G7"
           }
         },
         "da" : {
@@ -28,6 +28,12 @@
             "value" : "Dexcom G7"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dexcom G7"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -36,13 +42,13 @@
         },
         "he" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "new",
             "value" : "Dexcom G7"
           }
         },
-        "hi" : {
+        "hu" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "new",
             "value" : "Dexcom G7"
           }
         },
@@ -52,7 +58,7 @@
             "value" : "Dexcom G7"
           }
         },
-        "nb" : {
+        "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dexcom G7"
@@ -70,9 +76,15 @@
             "value" : "Dexcom G7"
           }
         },
-        "ro" : {
+        "pt" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "new",
+            "value" : "Dexcom G7"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
             "value" : "Dexcom G7"
           }
         },
@@ -88,9 +100,39 @@
             "value" : "Dexcom G7"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dexcom G7"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
+            "value" : "Dexcom G7"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dexcom G7"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dexcom G7"
+          }
+        },
+        "yy-YY" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dexcom G7"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
             "value" : "Dexcom G7"
           }
         }
@@ -99,34 +141,34 @@
     "Glucose data is unavailable" : {
       "comment" : "Error description for unreliable state",
       "localizations" : {
-        "cs" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Údaje o glukóze nejsou k dispozici"
+            "value" : "قراءات السكر غير متوفرة"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Glukosedata ikke tilgængeligt"
+            "value" : "Glukosedata er utilgængelig"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Blutzuckerdaten sind nicht verfügbar"
+            "value" : "Glukosewerte sind nicht verfügbar"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Los datos de glucosa no están disponibles"
+            "value" : "Datos de glucosa no disponibles"
           }
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Glukoositietoja ei ole saatavilla"
+            "state" : "new",
+            "value" : "Glucose data is unavailable"
           }
         },
         "fr" : {
@@ -137,14 +179,14 @@
         },
         "he" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "מידע גלוקוז לא זמין"
+            "state" : "new",
+            "value" : "Glucose data is unavailable"
           }
         },
-        "hi" : {
+        "hu" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "ग्लूकोस डेटा उपलब्ध नहीं है"
+            "state" : "new",
+            "value" : "Glucose data is unavailable"
           }
         },
         "it" : {
@@ -153,13 +195,7 @@
             "value" : "I dati della glicemia non sono disponibili"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "グルコースデータがありません"
-          }
-        },
-        "nb" : {
+        "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Blodsukker er utilgjengelig"
@@ -168,25 +204,25 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Glucosegegevens zijn niet beschikbaar"
+            "value" : "Glucose gegevens niet beschikbaar"
           }
         },
         "pl" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dane o poziomie glukozy są niedostępne"
+            "state" : "new",
+            "value" : "Glucose data is unavailable"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Glucose data is unavailable"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Os dados de glicose não estão disponíveis"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Datele despre glucoză nu sunt disponibile"
+            "state" : "new",
+            "value" : "Glucose data is unavailable"
           }
         },
         "ru" : {
@@ -198,31 +234,43 @@
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Údaje o glykémii nie sú k dispozícii"
+            "value" : "Dáta o glykémii nie sú k dispozícii"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Glukosvärden är inte tillgängliga"
+            "value" : "Inga blodglukosdata tillgängliga"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "KŞ verileri mevcut değil"
+            "value" : "Glikoz verileri kullanılamıyor"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дані глюкози недоступні"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dữ liệu glucose không có sẵn"
+            "value" : "Dữ liệu đường huyết không có sẵn"
+          }
+        },
+        "yy-YY" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Glucose data is unavailable"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "葡萄糖数据不可用"
+            "state" : "new",
+            "value" : "Glucose data is unavailable"
           }
         }
       }
@@ -230,10 +278,10 @@
     "Sensor expired" : {
       "comment" : "The description of sensor algorithm state when sensor is expired.",
       "localizations" : {
-        "cs" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Platnost senzoru vypršela"
+            "value" : "إنتهت صلاحية المستشعر"
           }
         },
         "da" : {
@@ -251,7 +299,13 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor caducado"
+            "value" : "El sensor ha caducado"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor expired"
           }
         },
         "fr" : {
@@ -262,14 +316,14 @@
         },
         "he" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "החיישן פג"
+            "state" : "new",
+            "value" : "Sensor expired"
           }
         },
-        "hi" : {
+        "hu" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर समाप्त हो गया"
+            "state" : "new",
+            "value" : "Sensor expired"
           }
         },
         "it" : {
@@ -278,10 +332,10 @@
             "value" : "Sensore scaduto"
           }
         },
-        "nb" : {
+        "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor utløpt"
+            "value" : "Sensoren er utløpt"
           }
         },
         "nl" : {
@@ -292,20 +346,26 @@
         },
         "pl" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sensor stracił ważność"
+            "state" : "new",
+            "value" : "Sensor expired"
           }
         },
-        "ro" : {
+        "pt" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Senzorul a expirat"
+            "state" : "new",
+            "value" : "Sensor expired"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor expired"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сенсор истек"
+            "value" : "Срок действия датчика истек"
           }
         },
         "sk" : {
@@ -314,16 +374,40 @@
             "value" : "Platnosť senzora vypršala"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sensorns livslängd är slut"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensörün süresi doldu"
+            "value" : "Sensör süresi doldu"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Термін Сенсору закінчився"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cảm biến đã hết hạn"
+          }
+        },
+        "yy-YY" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor expired"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "传感器已过期"
+            "state" : "new",
+            "value" : "Sensor expired"
           }
         }
       }
@@ -331,58 +415,64 @@
     "Sensor failed" : {
       "comment" : "The description of sensor algorithm state when sensor failed.",
       "localizations" : {
-        "cs" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Senzor selhal"
+            "value" : "فشل الحساس"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensorfejl"
+            "value" : "Sensor fejlede"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor defekt"
+            "value" : "Sensorfehler"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fallo del sensor"
+            "value" : "El sensor ha fallado"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor failed"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erreur de capteur"
+            "value" : "Capteura échoué"
           }
         },
         "he" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "החיישן נכשל"
+            "state" : "new",
+            "value" : "Sensor failed"
           }
         },
-        "hi" : {
+        "hu" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर ख़राब हो गया है"
+            "state" : "new",
+            "value" : "Sensor failed"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensore guasto"
+            "value" : "Sensore fallito"
           }
         },
-        "nb" : {
+        "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor feilet"
+            "value" : "Sensoren feilet"
           }
         },
         "nl" : {
@@ -393,20 +483,26 @@
         },
         "pl" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Błąd sensora"
+            "state" : "new",
+            "value" : "Sensor failed"
           }
         },
-        "ro" : {
+        "pt" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Senzorul a eșuat"
+            "state" : "new",
+            "value" : "Sensor failed"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor failed"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ошибка сенсора"
+            "value" : "Сбой датчика"
           }
         },
         "sk" : {
@@ -415,16 +511,40 @@
             "value" : "Senzor zlyhal"
           }
         },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sensorn är felaktig"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensör hatası"
+            "value" : "Sensör arızalı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося встановити Сенсор"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lỗi cảm biến"
+          }
+        },
+        "yy-YY" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor failed"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "传感器故障"
+            "state" : "new",
+            "value" : "Sensor failed"
           }
         }
       }
@@ -432,10 +552,10 @@
     "Sensor is in unknown state %1$d" : {
       "comment" : "The description of sensor algorithm state when raw value is unknown. (1: missing data details)",
       "localizations" : {
-        "cs" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Senzor je v neznámém stavu %1$d"
+            "value" : "المستشعر في حالة غير معروفة %1$d"
           }
         },
         "da" : {
@@ -447,19 +567,19 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor befindet sich in unbekanntem Zustand %1$d"
+            "value" : "Sensor ist in unbekanntem Zustand %1$d"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El sensor está en estado desconocido %1$d"
+            "value" : "El sensor está en un estado desconocido %1$d"
           }
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anturi on tuntemattomassa tilassa %1$d"
+            "state" : "new",
+            "value" : "Sensor is in unknown state %1$d"
           }
         },
         "fr" : {
@@ -470,56 +590,56 @@
         },
         "he" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "מצב החיישן אינו ידוע %1$d"
+            "state" : "new",
+            "value" : "Sensor is in unknown state %1$d"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor is in unknown state %1$d"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Il sensore è in stato sconosciuto %1$d"
+            "value" : "Il Sensore è in un stato %1$d sconosciuto"
           }
         },
-        "ja" : {
+        "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "センサーの状態が不明です %1$d"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sensor er i ukjent tilstand %1$d"
+            "value" : "Sensoren har ukjent tilstand %1$d"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Onbekende sensorstatus %1$d"
+            "value" : "Senor is in onbekende status %1$d"
           }
         },
         "pl" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sensor jest w nieznanym stanie %1$d"
+            "state" : "new",
+            "value" : "Sensor is in unknown state %1$d"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor is in unknown state %1$d"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "O sensor está em um estado desconhecido %1$d"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Starea senzorului este necunoscută"
+            "state" : "new",
+            "value" : "Sensor is in unknown state %1$d"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Неизвестное состояние сенсора%1$d"
+            "value" : "Датчик находится в неизвестном состоянии %1$d"
           }
         },
         "sk" : {
@@ -531,7 +651,7 @@
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensorns status är okänd %1$d"
+            "value" : "Sensorstatus okänd %1$d"
           }
         },
         "tr" : {
@@ -540,16 +660,28 @@
             "value" : "Sensör bilinmeyen durumda %1$d"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сенсор знаходиться в невідомому стані%1$d"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cảm biến ở trạng thái không xác định %1$d"
+            "value" : "Trạng thái cảm biến không xác định %1$d"
+          }
+        },
+        "yy-YY" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor is in unknown state %1$d"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "传感器处于未知状态 %1$d"
+            "state" : "new",
+            "value" : "Sensor is in unknown state %1$d"
           }
         }
       }
@@ -557,10 +689,10 @@
     "Sensor is OK" : {
       "comment" : "The description of sensor algorithm state when sensor is ok.",
       "localizations" : {
-        "cs" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Senzor je v pořádku"
+            "value" : "المستشعر يعمل جيداً"
           }
         },
         "da" : {
@@ -581,22 +713,28 @@
             "value" : "El sensor está bien"
           }
         },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor is OK"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le capteur est OK"
+            "value" : "Capteur est OK"
           }
         },
         "he" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "החיישן תקין"
+            "state" : "new",
+            "value" : "Sensor is OK"
           }
         },
-        "hi" : {
+        "hu" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर सही है"
+            "state" : "new",
+            "value" : "Sensor is OK"
           }
         },
         "it" : {
@@ -605,52 +743,82 @@
             "value" : "Il sensore è OK"
           }
         },
-        "nb" : {
+        "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor er OK"
+            "value" : "Sensoren er OK"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor is OK"
+            "value" : "Sensor is ok"
           }
         },
         "pl" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sensor jest OK"
+            "state" : "new",
+            "value" : "Sensor is OK"
           }
         },
-        "ro" : {
+        "pt" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Senzorul este OK"
+            "state" : "new",
+            "value" : "Sensor is OK"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor is OK"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сенсор ОК"
+            "value" : "Датчик ОК"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Senzor je v poriadku"
+            "value" : "Senzor pracuje správne"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sensorn är OK"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensör iyi durumda"
+            "value" : "Sensör TAMAM"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сенсор підключено"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sensor is OK"
+          }
+        },
+        "yy-YY" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor is OK"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "传感器正常"
+            "state" : "new",
+            "value" : "Sensor is OK"
           }
         }
       }
@@ -658,10 +826,10 @@
     "Sensor is stopped" : {
       "comment" : "The description of sensor algorithm state when sensor is stopped.",
       "localizations" : {
-        "cs" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Senzor je zastaven"
+            "value" : "المستشعر متوقف"
           }
         },
         "da" : {
@@ -679,13 +847,13 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El sensor está en pausa"
+            "value" : "El sensor está parado"
           }
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anturi on pysäytetty"
+            "state" : "new",
+            "value" : "Sensor is stopped"
           }
         },
         "fr" : {
@@ -696,14 +864,14 @@
         },
         "he" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "החיישן נעצר"
+            "state" : "new",
+            "value" : "Sensor is stopped"
           }
         },
-        "hi" : {
+        "hu" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर समाप्त हो गया"
+            "state" : "new",
+            "value" : "Sensor is stopped"
           }
         },
         "it" : {
@@ -712,46 +880,40 @@
             "value" : "Il sensore è arrestato"
           }
         },
-        "ja" : {
+        "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "センサーが停止しています"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sensor er stoppet"
+            "value" : "Sensoren er stoppet"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor gestopt"
+            "value" : "Sensor is gestopt"
           }
         },
         "pl" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sensor został zatrzymany"
+            "state" : "new",
+            "value" : "Sensor is stopped"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor is stopped"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "O sensor está parado"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Senzorul e oprit"
+            "state" : "new",
+            "value" : "Sensor is stopped"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сенсор остановлен"
+            "value" : "Датчик остановлен"
           }
         },
         "sk" : {
@@ -769,19 +931,31 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensör durdu"
+            "value" : "Sensör durduruldu"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сенсор зупинений"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cảm biến bị dừng"
+            "value" : "Cảm biến đã dừng hoạt động"
+          }
+        },
+        "yy-YY" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor is stopped"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "传感器停止"
+            "state" : "new",
+            "value" : "Sensor is stopped"
           }
         }
       }
@@ -789,10 +963,10 @@
     "Sensor is warming up" : {
       "comment" : "The description of sensor algorithm state when sensor is warming up.",
       "localizations" : {
-        "cs" : {
+        "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Senzor se zahřívá"
+            "value" : "المستشعر تحت الإحماء"
           }
         },
         "da" : {
@@ -804,85 +978,79 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor befindet sich in der Aufwärmphase"
+            "value" : "Sensor ist in der Aufwärmphase"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El sensor se está calentando"
+            "value" : "El sensor está calentando"
           }
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anturi lämpenee"
+            "state" : "new",
+            "value" : "Sensor is warming up"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le capteur est en préchauffage"
+            "value" : "Capteur est en période de réchauffement"
           }
         },
         "he" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "חיישן מתכונן"
+            "state" : "new",
+            "value" : "Sensor is warming up"
           }
         },
-        "hi" : {
+        "hu" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर अपने शुरुआती समय में है"
+            "state" : "new",
+            "value" : "Sensor is warming up"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Il Sensore si sta riscaldando"
+            "value" : "Il sensore è in fase di avvio"
           }
         },
-        "ja" : {
+        "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "センサーが準備中です"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sensor varmer opp"
+            "value" : "Sensoren varmer opp"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor aan het opwarmen"
+            "value" : "Sensor is aan het opwarmen"
           }
         },
         "pl" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sensor jest w fazie rozruchu"
+            "state" : "new",
+            "value" : "Sensor is warming up"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor is warming up"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "O sensor está aquecendo"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Senzorul se pregătește"
+            "state" : "new",
+            "value" : "Sensor is warming up"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Сенсор прогревается"
+            "value" : "Датчик прогревается"
           }
         },
         "sk" : {
@@ -894,7 +1062,7 @@
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensorn värmer upp"
+            "value" : "Sensorn värms upp"
           }
         },
         "tr" : {
@@ -903,16 +1071,28 @@
             "value" : "Sensör ısınıyor"
           }
         },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сенсор прогрівається"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cảm biến đang nóng lên"
+            "value" : "Cảm biến đang khởi động"
+          }
+        },
+        "yy-YY" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensor is warming up"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "传感器在启动中"
+            "state" : "new",
+            "value" : "Sensor is warming up"
           }
         }
       }
