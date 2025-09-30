@@ -387,14 +387,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management."
+            "state" : "translated",
+            "value" : "%1$@ може зчитувати дані G7 CGM, але для сполучення, калібрування та керування іншими датчиками все одно потрібно використовувати застосунок Dexcom G7."
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management."
+            "state" : "translated",
+            "value" : "%1$@ có thể đọc dữ liệu CGM G7, nhưng bạn vẫn phải sử dụng ứng dụng Dexcom G7 để ghép nối, hiệu chuẩn và quản lý cảm biến khác."
           }
         },
         "yy-YY" : {
@@ -2937,8 +2937,8 @@
         },
         "nl" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Open Dexcom App"
+            "state" : "translated",
+            "value" : "Open Dexcom app"
           }
         },
         "pl" : {
@@ -2967,8 +2967,8 @@
         },
         "sk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Open Dexcom App"
+            "state" : "translated",
+            "value" : "Otvoriť aplikáciu Dexcom"
           }
         },
         "sv" : {
@@ -2985,14 +2985,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Open Dexcom App"
+            "state" : "translated",
+            "value" : "Відкрити додаток Dexcom"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Open Dexcom App"
+            "state" : "translated",
+            "value" : "Mở ứng dụng Dexcom"
           }
         },
         "yy-YY" : {
@@ -3395,14 +3395,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Searching for\nSensor"
+            "state" : "translated",
+            "value" : "Пошук\nСенсору"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Searching for\nSensor"
+            "state" : "translated",
+            "value" : "Đang tìm kiếm\ncảm biến"
           }
         },
         "yy-YY" : {
@@ -3669,14 +3669,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor\nExpired"
+            "state" : "translated",
+            "value" : "Сенсор\nЗакінчився"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor\nExpired"
+            "state" : "translated",
+            "value" : "Cảm biến\nđã hết hạn"
           }
         },
         "yy-YY" : {
@@ -3806,14 +3806,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor\nFailed"
+            "state" : "translated",
+            "value" : "Помилка Сенсору"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor\nFailed"
+            "state" : "translated",
+            "value" : "Cảm biến\nlỗi"
           }
         },
         "yy-YY" : {
@@ -3943,14 +3943,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor\nIssue"
+            "state" : "translated",
+            "value" : "Проблема з Сенсором"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor\nIssue"
+            "state" : "translated",
+            "value" : "Cảm biến\n có vấn đề"
           }
         },
         "yy-YY" : {
@@ -4080,14 +4080,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor\nWarmup"
+            "state" : "translated",
+            "value" : "Прогрів Сенсору"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor\nWarmup"
+            "state" : "translated",
+            "value" : "Cảm biến\n đang khởi động"
           }
         },
         "yy-YY" : {
@@ -4902,14 +4902,14 @@
         },
         "uk" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Signal\nLoss"
+            "state" : "translated",
+            "value" : "Втрата сигналу"
           }
         },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Signal\nLoss"
+            "state" : "translated",
+            "value" : "Mất\ntín hiệu"
           }
         },
         "yy-YY" : {
