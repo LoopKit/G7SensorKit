@@ -148,12 +148,6 @@
             "value" : "Dexcom G7"
           }
         },
-        "yy-YY" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Dexcom G7"
-          }
-        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "new",
@@ -315,12 +309,6 @@
             "value" : "Dữ liệu glucose không có sẵn"
           }
         },
-        "yy-YY" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Glucose data is unavailable"
-          }
-        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -474,12 +462,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cảm biến đã hết hạn"
-          }
-        },
-        "yy-YY" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor expired"
           }
         },
         "zh-Hans" : {
@@ -637,12 +619,6 @@
             "value" : "Lỗi cảm biến"
           }
         },
-        "yy-YY" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor failed"
-          }
-        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -798,12 +774,6 @@
             "value" : "Cảm biến ở trạng thái không xác định %1$d"
           }
         },
-        "yy-YY" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor is in unknown state %1$d"
-          }
-        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -956,12 +926,6 @@
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor is OK"
-          }
-        },
-        "yy-YY" : {
-          "stringUnit" : {
-            "state" : "new",
             "value" : "Sensor is OK"
           }
         },
@@ -1126,12 +1090,6 @@
             "value" : "Cảm biến bị dừng"
           }
         },
-        "yy-YY" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor is stopped"
-          }
-        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1291,12 +1249,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cảm biến đang nóng lên"
-          }
-        },
-        "yy-YY" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Sensor is warming up"
           }
         },
         "zh-Hans" : {
