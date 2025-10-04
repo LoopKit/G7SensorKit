@@ -1,0 +1,7 @@
+files:
+  - source: /G7SensorKit/Localizable.xcstrings
+    translation: /G7SensorKit/Localizable.xcstrings
+    multilingual: 1
+  - source: /G7SensorKitUI/Localizable.xcstrings
+    translation: /G7SensorKitUI/Localizable.xcstrings
+    multilingual: 1
