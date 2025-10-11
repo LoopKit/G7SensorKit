@@ -190,7 +190,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "– – –"
           }
         },
@@ -286,7 +286,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "– – –"
           }
         }
@@ -297,7 +297,7 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management."
           }
         },
@@ -321,7 +321,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management."
           }
         },
@@ -345,7 +345,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management."
           }
         },
@@ -387,7 +387,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$@ can read G7 CGM data, but you must still use the Dexcom G7 App for pairing, calibration, and other sensor management."
           }
         },
@@ -487,7 +487,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Are you sure you want to delete this CGM?"
           }
         },
@@ -617,7 +617,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Bluetooth"
           }
         },
@@ -635,7 +635,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Bluetooth"
           }
         },
@@ -677,7 +677,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Bluetooth"
           }
         },
@@ -1599,7 +1599,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Dexcom G7"
           }
         },
@@ -1623,7 +1623,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Dexcom G7"
           }
         },
@@ -1665,7 +1665,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Dexcom G7"
           }
         },
@@ -1713,7 +1713,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Dexcom G7"
           }
         }
@@ -2045,7 +2045,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Grace Period End"
           }
         },
@@ -2069,7 +2069,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Grace Period End"
           }
         },
@@ -2111,7 +2111,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Grace Period End"
           }
         },
@@ -2159,7 +2159,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Grace Period End"
           }
         }
@@ -2200,7 +2200,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Grace period remaining"
           }
         },
@@ -2224,7 +2224,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Grace period remaining"
           }
         },
@@ -2266,7 +2266,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Grace period remaining"
           }
         },
@@ -2314,7 +2314,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Grace period remaining"
           }
         }
@@ -2373,7 +2373,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "HIGH"
           }
         },
@@ -2415,7 +2415,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "HIGH"
           }
         },
@@ -2498,7 +2498,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Last Connect"
           }
         },
@@ -2522,7 +2522,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Last Connect"
           }
         },
@@ -2564,7 +2564,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Last Connect"
           }
         },
@@ -2612,7 +2612,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Last Connect"
           }
         }
@@ -2646,7 +2646,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Last Reading"
           }
         },
@@ -2664,7 +2664,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Last Reading"
           }
         },
@@ -2706,7 +2706,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Last Reading"
           }
         },
@@ -2813,7 +2813,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "LOW"
           }
         },
@@ -2855,7 +2855,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "LOW"
           }
         },
@@ -3075,49 +3075,49 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
         "da" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
         "de" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
         "es" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
         "fr" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
         "he" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
@@ -3147,7 +3147,7 @@
         },
         "pl" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
@@ -3159,13 +3159,19 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți aplicația Dexcom"
           }
         },
         "ru" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
@@ -3183,7 +3189,7 @@
         },
         "tr" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Open Dexcom App"
           }
         },
@@ -3235,7 +3241,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Scan for new sensor"
           }
         },
@@ -3253,7 +3259,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Scan for new sensor"
           }
         },
@@ -3295,7 +3301,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Scan for new sensor"
           }
         },
@@ -3343,7 +3349,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Scan for new sensor"
           }
         }
@@ -3485,7 +3491,7 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Searching for\nSensor"
           }
         },
@@ -3509,7 +3515,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Searching for\nSensor"
           }
         },
@@ -3533,7 +3539,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Searching for\nSensor"
           }
         },
@@ -3575,7 +3581,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Searching for\nSensor"
           }
         },
@@ -3623,7 +3629,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Searching for\nSensor"
           }
         }
@@ -3658,7 +3664,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Searching for sensor"
           }
         },
@@ -3682,7 +3688,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Searching for sensor"
           }
         },
@@ -3724,7 +3730,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Searching for sensor"
           }
         },
@@ -3783,7 +3789,7 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nExpired"
           }
         },
@@ -3807,7 +3813,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nExpired"
           }
         },
@@ -3831,7 +3837,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nExpired"
           }
         },
@@ -3873,7 +3879,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nExpired"
           }
         },
@@ -3921,7 +3927,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nExpired"
           }
         }
@@ -3932,7 +3938,7 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nFailed"
           }
         },
@@ -3956,7 +3962,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nFailed"
           }
         },
@@ -3980,7 +3986,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nFailed"
           }
         },
@@ -4022,7 +4028,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nFailed"
           }
         },
@@ -4070,7 +4076,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nFailed"
           }
         }
@@ -4081,7 +4087,7 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nIssue"
           }
         },
@@ -4105,7 +4111,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nIssue"
           }
         },
@@ -4129,7 +4135,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nIssue"
           }
         },
@@ -4171,7 +4177,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nIssue"
           }
         },
@@ -4219,7 +4225,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nIssue"
           }
         }
@@ -4230,7 +4236,7 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nWarmup"
           }
         },
@@ -4254,7 +4260,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nWarmup"
           }
         },
@@ -4278,7 +4284,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nWarmup"
           }
         },
@@ -4320,7 +4326,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nWarmup"
           }
         },
@@ -4368,7 +4374,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor\nWarmup"
           }
         }
@@ -4403,7 +4409,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor Expiration"
           }
         },
@@ -4427,7 +4433,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor Expiration"
           }
         },
@@ -4469,7 +4475,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor Expiration"
           }
         },
@@ -4517,7 +4523,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor Expiration"
           }
         }
@@ -4558,7 +4564,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor expired"
           }
         },
@@ -4582,7 +4588,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor expired"
           }
         },
@@ -4624,7 +4630,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor expired"
           }
         },
@@ -4707,7 +4713,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor expires"
           }
         },
@@ -4731,7 +4737,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor expires"
           }
         },
@@ -4773,7 +4779,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor expires"
           }
         },
@@ -4821,7 +4827,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor expires"
           }
         }
@@ -4862,7 +4868,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor failed"
           }
         },
@@ -4886,7 +4892,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor failed"
           }
         },
@@ -4928,7 +4934,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor failed"
           }
         },
@@ -5011,7 +5017,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor Start"
           }
         },
@@ -5035,7 +5041,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor Start"
           }
         },
@@ -5077,7 +5083,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor Start"
           }
         },
@@ -5125,7 +5131,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor Start"
           }
         }
@@ -5136,7 +5142,7 @@
       "localizations" : {
         "ar" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Signal\nLoss"
           }
         },
@@ -5160,7 +5166,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Signal\nLoss"
           }
         },
@@ -5184,7 +5190,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Signal\nLoss"
           }
         },
@@ -5226,7 +5232,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Signal\nLoss"
           }
         },
@@ -5274,7 +5280,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Signal\nLoss"
           }
         }
@@ -5482,7 +5488,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Trend"
           }
         },
@@ -5637,7 +5643,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Upload Readings"
           }
         },
@@ -5679,7 +5685,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Upload Readings"
           }
         },
@@ -5762,7 +5768,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Warmup completes"
           }
         },
@@ -5786,7 +5792,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Warmup completes"
           }
         },
@@ -5828,7 +5834,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Warmup completes"
           }
         },

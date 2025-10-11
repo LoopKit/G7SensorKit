@@ -36,7 +36,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Dexcom G7"
           }
         },
@@ -60,7 +60,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Dexcom G7"
           }
         },
@@ -102,7 +102,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Dexcom G7"
           }
         },
@@ -150,7 +150,7 @@
         },
         "zh-Hans" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Dexcom G7"
           }
         }
@@ -215,7 +215,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Glucose data is unavailable"
           }
         },
@@ -352,7 +352,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor expired"
           }
         },
@@ -376,7 +376,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor expired"
           }
         },
@@ -418,7 +418,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor expired"
           }
         },
@@ -507,7 +507,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor failed"
           }
         },
@@ -531,7 +531,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor failed"
           }
         },
@@ -573,7 +573,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor failed"
           }
         },
@@ -680,7 +680,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor is in unknown state %1$d"
           }
         },
@@ -817,7 +817,7 @@
         },
         "fi" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor is OK"
           }
         },
@@ -841,7 +841,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor is OK"
           }
         },
@@ -883,7 +883,7 @@
         },
         "pt-BR" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor is OK"
           }
         },
@@ -996,7 +996,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor is stopped"
           }
         },
@@ -1157,7 +1157,7 @@
         },
         "hu" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "Sensor is warming up"
           }
         },
