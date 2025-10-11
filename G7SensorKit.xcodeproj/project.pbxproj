@@ -508,6 +508,9 @@
 				sk,
 				hi,
 				cs,
+				ce,
+				hu,
+				uk,
 			);
 			mainGroup = C17F50BC291EAC3800555EB5;
 			productRefGroup = C17F50C7291EAC3800555EB5 /* Products */;
