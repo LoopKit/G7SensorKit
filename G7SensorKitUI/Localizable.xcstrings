@@ -1963,7 +1963,7 @@
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Glucoza"
+            "value" : "Glicemie"
           }
         },
         "ru" : {
@@ -3065,7 +3065,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "设备名称"
+            "value" : "名称"
           }
         }
       }
