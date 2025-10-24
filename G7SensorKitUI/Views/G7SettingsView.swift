@@ -65,13 +65,13 @@ struct G7SettingsView: View {
                 HStack {
                     Text(LocalizedString("Sensor Expiration", comment: "title for g7 settings row showing sensor expiration time"))
                     Spacer()
-                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(G7Sensor.lifetime)))
+                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.sensorType.lifetime)))
                         .foregroundColor(.secondary)
                 }
                 HStack {
                     Text(LocalizedString("Grace Period End", comment: "title for g7 settings row showing sensor grace period end time"))
                     Spacer()
-                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod)))
+                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.sensorType.lifetime + viewModel.sensorType.gracePeriod)))
                         .foregroundColor(.secondary)
                 }
             }
@@ -84,6 +84,14 @@ struct G7SettingsView: View {
                                 dateFormatter: viewModel.dateFormatter)
                 LabeledValueView(label: LocalizedString("Trend", comment: "Field label"),
                                  value: viewModel.lastGlucoseTrendString)
+            }
+            
+            Section () {
+                Button(LocalizedString("Open Dexcom App", comment:"Opens the dexcom app to allow users to manage active sensors"), action: {
+                    if let appURL = URL(string: viewModel.sensorType.dexcomAppURL) {
+                        UIApplication.shared.open(appURL)
+                    }
+                })
             }
 
             Section("Bluetooth") {
@@ -123,14 +131,6 @@ struct G7SettingsView: View {
                     Toggle(LocalizedString("Upload Readings", comment: "title for g7 config settings to upload readings"), isOn: $viewModel.uploadReadings)
                 }
             }
-            
-            Section () {
-                Button(LocalizedString("Open Dexcom App", comment:"Opens the dexcom G7 app to allow users to manage active sensors"), action: {
-                    if let appURL = URL(string: "dexcomg7://") {
-                        UIApplication.shared.open(appURL)
-                    }
-                })
-            }
 
             Section () {
                 if !self.viewModel.scanning {
@@ -144,7 +144,7 @@ struct G7SettingsView: View {
         }
         .insetGroupedListStyle()
         .navigationBarItems(trailing: doneButton)
-        .navigationBarTitle(LocalizedString("Dexcom G7", comment: "Navigation bar title for G7SettingsView"))
+        .navigationBarTitle(viewModel.sensorTypeDisplayName)
     }
 
     private var deleteCGMButton: some View {
