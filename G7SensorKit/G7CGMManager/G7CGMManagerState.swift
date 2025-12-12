@@ -18,7 +18,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     public var latestReading: G7GlucoseMessage?
     public var latestReadingTimestamp: Date?
     public var latestConnect: Date?
-    public var uploadReadings: Bool = false
+    public var uploadReadings: Bool = true
 
     init() {
     }
