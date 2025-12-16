@@ -29,6 +29,8 @@ class G7SettingsViewModel: ObservableObject {
             cgmManager.uploadReadings = uploadReadings
         }
     }
+
+    @Published var isFifteenDaySensor: Bool = false
     
     let displayGlucosePreference: DisplayGlucosePreference
 
@@ -69,7 +71,12 @@ class G7SettingsViewModel: ObservableObject {
     }
 
     var sensorTypeDisplayName: String {
-        return sensorType.displayName
+        return effectiveSensorType.displayName
+    }
+
+    /// Returns the effective sensor type based on the toggle
+    var effectiveSensorType: G7SensorType {
+        G7SensorType.forFifteenDayOption(baseType: sensorType, isFifteenDaySensor: isFifteenDaySensor)
     }
     
     func updateValues() {
@@ -114,17 +121,17 @@ class G7SettingsViewModel: ObservableObject {
             guard let value = progressValue, value > 0 else {
                 return 0
             }
-            return 1 - value / sensorType.warmupDuration
+            return 1 - value / effectiveSensorType.warmupDuration
         case .lifetimeRemaining:
             guard let value = progressValue, value > 0 else {
                 return 0
             }
-            return 1 - value / sensorType.lifetime
+            return 1 - value / effectiveSensorType.lifetime
         case .gracePeriodRemaining:
             guard let value = progressValue, value > 0 else {
                 return 0
             }
-            return 1 - value / sensorType.gracePeriod
+            return 1 - value / effectiveSensorType.gracePeriod
         case .sensorExpired, .sensorFailed:
             return 1
         }

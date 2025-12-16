@@ -65,13 +65,13 @@ struct G7SettingsView: View {
                 HStack {
                     Text(LocalizedString("Sensor Expiration", comment: "title for g7 settings row showing sensor expiration time"))
                     Spacer()
-                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.sensorType.lifetime)))
+                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.effectiveSensorType.lifetime)))
                         .foregroundColor(.secondary)
                 }
                 HStack {
                     Text(LocalizedString("Grace Period End", comment: "title for g7 settings row showing sensor grace period end time"))
                     Spacer()
-                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.sensorType.lifetime + viewModel.sensorType.gracePeriod)))
+                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.effectiveSensorType.lifetime + viewModel.effectiveSensorType.gracePeriod)))
                         .foregroundColor(.secondary)
                 }
             }
@@ -127,9 +127,12 @@ struct G7SettingsView: View {
             }
 
             Section("Configuration") {
-                HStack {
-                    Toggle(LocalizedString("Upload Readings", comment: "title for g7 config settings to upload readings"), isOn: $viewModel.uploadReadings)
-                }
+                    HStack {
+                        Toggle(LocalizedString("Upload Readings", comment: "title for g7 config settings to upload readings"), isOn: $viewModel.uploadReadings)
+                    }
+                    HStack {
+                        Toggle(LocalizedString("15 Day Sensor", comment: "title for g7 config settings to enable 15 day sensor option"), isOn: $viewModel.isFifteenDaySensor)
+                    }
             }
 
             Section () {
