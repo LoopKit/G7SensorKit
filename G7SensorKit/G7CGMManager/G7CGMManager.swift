@@ -147,14 +147,13 @@ public class G7CGMManager: CGMManager {
     }
 
     public var uploadReadings: Bool {
-        get {
-            return state.uploadReadings
-        }
-        set {
-            mutateState { state in
-                state.uploadReadings = newValue
-            }
-        }
+        get { state.uploadReadings }
+        set { mutateState { $0.uploadReadings = newValue } }
+    }
+
+    public var isFifteenDaySensor: Bool {
+        get { state.isFifteenDaySensor }
+        set { mutateState { $0.isFifteenDaySensor = newValue } }
     }
 
     public let sensor: G7Sensor

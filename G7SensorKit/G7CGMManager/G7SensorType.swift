@@ -86,11 +86,12 @@ public enum G7SensorType: String, CaseIterable, CustomStringConvertible {
     }
     
     /// Detects sensor type based on the sensor name/ID
-    public static func detect(from sensorName: String) -> G7SensorType {
+    public static func detect(from sensorName: String, isFifteenDaySensor: Bool) -> G7SensorType {
         let name = sensorName.uppercased()
         if name.hasPrefix("DXCM") {
-            // For now, assume all DXCM are 10-day G7, but this could be enhanced
-            // based on additional sensor data or naming patterns
+            if isFifteenDaySensor {
+                return .g7extended
+            }
             return .g7
         } else if name.hasPrefix("DX01") {
             return .stelo

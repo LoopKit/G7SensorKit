@@ -20,6 +20,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     public var latestReadingTimestamp: Date?
     public var latestConnect: Date?
     public var uploadReadings: Bool = false
+    public var isFifteenDaySensor: Bool = false
 
     init() {
     }
@@ -31,7 +32,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
             self.sensorType = sensorType
         } else {
             if let sensorID = rawValue["sensorID"] as? String {
-                self.sensorType = G7SensorType.detect(from: sensorID)
+                self.sensorType = G7SensorType.detect(from: sensorID, isFifteenDaySensor: rawValue["isFifteenDaySensor"] as? Bool ?? false)
             }
         }
         self.activatedAt = rawValue["activatedAt"] as? Date
@@ -41,6 +42,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.latestReadingTimestamp = rawValue["latestReadingTimestamp"] as? Date
         self.latestConnect = rawValue["latestConnect"] as? Date
         self.uploadReadings = rawValue["uploadReadings"] as? Bool ?? false
+        self.isFifteenDaySensor = rawValue["isFifteenDaySensor"] as? Bool ?? false
     }
 
     public var rawValue: RawValue {
@@ -52,6 +54,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["latestReadingTimestamp"] = latestReadingTimestamp
         rawValue["latestConnect"] = latestConnect
         rawValue["uploadReadings"] = uploadReadings
+        rawValue["isFifteenDaySensor"] = isFifteenDaySensor
         return rawValue
     }
 }

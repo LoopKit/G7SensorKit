@@ -30,7 +30,11 @@ class G7SettingsViewModel: ObservableObject {
         }
     }
 
-    @Published var isFifteenDaySensor: Bool = false
+    @Published var isFifteenDaySensor: Bool = false {
+        didSet {
+            cgmManager.isFifteenDaySensor = isFifteenDaySensor
+        }
+    }
     
     let displayGlucosePreference: DisplayGlucosePreference
 
@@ -67,16 +71,12 @@ class G7SettingsViewModel: ObservableObject {
         self.displayGlucosePreference = displayGlucosePreference
         updateValues()
 
+        self.isFifteenDaySensor = cgmManager.isFifteenDaySensor
         self.cgmManager.addStateObserver(self, queue: DispatchQueue.main)
     }
 
     var sensorTypeDisplayName: String {
-        return effectiveSensorType.displayName
-    }
-
-    /// Returns the effective sensor type based on the toggle
-    var effectiveSensorType: G7SensorType {
-        G7SensorType.forFifteenDayOption(baseType: sensorType, isFifteenDaySensor: isFifteenDaySensor)
+        return sensorType.displayName
     }
     
     func updateValues() {
@@ -89,6 +89,7 @@ class G7SettingsViewModel: ObservableObject {
         lastReading = cgmManager.latestReading
         latestReadingTimestamp = cgmManager.latestReadingTimestamp
         uploadReadings = cgmManager.state.uploadReadings
+        isFifteenDaySensor = cgmManager.isFifteenDaySensor
     }
 
     var progressBarColorStyle: ColorStyle {
@@ -121,17 +122,17 @@ class G7SettingsViewModel: ObservableObject {
             guard let value = progressValue, value > 0 else {
                 return 0
             }
-            return 1 - value / effectiveSensorType.warmupDuration
+            return 1 - value / sensorType.warmupDuration
         case .lifetimeRemaining:
             guard let value = progressValue, value > 0 else {
                 return 0
             }
-            return 1 - value / effectiveSensorType.lifetime
+            return 1 - value / sensorType.lifetime
         case .gracePeriodRemaining:
             guard let value = progressValue, value > 0 else {
                 return 0
             }
-            return 1 - value / effectiveSensorType.gracePeriod
+            return 1 - value / sensorType.gracePeriod
         case .sensorExpired, .sensorFailed:
             return 1
         }

@@ -230,7 +230,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         /// The Dexcom One+ prefix is "DX02"
         if name.hasPrefix("DXCM") || name.hasPrefix("DX01") || name.hasPrefix("DX02"){
             // Auto-detect sensor type when connecting
-            sensorType = G7SensorType.detect(from: name)
+            sensorType = G7SensorType.detect(from: name, isFifteenDaySensor: false)
             
             // If we're following this name or if we're scanning, connect
             if let sensorName = sensorID, name.suffix(2) == sensorName.suffix(2) {
