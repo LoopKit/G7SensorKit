@@ -62,9 +62,13 @@ public enum G7SensorLifecycleState {
 
 
 public final class G7Sensor: G7BluetoothManagerDelegate {
+    // Legacy static properties for backward compatibility
     public static let lifetime = TimeInterval(hours: 10 * 24)
     public static let warmupDuration = TimeInterval(minutes: 25)
     public static let gracePeriod = TimeInterval(hours: 12)
+    
+    // Current sensor type for dynamic timing
+    public var sensorType: G7SensorType = .unknown
 
     public weak var delegate: G7SensorDelegate?
 
@@ -222,8 +226,12 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         }
 
         /// The Dexcom G7 advertises a peripheral name of "DXCMxx", and later reports a full name of "Dexcomxx"
-        /// Dexcom One+ peripheral name start with "DX02"
-        if name.hasPrefix("DXCM") || name.hasPrefix("DX02"){
+        /// The Dexcom Stelo prefix is "DX01"
+        /// The Dexcom One+ prefix is "DX02"
+        if name.hasPrefix("DXCM") || name.hasPrefix("DX01") || name.hasPrefix("DX02"){
+            // Auto-detect sensor type when connecting
+            sensorType = G7SensorType.detect(from: name, isFifteenDaySensor: false)
+            
             // If we're following this name or if we're scanning, connect
             if let sensorName = sensorID, name.suffix(2) == sensorName.suffix(2) {
                 return .makeActive

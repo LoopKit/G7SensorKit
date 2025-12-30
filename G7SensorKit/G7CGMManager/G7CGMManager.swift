@@ -116,14 +116,14 @@ public class G7CGMManager: CGMManager {
         guard let activatedAt = sensorActivatedAt else {
             return nil
         }
-        return activatedAt.addingTimeInterval(G7Sensor.lifetime)
+        return activatedAt.addingTimeInterval(state.sensorType.lifetime)
     }
 
     public var sensorEndsAt: Date? {
         guard let activatedAt = sensorActivatedAt else {
             return nil
         }
-        return activatedAt.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod)
+        return activatedAt.addingTimeInterval(state.sensorType.lifetime + state.sensorType.gracePeriod)
     }
 
 
@@ -131,7 +131,7 @@ public class G7CGMManager: CGMManager {
         guard let activatedAt = sensorActivatedAt else {
             return nil
         }
-        return activatedAt.addingTimeInterval(G7Sensor.warmupDuration)
+        return activatedAt.addingTimeInterval(state.sensorType.warmupDuration)
     }
 
     public var latestReading: G7GlucoseMessage? {
@@ -147,14 +147,13 @@ public class G7CGMManager: CGMManager {
     }
 
     public var uploadReadings: Bool {
-        get {
-            return state.uploadReadings
-        }
-        set {
-            mutateState { state in
-                state.uploadReadings = newValue
-            }
-        }
+        get { state.uploadReadings }
+        set { mutateState { $0.uploadReadings = newValue } }
+    }
+
+    public var isFifteenDaySensor: Bool {
+        get { state.isFifteenDaySensor }
+        set { mutateState { $0.isFifteenDaySensor = newValue } }
     }
 
     public let sensor: G7Sensor
@@ -229,7 +228,9 @@ public class G7CGMManager: CGMManager {
 
     public static let pluginIdentifier: String = "G7CGMManager"
 
-    public let localizedTitle = LocalizedString("Dexcom G7", comment: "CGM display title")
+    public var localizedTitle: String {
+        return state.sensorType.displayName
+    }
 
     public let isOnboarded = true   // No distinction between created and onboarded
 
@@ -242,6 +243,7 @@ public class G7CGMManager: CGMManager {
 
         mutateState { state in
             state.sensorID = nil
+            state.sensorType = .unknown
             state.activatedAt = nil
         }
         sensor.scanForNewSensor()
@@ -251,7 +253,7 @@ public class G7CGMManager: CGMManager {
         return HKDevice(
             name: state.sensorID ?? "Unknown",
             manufacturer: "Dexcom",
-            model: "G7",
+            model: state.sensorType.rawValue,
             hardwareVersion: nil,
             firmwareVersion: nil,
             softwareVersion: "CGMBLEKit" + String(G7SensorKitVersionNumber),
@@ -292,14 +294,15 @@ extension G7CGMManager: G7SensorDelegate {
         if shouldSwitchToNewSensor {
             mutateState { state in
                 state.sensorID = name
+                state.sensorType = sensor.sensorType
                 state.activatedAt = activatedAt
             }
             let event = PersistedCgmEvent(
                 date: activatedAt,
                 type: .sensorStart,
                 deviceIdentifier: name,
-                expectedLifetime: .hours(24 * 10 + 12),
-                warmupPeriod: .hours(2)
+                expectedLifetime: .hours(sensor.sensorType.lifetime.hours + sensor.sensorType.gracePeriod.hours),
+                warmupPeriod: .hours(sensor.sensorType.warmupDuration.hours)
             )
             delegate.notify { delegate in
                 delegate?.cgmManager(self, hasNew: [event])
