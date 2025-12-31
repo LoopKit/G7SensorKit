@@ -10,29 +10,32 @@ import Foundation
 import LoopKit
 
 public struct ExtendedVersionMessage: SensorMessage, Equatable {
-    public let sessionLength: UInt32
-    public let warmupLength: UInt16
+    public let sessionLength: TimeInterval
+    public let warmupLength: TimeInterval
     public let algorithmVersion: UInt32
     public let hardwareVersion: UInt8
     public let maxLifetimeDays: UInt16
+
     public let data: Data
 
     init?(data: Data) {
         self.data = data
 
-        guard data.starts(with: .extendedVersionRx) else {
+        // 52 00 c0d70d00 5406 00020404 ff 0c00
+
+        guard data.starts(with: .extendedVersionTx) else {
             return nil
         }
 
-        guard data.count >= 14 else {
+        guard data.count >= 15 else {
             return nil
         }
 
-        sessionLength = data[1..<5].toInt()
-        warmupLength = data[5..<7].toInt()
-        algorithmVersion = data[7..<11].toInt()
-        hardwareVersion = data[11]
-        maxLifetimeDays = data[12..<16].toInt()
+        sessionLength = TimeInterval(data[2..<6].to(UInt32.self))
+        warmupLength = TimeInterval(data[6..<8].to(UInt16.self))
+        algorithmVersion = data[8..<12].to(UInt32.self)
+        hardwareVersion = data[12]
+        maxLifetimeDays = data[13..<15].to(UInt16.self)
     }
 }
 

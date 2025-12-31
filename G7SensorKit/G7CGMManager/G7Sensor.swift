@@ -273,7 +273,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                     self.delegate?.sensor(self, didError: G7SensorError.observationError("Unable to handle glucose control response"))
                 }
             }
-        case .extendedVersionRx:
+        case .extendedVersionTx:
             if let extendedVersionMessage = ExtendedVersionMessage(data: response) {
                 log.default("Received %{public}@", String(describing: extendedVersionMessage))
                 delegateQueue.async {
