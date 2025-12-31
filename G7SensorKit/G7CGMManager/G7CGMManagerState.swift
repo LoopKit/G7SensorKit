@@ -15,6 +15,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
 
     public var sensorID: String?
     public var activatedAt: Date?
+    public var extendedVersion: ExtendedVersionMessage?
     public var latestReading: G7GlucoseMessage?
     public var latestReadingTimestamp: Date?
     public var latestConnect: Date?
@@ -29,6 +30,9 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         if let readingData = rawValue["latestReading"] as? Data {
             latestReading = G7GlucoseMessage(data: readingData)
         }
+        if let extendedVersionData = rawValue["extendedVersion"] as? Data {
+            extendedVersion = ExtendedVersionMessage(data: extendedVersionData)
+        }
         self.latestReadingTimestamp = rawValue["latestReadingTimestamp"] as? Date
         self.latestConnect = rawValue["latestConnect"] as? Date
         self.uploadReadings = rawValue["uploadReadings"] as? Bool ?? false
@@ -39,6 +43,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["sensorID"] = sensorID
         rawValue["activatedAt"] = activatedAt
         rawValue["latestReading"] = latestReading?.data
+        rawValue["extendedVersion"] = extendedVersion?.data
         rawValue["latestReadingTimestamp"] = latestReadingTimestamp
         rawValue["latestConnect"] = latestConnect
         rawValue["uploadReadings"] = uploadReadings

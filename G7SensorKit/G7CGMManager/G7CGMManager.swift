@@ -112,18 +112,26 @@ public class G7CGMManager: CGMManager {
         return state.activatedAt
     }
 
+    public var lifetime: TimeInterval {
+        if let maxLifetimeDays = state.extendedVersion?.maxLifetimeDays {
+            return TimeInterval(hours: Double(maxLifetimeDays) * 24)
+        } else {
+            return G7Sensor.defaultLifetime
+        }
+    }
+
     public var sensorExpiresAt: Date? {
         guard let activatedAt = sensorActivatedAt else {
             return nil
         }
-        return activatedAt.addingTimeInterval(G7Sensor.lifetime)
+        return activatedAt.addingTimeInterval(lifetime)
     }
 
     public var sensorEndsAt: Date? {
         guard let activatedAt = sensorActivatedAt else {
             return nil
         }
-        return activatedAt.addingTimeInterval(G7Sensor.lifetime + G7Sensor.gracePeriod)
+        return activatedAt.addingTimeInterval(lifetime + G7Sensor.gracePeriod)
     }
 
 
@@ -201,6 +209,7 @@ public class G7CGMManager: CGMManager {
         lockedState = Locked(state)
         sensor = G7Sensor(sensorID: state.sensorID)
         sensor.delegate = self
+        sensor.needsVersionInfo = state.extendedVersion == nil
     }
 
     public var rawState: RawStateValue {
@@ -243,6 +252,7 @@ public class G7CGMManager: CGMManager {
         mutateState { state in
             state.sensorID = nil
             state.activatedAt = nil
+            state.extendedVersion = nil
         }
         sensor.scanForNewSensor()
     }
@@ -307,6 +317,12 @@ extension G7CGMManager: G7SensorDelegate {
         }
 
         return shouldSwitchToNewSensor
+    }
+
+    public func sensor(_ sensor: G7Sensor, didReceive extendedVersion: ExtendedVersionMessage) {
+        mutateState { state in
+            state.extendedVersion = extendedVersion
+        }
     }
 
     public func sensorDidConnect(_ sensor: G7Sensor, name: String) {
