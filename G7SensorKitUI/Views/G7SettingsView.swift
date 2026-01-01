@@ -71,7 +71,7 @@ struct G7SettingsView: View {
                 HStack {
                     Text(LocalizedString("Grace Period End", comment: "title for g7 settings row showing sensor grace period end time"))
                     Spacer()
-                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime + G7Sensor.gracePeriod)))
+                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime + viewModel.gracePeriod)))
                         .foregroundColor(.secondary)
                 }
             }
