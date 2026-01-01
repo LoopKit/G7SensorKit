@@ -16,7 +16,7 @@ final class ExtendedVersionMessageTests: XCTestCase {
         let message = ExtendedVersionMessage(data: data)!
 
         XCTAssertEqual(10.5, message.sessionLength.hours / 24)
-        XCTAssertEqual(27, message.warmupLength.minutes)
+        XCTAssertEqual(27, message.warmupDuration.minutes)
         XCTAssertEqual(67371520, message.algorithmVersion)
         XCTAssertEqual(255, message.hardwareVersion)
         XCTAssertEqual(12, message.maxLifetimeDays)

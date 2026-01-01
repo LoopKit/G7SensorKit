@@ -23,6 +23,7 @@ class G7SettingsViewModel: ObservableObject {
     @Published private(set) var activatedAt: Date?
     @Published private(set) var lastConnect: Date?
     @Published private(set) var lifetime: TimeInterval
+    @Published private(set) var warmupDuration: TimeInterval
     @Published private(set) var latestReadingTimestamp: Date?
     @Published var uploadReadings: Bool = false {
         didSet {
@@ -64,6 +65,7 @@ class G7SettingsViewModel: ObservableObject {
         self.cgmManager = cgmManager
         self.displayGlucosePreference = displayGlucosePreference
         self.lifetime = cgmManager.lifetime
+        self.warmupDuration = cgmManager.warmupDuration
         updateValues()
 
         self.cgmManager.addStateObserver(self, queue: DispatchQueue.main)
@@ -79,6 +81,7 @@ class G7SettingsViewModel: ObservableObject {
         latestReadingTimestamp = cgmManager.latestReadingTimestamp
         uploadReadings = cgmManager.state.uploadReadings
         lifetime = cgmManager.lifetime
+        warmupDuration = cgmManager.warmupDuration
     }
 
     var progressBarColorStyle: ColorStyle {
@@ -111,7 +114,7 @@ class G7SettingsViewModel: ObservableObject {
             guard let value = progressValue, value > 0 else {
                 return 0
             }
-            return 1 - value / G7Sensor.warmupDuration
+            return 1 - value / warmupDuration
         case .lifetimeRemaining:
             guard let value = progressValue, value > 0 else {
                 return 0

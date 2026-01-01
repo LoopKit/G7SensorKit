@@ -65,7 +65,7 @@ public enum G7SensorLifecycleState {
 
 public final class G7Sensor: G7BluetoothManagerDelegate {
     public static let defaultLifetime = TimeInterval(hours: 10 * 24)
-    public static let warmupDuration = TimeInterval(minutes: 25)
+    public static let defaultWarmupDuration = TimeInterval(minutes: 27)
     public static let gracePeriod = TimeInterval(hours: 12)
 
     public weak var delegate: G7SensorDelegate?

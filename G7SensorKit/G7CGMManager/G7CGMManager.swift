@@ -113,11 +113,15 @@ public class G7CGMManager: CGMManager {
     }
 
     public var lifetime: TimeInterval {
-        if let maxLifetimeDays = state.extendedVersion?.maxLifetimeDays {
-            return TimeInterval(hours: Double(maxLifetimeDays) * 24)
+        if let sessionLength = state.extendedVersion?.sessionLength {
+            return sessionLength - G7Sensor.gracePeriod
         } else {
             return G7Sensor.defaultLifetime
         }
+    }
+
+    public var warmupDuration: TimeInterval {
+        state.extendedVersion?.warmupDuration ?? G7Sensor.defaultWarmupDuration
     }
 
     public var sensorExpiresAt: Date? {
@@ -139,7 +143,7 @@ public class G7CGMManager: CGMManager {
         guard let activatedAt = sensorActivatedAt else {
             return nil
         }
-        return activatedAt.addingTimeInterval(G7Sensor.warmupDuration)
+        return activatedAt.addingTimeInterval(warmupDuration)
     }
 
     public var latestReading: G7GlucoseMessage? {
@@ -308,8 +312,8 @@ extension G7CGMManager: G7SensorDelegate {
                 date: activatedAt,
                 type: .sensorStart,
                 deviceIdentifier: name,
-                expectedLifetime: .hours(24 * 10 + 12),
-                warmupPeriod: .hours(2)
+                expectedLifetime: lifetime + G7Sensor.gracePeriod,
+                warmupPeriod: warmupDuration
             )
             delegate.notify { delegate in
                 delegate?.cgmManager(self, hasNew: [event])
