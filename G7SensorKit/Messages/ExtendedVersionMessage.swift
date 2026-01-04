@@ -21,7 +21,8 @@ public struct ExtendedVersionMessage: SensorMessage, Equatable {
     init?(data: Data) {
         self.data = data
 
-        // 52 00 c0d70d00 5406 00020404 ff 0c00
+        // 10-day: 52 00 c0d70d00 5406 00020404 ff 0c00
+        // 15-day: 52 00 406f1400 880e 00010a04 ff 1100
 
         guard data.starts(with: .extendedVersionTx) else {
             return nil

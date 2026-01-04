@@ -21,4 +21,15 @@ final class ExtendedVersionMessageTests: XCTestCase {
         XCTAssertEqual(255, message.hardwareVersion)
         XCTAssertEqual(12, message.maxLifetimeDays)
     }
+
+    func test15DayMessage() {
+        let data = Data(hexadecimalString: "5200406f1400880e00010a04ff1100")!
+        let message = ExtendedVersionMessage(data: data)!
+
+        XCTAssertEqual(15.5, message.sessionLength.hours / 24)
+        XCTAssertEqual(62, message.warmupDuration.minutes)
+        XCTAssertEqual(67764480, message.algorithmVersion)
+        XCTAssertEqual(255, message.hardwareVersion)
+        XCTAssertEqual(17, message.maxLifetimeDays)
+    }
 }
