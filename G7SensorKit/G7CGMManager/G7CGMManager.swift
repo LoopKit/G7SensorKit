@@ -113,8 +113,8 @@ public class G7CGMManager: CGMManager {
     }
 
     public var lifetime: TimeInterval {
-        if let sessionLength = state.extendedVersion?.sessionDuration {
-            return sessionLength - gracePeriod
+        if let sessionLength = state.extendedVersion?.sessionLength {
+            return sessionLength - G7Sensor.gracePeriod
         } else {
             return G7Sensor.defaultLifetime
         }
@@ -122,10 +122,6 @@ public class G7CGMManager: CGMManager {
 
     public var warmupDuration: TimeInterval {
         state.extendedVersion?.warmupDuration ?? G7Sensor.defaultWarmupDuration
-    }
-
-    public var gracePeriod: TimeInterval {
-        state.extendedVersion?.gracePeriodDuration ?? G7Sensor.defaultGracePeriod
     }
 
     public var sensorExpiresAt: Date? {
@@ -139,7 +135,7 @@ public class G7CGMManager: CGMManager {
         guard let activatedAt = sensorActivatedAt else {
             return nil
         }
-        return activatedAt.addingTimeInterval(lifetime + gracePeriod)
+        return activatedAt.addingTimeInterval(lifetime + G7Sensor.gracePeriod)
     }
 
 
@@ -316,7 +312,7 @@ extension G7CGMManager: G7SensorDelegate {
                 date: activatedAt,
                 type: .sensorStart,
                 deviceIdentifier: name,
-                expectedLifetime: lifetime + gracePeriod,
+                expectedLifetime: lifetime + G7Sensor.gracePeriod,
                 warmupPeriod: warmupDuration
             )
             delegate.notify { delegate in
