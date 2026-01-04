@@ -279,12 +279,12 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 delegateQueue.async {
                     self.delegate?.sensor(self, didReceive: extendedVersionMessage)
                     self.needsVersionInfo = false
+                    self.delegate?.sensor(self, logComms: response.hexadecimalString)
                 }
             }
         case .backfillFinished:
             flushBackfillBuffer()
         default:
-            self.delegate?.sensor(self, logComms: response.hexadecimalString)
             break
         }
     }
