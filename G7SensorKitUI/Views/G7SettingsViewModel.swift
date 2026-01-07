@@ -25,7 +25,7 @@ class G7SettingsViewModel: ObservableObject {
     @Published private(set) var lifetime: TimeInterval
     @Published private(set) var warmupDuration: TimeInterval
     @Published private(set) var latestReadingTimestamp: Date?
-    @Published var uploadReadings: Bool = false {
+    @Published var uploadReadings: Bool = true {
         didSet {
             cgmManager.uploadReadings = uploadReadings
         }
