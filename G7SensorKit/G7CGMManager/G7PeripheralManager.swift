@@ -80,6 +80,20 @@ class G7PeripheralManager: NSObject {
 
         assertConfiguration()
     }
+
+    func requestExtendedVersion() throws {
+        self.log.default("Requesting sensor extended version");
+        guard let service = peripheral.services?.itemWithUUID(SensorServiceUUID.cgmService.cbUUID) else {
+            self.log.error("Peripheral missing cgm service. Services = %{public}@", String(describing: peripheral.services));
+            throw PeripheralManagerError.invalidConfiguration
+        }
+
+        guard let characteristic = service.characteristics?.itemWithUUID(CGMServiceCharacteristicUUID.control.cbUUID) else {
+            throw PeripheralManagerError.unknownCharacteristic
+        }
+
+        try writeValue(Data([G7Opcode.extendedVersionTx.rawValue]), for: characteristic, type: .withResponse, timeout: 1)
+    }
 }
 
 

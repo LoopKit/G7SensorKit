@@ -11,6 +11,8 @@
 		B60BB2E42BC649DA00D2BB39 /* Bundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60BB2E32BC649DA00D2BB39 /* Bundle.swift */; };
 		B66D1F6D2E6A803800471149 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B66D1F6C2E6A803800471149 /* Localizable.xcstrings */; };
 		B66D1F6F2E6A803800471149 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = B66D1F6E2E6A803800471149 /* Localizable.xcstrings */; };
+		C107607F2F059130008B2B39 /* ExtendedVersionMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C107607E2F05912B008B2B39 /* ExtendedVersionMessage.swift */; };
+		C10760812F05B41B008B2B39 /* ExtendedVersionMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10760802F05B412008B2B39 /* ExtendedVersionMessageTests.swift */; };
 		C109F14A291ECCE2008EA5B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C109F149291ECCE2008EA5B6 /* Assets.xcassets */; };
 		C109F14C291ED66F008EA5B6 /* G7GlucoseMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */; };
 		C139829829295D7D0047DB5F /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F514A291EB6F000555EB5 /* HKUnit.swift */; };
@@ -112,6 +114,8 @@
 		B60BB2E32BC649DA00D2BB39 /* Bundle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Bundle.swift; path = G7SensorKitUI/Extensions/Bundle.swift; sourceTree = SOURCE_ROOT; };
 		B66D1F6C2E6A803800471149 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		B66D1F6E2E6A803800471149 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		C107607E2F05912B008B2B39 /* ExtendedVersionMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedVersionMessage.swift; sourceTree = "<group>"; };
+		C10760802F05B412008B2B39 /* ExtendedVersionMessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedVersionMessageTests.swift; sourceTree = "<group>"; };
 		C109F149291ECCE2008EA5B6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = G7GlucoseMessageTests.swift; sourceTree = "<group>"; };
 		C1409A08291EC22F006BE8D0 /* OSLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
@@ -240,6 +244,7 @@
 		C17F50D2291EAC3800555EB5 /* G7SensorKitTests */ = {
 			isa = PBXGroup;
 			children = (
+				C10760802F05B412008B2B39 /* ExtendedVersionMessageTests.swift */,
 				C17F50D3291EAC3800555EB5 /* G7SensorKitTests.swift */,
 				C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */,
 			);
@@ -319,6 +324,7 @@
 		C17F5141291EB34800555EB5 /* Messages */ = {
 			isa = PBXGroup;
 			children = (
+				C107607E2F05912B008B2B39 /* ExtendedVersionMessage.swift */,
 				C17F50E3291EAC6500555EB5 /* G7Opcode.swift */,
 				C17F5146291EB57700555EB5 /* SensorMessage.swift */,
 				C17F50E8291EAC6500555EB5 /* G7GlucoseMessage.swift */,
@@ -571,6 +577,7 @@
 				C17F5140291EB27D00555EB5 /* TimeInterval.swift in Sources */,
 				C17F50F0291EAC6500555EB5 /* G7CGMManagerState.swift in Sources */,
 				C17F5145291EB45900555EB5 /* CBPeripheral.swift in Sources */,
+				C107607F2F059130008B2B39 /* ExtendedVersionMessage.swift in Sources */,
 				C17F513A291EB0D900555EB5 /* GlucoseLimits.swift in Sources */,
 				C17F5143291EB36700555EB5 /* AuthChallengeRxMessage.swift in Sources */,
 				C17F50EA291EAC6500555EB5 /* G7DeviceStatus.swift in Sources */,
@@ -595,6 +602,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C109F14C291ED66F008EA5B6 /* G7GlucoseMessageTests.swift in Sources */,
+				C10760812F05B41B008B2B39 /* ExtendedVersionMessageTests.swift in Sources */,
 				C17F50D4291EAC3800555EB5 /* G7SensorKitTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

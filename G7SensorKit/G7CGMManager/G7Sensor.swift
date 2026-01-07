@@ -28,6 +28,8 @@ public protocol G7SensorDelegate: AnyObject {
     // If this returns true, then start following this sensor
     func sensor(_ sensor: G7Sensor, didDiscoverNewSensor name: String, activatedAt: Date) -> Bool
 
+    func sensor(_ sensor: G7Sensor, didReceive extendedVersion: ExtendedVersionMessage)
+
     // This is triggered for connection/disconnection events, and enabling/disabling scan
     func sensorConnectionStatusDidUpdate(_ sensor: G7Sensor)
 }
@@ -62,8 +64,8 @@ public enum G7SensorLifecycleState {
 
 
 public final class G7Sensor: G7BluetoothManagerDelegate {
-    public static let lifetime = TimeInterval(hours: 10 * 24)
-    public static let warmupDuration = TimeInterval(minutes: 25)
+    public static let defaultLifetime = TimeInterval(hours: 10 * 24)
+    public static let defaultWarmupDuration = TimeInterval(minutes: 27)
     public static let gracePeriod = TimeInterval(hours: 12)
 
     public weak var delegate: G7SensorDelegate?
@@ -72,6 +74,9 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     /// The initial activation date of the sensor
     var activationDate: Date?
+
+    /// The initial activation date of the sensor
+    var needsVersionInfo: Bool = false
 
     /// The date of last connection
     private var lastConnection: Date?
@@ -91,10 +96,6 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     private let delegateQueue = DispatchQueue(label: "com.loopkit.G7Sensor.delegateQueue", qos: .unspecified)
 
     private var sensorID: String?
-
-    public func setSensorId(_ newId: String) {
-        self.sensorID = newId
-    }
 
     public init(sensorID: String?) {
         self.sensorID = sensorID
@@ -138,6 +139,17 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 }
             }
         }
+
+        if needsVersionInfo, let name = peripheralManager.peripheral.name, name == sensorID {
+            peripheralManager.perform { (peripheral) in
+                do {
+                    try peripheral.requestExtendedVersion()
+                } catch let error {
+                    self.log.error("Error trying to request extended version: %{public}@", String(describing: error))
+                }
+            }
+        }
+
         if sensorID == nil, let name = peripheralManager.peripheral.name, let activationDate = activationDate  {
             delegateQueue.async {
                 guard let delegate = self.delegate else {
@@ -147,8 +159,18 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 if delegate.sensor(self, didDiscoverNewSensor: name, activatedAt: activationDate) {
                     self.sensorID = name
                     self.activationDate = activationDate
+                    self.needsVersionInfo = true
                     self.delegate?.sensor(self, didRead: message)
                     self.bluetoothManager.stopScanning()
+                    if self.needsVersionInfo, let name = peripheralManager.peripheral.name, name == self.sensorID {
+                        peripheralManager.perform { (peripheral) in
+                            do {
+                                try peripheral.requestExtendedVersion()
+                            } catch let error {
+                                self.log.error("Error trying to request extended version on initial detection: %{public}@", String(describing: error))
+                            }
+                        }
+                    }
                 }
             }
         } else if sensorID != nil {
@@ -251,10 +273,18 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                     self.delegate?.sensor(self, didError: G7SensorError.observationError("Unable to handle glucose control response"))
                 }
             }
+        case .extendedVersionTx:
+            if let extendedVersionMessage = ExtendedVersionMessage(data: response) {
+                log.default("Received %{public}@", String(describing: extendedVersionMessage))
+                delegateQueue.async {
+                    self.delegate?.sensor(self, didReceive: extendedVersionMessage)
+                    self.needsVersionInfo = false
+                    self.delegate?.sensor(self, logComms: response.hexadecimalString)
+                }
+            }
         case .backfillFinished:
             flushBackfillBuffer()
         default:
-            self.delegate?.sensor(self, logComms: response.hexadecimalString)
             break
         }
     }
