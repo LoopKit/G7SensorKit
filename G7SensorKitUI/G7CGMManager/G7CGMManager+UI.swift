@@ -117,7 +117,7 @@ extension G7CGMManager: CGMManagerUI {
                 return nil
             }
             let remaining = max(0, endTime.timeIntervalSinceNow)
-            return G7LifecycleProgress(percentComplete: 1-(remaining/gracePeriod), progressState: .critical)
+            return G7LifecycleProgress(percentComplete: 1-(remaining/G7Sensor.gracePeriod), progressState: .critical)
         case .expired:
             return G7LifecycleProgress(percentComplete: 1, progressState: .critical)
         default:
