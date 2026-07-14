@@ -15,6 +15,7 @@
 		C10760812F05B41B008B2B39 /* ExtendedVersionMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10760802F05B412008B2B39 /* ExtendedVersionMessageTests.swift */; };
 		C109F14A291ECCE2008EA5B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C109F149291ECCE2008EA5B6 /* Assets.xcassets */; };
 		C109F14C291ED66F008EA5B6 /* G7GlucoseMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */; };
+		C1D0C0DE2F0700010000CAFE /* G7CGMManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */; };
 		C139829829295D7D0047DB5F /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F514A291EB6F000555EB5 /* HKUnit.swift */; };
 		C1409A07291EC21C006BE8D0 /* OSLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5126291EAF2F00555EB5 /* OSLog.swift */; };
 		C1409A09291EC22F006BE8D0 /* OSLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1409A08291EC22F006BE8D0 /* OSLog.swift */; };
@@ -118,6 +119,7 @@
 		C10760802F05B412008B2B39 /* ExtendedVersionMessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedVersionMessageTests.swift; sourceTree = "<group>"; };
 		C109F149291ECCE2008EA5B6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = G7GlucoseMessageTests.swift; sourceTree = "<group>"; };
+		C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = G7CGMManagerTests.swift; sourceTree = "<group>"; };
 		C1409A08291EC22F006BE8D0 /* OSLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
 		C1409A0A291EC258006BE8D0 /* OSLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
 		C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = G7SensorKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -247,6 +249,7 @@
 				C10760802F05B412008B2B39 /* ExtendedVersionMessageTests.swift */,
 				C17F50D3291EAC3800555EB5 /* G7SensorKitTests.swift */,
 				C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */,
+				C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */,
 			);
 			path = G7SensorKitTests;
 			sourceTree = "<group>";
@@ -601,6 +604,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C109F14C291ED66F008EA5B6 /* G7GlucoseMessageTests.swift in Sources */,
+				C1D0C0DE2F0700010000CAFE /* G7CGMManagerTests.swift in Sources */,
 				C10760812F05B41B008B2B39 /* ExtendedVersionMessageTests.swift in Sources */,
 				C17F50D4291EAC3800555EB5 /* G7SensorKitTests.swift in Sources */,
 			);
