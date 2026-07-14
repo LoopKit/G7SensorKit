@@ -28,6 +28,16 @@ public class G7CGMManager: CGMManager {
     
     private let log = OSLog(category: "G7CGMManager")
 
+    /// How long to wait for communication to resume after a suspected session end
+    /// before forgetting the sensor and scanning for a new one. BLE handshake
+    /// failures are indistinguishable from a stopped session at disconnect time;
+    /// readings normally resume on the sensor's next 5-minute connection cycle.
+    var suspectedSessionEndGracePeriod: TimeInterval = TimeInterval(minutes: 15)
+
+    /// Pending deferred scan-for-new-sensor, scheduled on a suspected session end
+    /// and cancelled when sensor communication resumes.
+    private let suspectedSessionEndScanItem = Locked<DispatchWorkItem?>(nil)
+
     public var state: G7CGMManagerState {
         return lockedState.value
     }
@@ -209,18 +219,20 @@ public class G7CGMManager: CGMManager {
         completion(.noData)
     }
 
-    public init() {
-        lockedState = Locked(G7CGMManagerState())
-        sensor = G7Sensor(sensorID: nil)
-        sensor.delegate = self
+    public convenience init() {
+        self.init(state: G7CGMManagerState(), sensor: G7Sensor(sensorID: nil))
     }
 
-    public required init?(rawState: RawStateValue) {
+    public required convenience init?(rawState: RawStateValue) {
         let state = G7CGMManagerState(rawValue: rawState)
-        lockedState = Locked(state)
-        sensor = G7Sensor(sensorID: state.sensorID)
-        sensor.delegate = self
+        self.init(state: state, sensor: G7Sensor(sensorID: state.sensorID))
         sensor.needsVersionInfo = state.extendedVersion == nil
+    }
+
+    init(state: G7CGMManagerState, sensor: G7Sensor) {
+        lockedState = Locked(state)
+        self.sensor = sensor
+        sensor.delegate = self
     }
 
     public var rawState: RawStateValue {
@@ -256,6 +268,8 @@ public class G7CGMManager: CGMManager {
     }
 
     public func scanForNewSensor() {
+        cancelSuspectedSessionEndScan()
+
         logDeviceCommunication("Forgetting existing sensor and starting scan for new sensor.", type: .connection)
 
         mutateState { state in
@@ -344,8 +358,47 @@ extension G7CGMManager: G7SensorDelegate {
     public func sensorDisconnected(_ sensor: G7Sensor, suspectedEndOfSession: Bool) {
         logDeviceCommunication("Sensor disconnected: suspectedEndOfSession=\(suspectedEndOfSession)", type: .connection)
         if suspectedEndOfSession {
-            scanForNewSensor()
+            scheduleScanAfterSuspectedSessionEnd()
         }
+    }
+
+    /// A disconnect before authentication usually means the session was stopped,
+    /// but the same signature occurs on transient BLE handshake failures, where
+    /// forgetting the sensor immediately causes a long re-discovery outage.
+    /// Instead, keep tracking the current sensor and only scan for a new one if
+    /// communication does not resume within the grace period.
+    private func scheduleScanAfterSuspectedSessionEnd() {
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            self.suspectedSessionEndScanItem.value = nil
+            self.logDeviceCommunication("No sensor communication since suspected session end.", type: .connection)
+            self.scanForNewSensor()
+        }
+
+        var scheduled = false
+        _ = suspectedSessionEndScanItem.mutate { item in
+            if item == nil {
+                item = workItem
+                scheduled = true
+            }
+        }
+
+        // A grace period is already running; keep its original deadline.
+        guard scheduled else { return }
+
+        logDeviceCommunication("Suspected session end; waiting \(suspectedSessionEndGracePeriod.minutes) minutes for communication to resume before scanning for new sensor.", type: .connection)
+        // Wall-clock deadline: a mach-time deadline pauses while the device
+        // sleeps, which could postpone detection of a genuinely ended session.
+        DispatchQueue.global(qos: .utility).asyncAfter(wallDeadline: .now() + suspectedSessionEndGracePeriod, execute: workItem)
+    }
+
+    private func cancelSuspectedSessionEndScan() {
+        var pendingItem: DispatchWorkItem?
+        _ = suspectedSessionEndScanItem.mutate { item in
+            pendingItem = item
+            item = nil
+        }
+        pendingItem?.cancel()
     }
 
     public func sensor(_ sensor: G7Sensor, logComms comms: String) {
@@ -358,6 +411,9 @@ extension G7CGMManager: G7SensorDelegate {
     }
 
     public func sensor(_ sensor: G7Sensor, didRead message: G7GlucoseMessage) {
+
+        // Receiving any glucose message proves the session is still active.
+        cancelSuspectedSessionEndScan()
 
         guard message != latestReading else {
             logDeviceCommunication("Sensor reading duplicate: \(message)", type: .error)
@@ -427,6 +483,8 @@ extension G7CGMManager: G7SensorDelegate {
     }
 
     public func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage]) {
+        cancelSuspectedSessionEndScan()
+
         for msg in backfill {
             logDeviceCommunication("Sensor didReadBackfill \(msg)", type: .receive)
         }

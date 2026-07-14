@@ -90,14 +90,19 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     private let log = OSLog(category: "G7Sensor")
 
-    private let bluetoothManager = G7BluetoothManager()
+    private let bluetoothManager: G7BluetoothManager
 
     private let delegateQueue = DispatchQueue(label: "com.loopkit.G7Sensor.delegateQueue", qos: .unspecified)
 
     private var sensorID: String?
 
-    public init(sensorID: String?) {
+    public convenience init(sensorID: String?) {
+        self.init(sensorID: sensorID, bluetoothManager: G7BluetoothManager())
+    }
+
+    init(sensorID: String?, bluetoothManager: G7BluetoothManager) {
         self.sensorID = sensorID
+        self.bluetoothManager = bluetoothManager
         bluetoothManager.delegate = self
     }
 
