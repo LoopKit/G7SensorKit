@@ -72,7 +72,11 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     // MARK: - Passive observation state, confined to `bluetoothManager.managerQueue`
 
     /// The initial activation date of the sensor
-    var activationDate: Date?
+    // watch-from-stock: `public` (was internal) — the transport-injection seam. An external
+    // transport driving the G7SensorDelegate callbacks (in place of this class's passive
+    // CoreBluetooth listener) must set the activation date before delivering readings, exactly
+    // as handleGlucoseMessage does below; G7CGMManager reads it to timestamp samples.
+    public var activationDate: Date?
 
     /// The initial activation date of the sensor
     var needsVersionInfo: Bool = false

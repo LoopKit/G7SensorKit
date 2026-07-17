@@ -136,7 +136,12 @@ class G7BluetoothManager: NSObject {
     /// restoration option, which raises an exception outside an app with the
     /// bluetooth-central background mode.
     func makeCentralManager(queue: DispatchQueue) -> CBCentralManager {
+#if os(iOS)
         return CBCentralManager(delegate: self, queue: queue, options: [CBCentralManagerOptionRestoreIdentifierKey: "com.loudnate.CGMBLEKit"])
+#else
+        // watchOS has no CoreBluetooth state restoration; the watch host owns reconnect policy.
+        return CBCentralManager(delegate: self, queue: queue, options: nil)
+#endif
     }
 
     // MARK: - Actions
@@ -341,6 +346,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         }
     }
 
+#if os(iOS) // watchOS has no CoreBluetooth state restoration (willRestoreState / restored-state keys are iOS-only)
     func centralManager(_ central: CBCentralManager, willRestoreState dict: [String : Any]) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
@@ -351,6 +357,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
             }
         }
     }
+#endif
 
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
