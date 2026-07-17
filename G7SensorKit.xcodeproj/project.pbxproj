@@ -918,7 +918,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.loopkit.G7SensorKit;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SDKROOT = auto;
+				SDKROOT = iphoneos; /* PODLOAN watch-from-stock: was `auto` — a specializable candidate hijacks the watch extension's implicit G7SensorKit.framework dependency from G7SensorKit-watchOS; effective iOS SDK unchanged (SUPPORTED_PLATFORMS pins iphoneos) */
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -954,7 +954,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.loopkit.G7SensorKit;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SDKROOT = auto;
+				SDKROOT = iphoneos; /* PODLOAN watch-from-stock: was `auto` — a specializable candidate hijacks the watch extension's implicit G7SensorKit.framework dependency from G7SensorKit-watchOS; effective iOS SDK unchanged (SUPPORTED_PLATFORMS pins iphoneos) */
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
