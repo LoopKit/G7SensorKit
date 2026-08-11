@@ -7,6 +7,12 @@
 //
 
 import CoreBluetooth
+
+/// FORK ADDITION (Sport Mode #101): public sink for the radio census, since the BLE types
+/// themselves are module-internal. The watch app assigns it; nil (default) = os_log only.
+public enum G7RadioCensus {
+    public static var sink: ((String) -> Void)?
+}
 import Foundation
 import os.log
 
@@ -124,6 +130,21 @@ class G7BluetoothManager: NSObject {
 
     private let managerQueue = DispatchQueue(label: "com.loudnate.CGMBLEKit.bluetoothManagerQueue", qos: .unspecified)
 
+    /// FORK ADDITION (Sport Mode #101, 2026-08-10): radio-census sink. os_log lines from this
+    /// layer never reach the on-watch mirrored log, which is what the field analysis reads —
+    /// the 2026-08-10 acquisition investigation had to infer the mechanism because discovery,
+    /// connection events, and connect verdicts were all invisible. Same pattern as OmnipodKit's
+    /// `podLoanLogSink`; the watch wires it, the phone leaves it nil (os_log only).
+    ///
+    /// Acquisition has THREE triggers, and the census must name which one fired:
+    ///  (a) retrieveConnectedPeripherals at scan start — riding a link D2W already holds
+    ///  (b) connectionEventDidOccur — the OS reporting D2W (or anyone) connecting to a sensor
+    ///  (c) advertisement scan — the only path that needs active scanning
+    private static func census(_ line: String) { G7RadioCensus.sink?(line) }
+    /// didDiscover fires many times per transmit window; log each peripheral at most
+    /// once per 30 s. managerQueue-confined.
+    private var lastDiscoveryLog: [UUID: Date] = [:]
+
     override init() {
         super.init()
 
@@ -192,6 +213,10 @@ class G7BluetoothManager: NSObject {
 
     func centralManager(_ central: CBCentralManager, connectionEventDidOccur event: CBConnectionEvent, for peripheral: CBPeripheral) {
         managerQueue.async {
+            // Trigger (b): the OS saw a connection event on a sensor-service peripheral —
+            // in practice, D2W connecting for its reading. Log ALWAYS (even when we have an
+            // active peripheral and ignore it): the census needs D2W's rhythm either way.
+            Self.census("connection-event \(event.rawValue == 1 ? "CONNECT" : "disconnect") \(peripheral.name ?? "unnamed") — \(self.activePeripheralIdentifier == nil ? "handling (trigger b)" : "ignored, have active")")
             if self.activePeripheralIdentifier == nil {
                 self.log.default("Discovered peripheral from connectionEventDidOccur %{public}@", peripheral.identifier.uuidString)
                 self.handleDiscoveredPeripheral(peripheral)
@@ -213,12 +238,18 @@ class G7BluetoothManager: NSObject {
 
         if let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
             log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
+            Self.census("scan-start: retrieved KNOWN peripheral \(peripheral.name ?? "unnamed") state=\(peripheral.state.rawValue)")
             handleDiscoveredPeripheral(peripheral)
         } else {
-            for peripheral in centralManager.retrieveConnectedPeripherals(withServices: [
+            let systemConnected = centralManager.retrieveConnectedPeripherals(withServices: [
                 SensorServiceUUID.advertisement.cbUUID,
                 SensorServiceUUID.cgmService.cbUUID
-            ]) {
+            ])
+            // Trigger (a): the literal piggyback. Empty means D2W held no sensor link at this
+            // exact moment — its connections last ~10-20 s per 5-min window, so this is a
+            // timing lottery and the census must show every draw.
+            Self.census("scan-start: system-connected list = [\(systemConnected.map { $0.name ?? "unnamed" }.joined(separator: ","))] (\(systemConnected.count))")
+            for peripheral in systemConnected {
                 log.default("Found system-connected peripheral: %{public}@", peripheral.identifier.uuidString)
                 handleDiscoveredPeripheral(peripheral)
             }
@@ -237,6 +268,7 @@ class G7BluetoothManager: NSObject {
                 ],
                 options: nil
             )
+            Self.census("scan STARTED (trigger c armed) + connection-events registered (trigger b armed)")
             delegate?.bluetoothManagerScanningStatusDidChange(self)
         }
     }
@@ -364,6 +396,14 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
 
         log.default("%{public}@: %{public}@, data = %{public}@", #function, peripheral, String(describing: advertisementData))
 
+        // Trigger (c): an advertisement reached our scan. Rate-limited per peripheral; the
+        // interesting signal is PRESENCE vs ABSENCE per window — a held-pod-link arm with no
+        // didDiscover lines while D2W reads fine is scan starvation, observed directly.
+        if lastDiscoveryLog[peripheral.identifier].map({ Date().timeIntervalSince($0) > 30 }) ?? true {
+            lastDiscoveryLog[peripheral.identifier] = Date()
+            Self.census("ad DISCOVERED (trigger c) \(peripheral.name ?? "unnamed") rssi \(RSSI)")
+        }
+
         managerQueue.async {
             self.handleDiscoveredPeripheral(peripheral)
         }
@@ -371,6 +411,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
+        Self.census("didConnect \(peripheral.name ?? "unnamed")")
 
         log.default("%{public}@: %{public}@", #function, peripheral)
 
