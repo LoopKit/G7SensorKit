@@ -10,8 +10,46 @@ import CoreBluetooth
 
 /// FORK ADDITION (Sport Mode #101): public sink for the radio census, since the BLE types
 /// themselves are module-internal. The watch app assigns it; nil (default) = os_log only.
+///
+/// #101 phase 2 additionally publishes two lock-protected timestamps so the app can gate
+/// pod radio work on live G7 acquisition state (2026-08-10 23:31:48: the pod scan fired
+/// 100ms before the D2W ride appeared and the G7 connect never completed — the app needs
+/// to SEE an in-flight connect / fresh ride activity, not infer it from the clock):
+/// - `connectPendingSince`: a `centralManager.connect` we issued that has neither
+///   didConnect nor didFailToConnect'd yet. The fragile establishment phase.
+/// - `lastRideSignalAt`: most recent acquisition signal of any kind (connection event,
+///   sensor advertisement, connect issued/landed). "Fresh signal" means a ride is in
+///   progress or imminent; silence means the radio is ours to use.
 public enum G7RadioCensus {
     public static var sink: ((String) -> Void)?
+
+    private static let stateLock = NSLock()
+    private static var _connectPendingSince: Date?
+    private static var _lastRideSignalAt: Date?
+
+    public static var connectPendingSince: Date? {
+        stateLock.lock(); defer { stateLock.unlock() }
+        return _connectPendingSince
+    }
+    public static var lastRideSignalAt: Date? {
+        stateLock.lock(); defer { stateLock.unlock() }
+        return _lastRideSignalAt
+    }
+
+    static func noteConnectPending() {
+        stateLock.lock(); defer { stateLock.unlock() }
+        if _connectPendingSince == nil { _connectPendingSince = Date() }
+        _lastRideSignalAt = Date()
+    }
+    static func noteConnectResolved() {
+        stateLock.lock(); defer { stateLock.unlock() }
+        _connectPendingSince = nil
+        _lastRideSignalAt = Date()
+    }
+    static func noteRideSignal() {
+        stateLock.lock(); defer { stateLock.unlock() }
+        _lastRideSignalAt = Date()
+    }
 }
 import Foundation
 import os.log
@@ -216,6 +254,7 @@ class G7BluetoothManager: NSObject {
             // Trigger (b): the OS saw a connection event on a sensor-service peripheral —
             // in practice, D2W connecting for its reading. Log ALWAYS (even when we have an
             // active peripheral and ignore it): the census needs D2W's rhythm either way.
+            if event == .peerConnected { G7RadioCensus.noteRideSignal() }
             Self.census("connection-event \(event.rawValue == 1 ? "CONNECT" : "disconnect") \(peripheral.name ?? "unnamed") — \(self.activePeripheralIdentifier == nil ? "handling (trigger b)" : "ignored, have active")")
             if self.activePeripheralIdentifier == nil {
                 self.log.default("Discovered peripheral from connectionEventDidOccur %{public}@", peripheral.identifier.uuidString)
@@ -281,10 +320,25 @@ class G7BluetoothManager: NSObject {
      The sleep gives the transmitter time to shut down, but keeps the app running.
 
      */
+    /// #101 churn fix: single-flight. Every didFail/didDisconnect used to schedule its own
+    /// 2s-delayed rescan; a failed ride produced a burst of them and each rescan re-fired
+    /// connection events that produced more failures (2026-08-10 23:31:52-59, ~10 scan
+    /// restarts/second). N failures now schedule exactly one rescan.
+    private let scanRestartPending = NSLock()
+    private var _scanRestartPending = false
+
     fileprivate func scanAfterDelay() {
+        scanRestartPending.lock()
+        let alreadyPending = _scanRestartPending
+        _scanRestartPending = true
+        scanRestartPending.unlock()
+        guard !alreadyPending else { return }
+
         DispatchQueue.global(qos: .utility).async {
             Thread.sleep(forTimeInterval: 2)
-
+            self.scanRestartPending.lock()
+            self._scanRestartPending = false
+            self.scanRestartPending.unlock()
             self.scanForPeripheral()
         }
     }
@@ -314,6 +368,16 @@ class G7BluetoothManager: NSObject {
     private func handleDiscoveredPeripheral(_ peripheral: CBPeripheral) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
+        // #101 churn fix (2026-08-10 23:31:52-59): during a failed ride, every scan restart
+        // re-registers connection events and the OS re-fires CONNECT for the already-linked
+        // D2W peripheral — each firing landed here and issued ANOTHER connect() while the
+        // first was still pending, minting a fresh G7PeripheralManager per event (~10/s).
+        // A pending connect is already doing everything a duplicate would; skip it.
+        if peripheral.state == .connecting, managedPeripherals[peripheral.identifier] != nil {
+            G7RadioCensus.noteRideSignal()
+            return
+        }
+
         if let delegate = delegate {
             switch delegate.bluetoothManager(self, shouldConnectPeripheral: peripheral) {
             case .makeActive:
@@ -330,10 +394,12 @@ class G7BluetoothManager: NSObject {
                     activePeripheralManager?.delegate = self
                 }
                 self.managedPeripherals[peripheral.identifier] = activePeripheralManager
+                G7RadioCensus.noteConnectPending()
                 self.centralManager.connect(peripheral)
 
             case .connect:
                 log.default("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
+                G7RadioCensus.noteConnectPending()
                 self.centralManager.connect(peripheral)
                 let peripheralManager = G7PeripheralManager(
                     peripheral: peripheral,
@@ -399,6 +465,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         // Trigger (c): an advertisement reached our scan. Rate-limited per peripheral; the
         // interesting signal is PRESENCE vs ABSENCE per window — a held-pod-link arm with no
         // didDiscover lines while D2W reads fine is scan starvation, observed directly.
+        G7RadioCensus.noteRideSignal()
         if lastDiscoveryLog[peripheral.identifier].map({ Date().timeIntervalSince($0) > 30 }) ?? true {
             lastDiscoveryLog[peripheral.identifier] = Date()
             Self.census("ad DISCOVERED (trigger c) \(peripheral.name ?? "unnamed") rssi \(RSSI)")
@@ -411,6 +478,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
+        G7RadioCensus.noteConnectResolved()
         Self.census("didConnect \(peripheral.name ?? "unnamed")")
 
         log.default("%{public}@: %{public}@", #function, peripheral)
@@ -428,6 +496,11 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
+        // #101: the failing half of the churn cycle was invisible — the census had
+        // didConnect but neither terminal callback, so a ride that died looked identical
+        // to one that never started.
+        G7RadioCensus.noteConnectResolved()
+        Self.census("didDisconnect \(peripheral.name ?? "unnamed")\(error.map { " error=\($0.localizedDescription)" } ?? "")")
         log.default("%{public}@: %{public}@", #function, peripheral)
         // Ignore errors indicating the peripheral disconnected remotely, as that's expected behavior
         if let error = error as NSError?, CBError(_nsError: error).code != .peripheralDisconnected {
@@ -456,6 +529,8 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
+        G7RadioCensus.noteConnectResolved()
+        Self.census("didFailToConnect \(peripheral.name ?? "unnamed")\(error.map { " error=\($0.localizedDescription)" } ?? "")")
 
         log.error("%{public}@: %{public}@", #function, String(describing: error))
         if let error = error, let peripheralManager = activePeripheralManager {
