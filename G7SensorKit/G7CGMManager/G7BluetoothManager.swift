@@ -149,6 +149,43 @@ class G7BluetoothManager: NSObject {
     /// Isolated to `managerQueue`
     private var managedPeripherals: [UUID:G7PeripheralManager] = [:]
 
+    // RADIO LAB (2026-08-20). Runtime gates over the three acquisition doorways, so experiments are a
+    // 10-second toggle instead of an install cycle. UserDefaults-read AT USE with the shipped default,
+    // the same pattern OmnipodKit's connectOnDemandEnabled has always used. Absent keys change nothing.
+    static var labRideEnabled: Bool { UserDefaults.standard.object(forKey: "G7Lab.trigger.a") as? Bool ?? true }
+    static var labEventsEnabled: Bool { UserDefaults.standard.object(forKey: "G7Lab.trigger.b") as? Bool ?? true }
+    static var labScanEnabled: Bool { UserDefaults.standard.object(forKey: "G7Lab.trigger.c") as? Bool ?? true }
+
+    // SCAN WATCHDOG (H14 probe + remedy, 2026-08-20). The night of 08-19 the known-sensor branch sat in
+    // a bare pending connect for 37 minutes while the sensor advertised on grid (Mac observer). Whatever
+    // the root cause (H14: a scan session dead at the bluetoothd level while isScanning reads true), a
+    // full recycle of the acquisition is correct under every theory. 320 s = one full sensor window plus
+    // jitter: a whole window with acquisition armed and NOTHING delivered is deafness, not bad luck.
+    private var scanWatchdog: DispatchSourceTimer?
+    private var lastDeliveryAt: Date?
+
+    private func armScanWatchdog() {
+        scanWatchdog?.cancel()
+        let t = DispatchSource.makeTimerSource(queue: managerQueue)
+        t.schedule(deadline: .now() + 320, repeating: 320)
+        t.setEventHandler { [weak self] in self?.scanWatchdogFired() }
+        t.resume()
+        scanWatchdog = t
+    }
+
+    private func scanWatchdogFired() {
+        dispatchPrecondition(condition: .onQueue(managerQueue))
+        guard activePeripheral?.state != .connected else { return }
+        let age = lastDeliveryAt.map { Int(-$0.timeIntervalSinceNow) }
+        guard (age ?? Int.max) > 315 else { return }
+        Self.census("scan-watchdog: NOTHING delivered in \(age.map(String.init) ?? "∞")s with acquisition armed — recycling scan + connect (H14 probe)")
+        if let p = activePeripheral, p.state == .connecting {
+            centralManager.cancelPeripheralConnection(p)
+        }
+        managerQueue_stopScanning()
+        managerQueue_scanForPeripheral()
+    }
+
     var activePeripheralIdentifier: UUID? {
         get {
             return lockedPeripheralIdentifier.value
@@ -255,6 +292,7 @@ class G7BluetoothManager: NSObject {
             // in practice, D2W connecting for its reading. Log ALWAYS (even when we have an
             // active peripheral and ignore it): the census needs D2W's rhythm either way.
             if event == .peerConnected { G7RadioCensus.noteRideSignal() }
+            self.lastDeliveryAt = Date()
             Self.census("connection-event \(event.rawValue == 1 ? "CONNECT" : "disconnect") \(peripheral.name ?? "unnamed") — \(self.activePeripheralIdentifier == nil ? "handling (trigger b)" : "ignored, have active")")
             if self.activePeripheralIdentifier == nil {
                 self.log.default("Discovered peripheral from connectionEventDidOccur %{public}@", peripheral.identifier.uuidString)
@@ -275,7 +313,7 @@ class G7BluetoothManager: NSObject {
             return
         }
 
-        if let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
+        if Self.labRideEnabled, let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
             log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
             Self.census("scan-start: retrieved KNOWN peripheral \(peripheral.name ?? "unnamed") state=\(peripheral.state.rawValue)")
             handleDiscoveredPeripheral(peripheral)
@@ -294,22 +332,37 @@ class G7BluetoothManager: NSObject {
             }
         }
 
-        if activePeripheral == nil {
+        // THE 20-40 MINUTE OUTAGE FIX (2026-08-20). This used to be `activePeripheral == nil`, so the
+        // known-sensor branch above — which retrieves the peripheral and issues a bare connect() —
+        // left NO scan armed. A pending connect depends on bluetoothd's own duty-cycled background
+        // scan, which against a 1-4 s advertising burst per 300 s window is a lottery: measured
+        // 2026-08-19/20, seven consecutive windows missed, 20-40 min outages ending only when the
+        // sensor escalated to ~60 s distress cadence (also measured — the "exact 300 s grid" is the
+        // COLLECTED regime only). An armed scan catches the FIRST burst instead. Crude proved the same
+        // lesson ("scan is the primitive"). didConnect stops the scan via readied →
+        // managerQueue_stopScanning, and handleDiscoveredPeripheral's #101 guard makes a discovery
+        // during a pending connect a no-op, so this cannot churn.
+        if activePeripheral?.state != .connected {
             log.default("Scanning for peripherals and listening for connection events")
 
-            centralManager.registerForConnectionEvents(options: [CBConnectionEventMatchingOption.serviceUUIDs: [
-                SensorServiceUUID.advertisement.cbUUID,
-                SensorServiceUUID.cgmService.cbUUID
-            ]])
+            if Self.labEventsEnabled {
+                centralManager.registerForConnectionEvents(options: [CBConnectionEventMatchingOption.serviceUUIDs: [
+                    SensorServiceUUID.advertisement.cbUUID,
+                    SensorServiceUUID.cgmService.cbUUID
+                ]])
+            }
 
-            centralManager.scanForPeripherals(withServices: [
-                    SensorServiceUUID.advertisement.cbUUID
-                ],
-                options: nil
-            )
-            Self.census("scan STARTED (trigger c armed) + connection-events registered (trigger b armed)")
+            if Self.labScanEnabled {
+                centralManager.scanForPeripherals(withServices: [
+                        SensorServiceUUID.advertisement.cbUUID
+                    ],
+                    options: nil
+                )
+            }
+            Self.census("scan STARTED (lab: a=\(Self.labRideEnabled) b=\(Self.labEventsEnabled) c=\(Self.labScanEnabled)) — trigger c \(Self.labScanEnabled ? "armed" : "DISABLED BY LAB"), events \(Self.labEventsEnabled ? "armed" : "DISABLED BY LAB")")
             delegate?.bluetoothManagerScanningStatusDidChange(self)
         }
+        armScanWatchdog()
     }
 
     /**
@@ -468,6 +521,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         G7RadioCensus.noteRideSignal()
         if lastDiscoveryLog[peripheral.identifier].map({ Date().timeIntervalSince($0) > 30 }) ?? true {
             lastDiscoveryLog[peripheral.identifier] = Date()
+            lastDeliveryAt = Date()
             Self.census("ad DISCOVERED (trigger c) \(peripheral.name ?? "unnamed") rssi \(RSSI)")
         }
 
@@ -479,6 +533,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
         G7RadioCensus.noteConnectResolved()
+        lastDeliveryAt = Date()
         Self.census("didConnect \(peripheral.name ?? "unnamed")")
 
         log.default("%{public}@: %{public}@", #function, peripheral)
