@@ -166,6 +166,7 @@ class G7BluetoothManager: NSObject {
 
     private func armScanWatchdog() {
         scanWatchdog?.cancel()
+        if lastDeliveryAt == nil { lastDeliveryAt = Date() }   // baseline, so the first check is not "∞"
         let t = DispatchSource.makeTimerSource(queue: managerQueue)
         t.schedule(deadline: .now() + 320, repeating: 320)
         t.setEventHandler { [weak self] in self?.scanWatchdogFired() }
