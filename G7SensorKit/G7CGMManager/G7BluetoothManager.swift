@@ -23,6 +23,16 @@ import CoreBluetooth
 public enum G7RadioCensus {
     public static var sink: ((String) -> Void)?
 
+    /// Every sensor NAME this radio sees, as a signal rather than as prose.
+    ///
+    /// The census already logged these names, but only inside sentences — recovering "which
+    /// sensors are actually in range" meant parsing log strings. The host needs it as data to
+    /// break the stranded-identity trap: when the persisted sensor is gone and a replacement is
+    /// advertising beside it, nothing in the manager can notice, because it is busy failing
+    /// authentication against a corpse and therefore never learns the new sensor's ID.
+    /// (Ported from the pure/SportMode line, 2026-08-21.)
+    public static var sensorSighted: ((String) -> Void)?
+
     private static let stateLock = NSLock()
     private static var _connectPendingSince: Date?
     private static var _lastRideSignalAt: Date?
@@ -295,6 +305,7 @@ class G7BluetoothManager: NSObject {
             if event == .peerConnected { G7RadioCensus.noteRideSignal() }
             self.lastDeliveryAt = Date()
             Self.census("connection-event \(event.rawValue == 1 ? "CONNECT" : "disconnect") \(peripheral.name ?? "unnamed") — \(self.activePeripheralIdentifier == nil ? "handling (trigger b)" : "ignored, have active")")
+            if let name = peripheral.name { G7RadioCensus.sensorSighted?(name) }
             if self.activePeripheralIdentifier == nil {
                 self.log.default("Discovered peripheral from connectionEventDidOccur %{public}@", peripheral.identifier.uuidString)
                 self.handleDiscoveredPeripheral(peripheral)
@@ -524,6 +535,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
             lastDiscoveryLog[peripheral.identifier] = Date()
             lastDeliveryAt = Date()
             Self.census("ad DISCOVERED (trigger c) \(peripheral.name ?? "unnamed") rssi \(RSSI)")
+            if let name = peripheral.name { G7RadioCensus.sensorSighted?(name) }
         }
 
         managerQueue.async {
