@@ -568,7 +568,9 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         // didConnect but neither terminal callback, so a ride that died looked identical
         // to one that never started.
         G7RadioCensus.noteConnectResolved()
-        Self.census("didDisconnect \(peripheral.name ?? "unnamed")\(error.map { " error=\($0.localizedDescription)" } ?? "")")
+        // [domain#code] alongside Apple's prose (from the pure line, where a grep for Code=11
+        // returned zero while 34 connection-limit failures sat in the log as text only).
+        Self.census("didDisconnect \(peripheral.name ?? "unnamed")\(error.map { " [\(($0 as NSError).domain)#\(($0 as NSError).code)] \($0.localizedDescription)" } ?? "")")
         log.default("%{public}@: %{public}@", #function, peripheral)
         // Ignore errors indicating the peripheral disconnected remotely, as that's expected behavior
         if let error = error as NSError?, CBError(_nsError: error).code != .peripheralDisconnected {
@@ -598,7 +600,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
         G7RadioCensus.noteConnectResolved()
-        Self.census("didFailToConnect \(peripheral.name ?? "unnamed")\(error.map { " error=\($0.localizedDescription)" } ?? "")")
+        Self.census("didFailToConnect \(peripheral.name ?? "unnamed")\(error.map { " [\(($0 as NSError).domain)#\(($0 as NSError).code)] \($0.localizedDescription)" } ?? "")")
 
         log.error("%{public}@: %{public}@", #function, String(describing: error))
         if let error = error, let peripheralManager = activePeripheralManager {
