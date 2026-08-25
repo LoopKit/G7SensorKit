@@ -159,12 +159,13 @@ class G7BluetoothManager: NSObject {
     /// Isolated to `managerQueue`
     private var managedPeripherals: [UUID:G7PeripheralManager] = [:]
 
-    // RADIO LAB (2026-08-20). Runtime gates over the three acquisition doorways, so experiments are a
-    // 10-second toggle instead of an install cycle. UserDefaults-read AT USE with the shipped default,
-    // the same pattern OmnipodKit's connectOnDemandEnabled has always used. Absent keys change nothing.
-    static var labRideEnabled: Bool { UserDefaults.standard.object(forKey: "G7Lab.trigger.a") as? Bool ?? true }
-    static var labEventsEnabled: Bool { UserDefaults.standard.object(forKey: "G7Lab.trigger.b") as? Bool ?? true }
-    static var labScanEnabled: Bool { UserDefaults.standard.object(forKey: "G7Lab.trigger.c") as? Bool ?? true }
+    // SETTLED 2026-08-25 — no longer lab toggles. All three acquisition doorways proven over
+    // weeks of field use (ride + events + scan together are the piggyback mechanism); the
+    // UserDefaults reads are gone deliberately, so a stale `false` from an old experiment can
+    // never silently disable a doorway. The accessors stay so the call sites read as gates.
+    static var labRideEnabled: Bool { true }
+    static var labEventsEnabled: Bool { true }
+    static var labScanEnabled: Bool { true }
 
     // SCAN WATCHDOG (H14 probe + remedy, 2026-08-20). The night of 08-19 the known-sensor branch sat in
     // a bare pending connect for 37 minutes while the sensor advertised on grid (Mac observer). Whatever
