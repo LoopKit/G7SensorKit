@@ -71,6 +71,30 @@ final class G7CGMManagerTests: XCTestCase {
         XCTAssertEqual(Self.sensorID, manager.state.sensorID)
     }
 
+    func testGraceExpiryAfterCommsSinceGraceStartKeepsSensor() {
+        // A reading can race with the expiry timer: the work item is already
+        // dispatched when the reading arrives. Expiry must re-check for
+        // communication received since the grace period began.
+        let manager = makeManager(gracePeriod: 100)
+
+        manager.sensorDisconnected(manager.sensor, suspectedEndOfSession: true)
+        manager.sensor(manager.sensor, didRead: okGlucoseMessage)
+
+        manager.handleSuspectedSessionEndGraceExpiry(graceStart: Date(timeIntervalSinceNow: -60))
+
+        XCTAssertEqual(Self.sensorID, manager.state.sensorID)
+    }
+
+    func testGraceExpiryWithoutCommsForgetsSensor() {
+        let manager = makeManager(gracePeriod: 100)
+
+        manager.sensorDisconnected(manager.sensor, suspectedEndOfSession: true)
+
+        manager.handleSuspectedSessionEndGraceExpiry(graceStart: Date(timeIntervalSinceNow: -60))
+
+        XCTAssertNil(manager.state.sensorID)
+    }
+
     func testNonSuspectedDisconnectDoesNotForgetSensor() {
         let manager = makeManager(gracePeriod: 0.1)
 

@@ -31,6 +31,10 @@ public class G7CGMManager: CGMManager {
     /// and cancelled when sensor communication resumes.
     private let suspectedSessionEndScanItem = Locked<DispatchWorkItem?>(nil)
 
+    /// When the sensor last communicated (glucose or backfill message). Used to
+    /// resolve the race between an expiring grace period and an arriving message.
+    private let lastSensorCommsDate = Locked<Date?>(nil)
+
     public var state: G7CGMManagerState {
         return lockedState.value
     }
@@ -363,11 +367,9 @@ extension G7CGMManager: G7SensorDelegate {
     /// Instead, keep tracking the current sensor and only scan for a new one if
     /// communication does not resume within the grace period.
     private func scheduleScanAfterSuspectedSessionEnd() {
+        let graceStart = Date()
         let workItem = DispatchWorkItem { [weak self] in
-            guard let self = self else { return }
-            self.suspectedSessionEndScanItem.value = nil
-            self.logDeviceCommunication("No sensor communication since suspected session end.", type: .connection)
-            self.scanForNewSensor()
+            self?.handleSuspectedSessionEndGraceExpiry(graceStart: graceStart)
         }
 
         var scheduled = false
@@ -379,12 +381,29 @@ extension G7CGMManager: G7SensorDelegate {
         }
 
         // A grace period is already running; keep its original deadline.
-        guard scheduled else { return }
+        guard scheduled else {
+            logDeviceCommunication("Suspected session end during active grace period; original deadline unchanged.", type: .connection)
+            return
+        }
 
         logDeviceCommunication("Suspected session end; waiting \(suspectedSessionEndGracePeriod.minutes) minutes for communication to resume before scanning for new sensor.", type: .connection)
         // Wall-clock deadline: a mach-time deadline pauses while the device
         // sleeps, which could postpone detection of a genuinely ended session.
         DispatchQueue.global(qos: .utility).asyncAfter(wallDeadline: .now() + suspectedSessionEndGracePeriod, execute: workItem)
+    }
+
+    func handleSuspectedSessionEndGraceExpiry(graceStart: Date) {
+        suspectedSessionEndScanItem.value = nil
+
+        // A message may have arrived after this expiry was already dispatched;
+        // any communication since the grace period began proves the session is alive.
+        if let lastComms = lastSensorCommsDate.value, lastComms > graceStart {
+            logDeviceCommunication("Communication received during suspected session end grace period; keeping sensor.", type: .connection)
+            return
+        }
+
+        logDeviceCommunication("No sensor communication since suspected session end.", type: .connection)
+        scanForNewSensor()
     }
 
     private func cancelSuspectedSessionEndScan() {
@@ -408,6 +427,7 @@ extension G7CGMManager: G7SensorDelegate {
     public func sensor(_ sensor: G7Sensor, didRead message: G7GlucoseMessage) {
 
         // Receiving any glucose message proves the session is still active.
+        lastSensorCommsDate.value = Date()
         cancelSuspectedSessionEndScan()
 
         guard message != latestReading else {
@@ -478,6 +498,7 @@ extension G7CGMManager: G7SensorDelegate {
     }
 
     public func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage]) {
+        lastSensorCommsDate.value = Date()
         cancelSuspectedSessionEndScan()
 
         for msg in backfill {
