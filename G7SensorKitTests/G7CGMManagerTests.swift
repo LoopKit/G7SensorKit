@@ -148,28 +148,41 @@ final class G7CGMManagerTests: XCTestCase {
         XCTAssertEqual(Self.sensorID, manager.state.sensorID)
     }
 
-    func testGraceExpiryAfterCommsSinceGraceStartKeepsSensor() {
-        // A reading can race with the expiry timer: the work item is already
-        // dispatched when the reading arrives. Expiry must re-check for
-        // communication received since the grace period began.
+    func testGraceExpiryAfterCommsSinceGraceStartKeepsSensor() throws {
+        // A reading races the expiry: it is already dispatched when the reading
+        // arrives and clears the marker. Expiry must notice it no longer owns
+        // the window and leave the sensor alone.
         let manager = makeManager(gracePeriod: 100)
 
         manager.sensorDisconnected(manager.sensor, suspectedEndOfSession: true)
-        manager.sensor(manager.sensor, didRead: okGlucoseMessage)
+        let graceStart = try XCTUnwrap(manager.state.suspectedSessionEndAt)
 
-        manager.handleSuspectedSessionEndGraceExpiry(graceStart: Date(timeIntervalSinceNow: -60))
+        manager.sensor(manager.sensor, didRead: okGlucoseMessage)
+        manager.handleSuspectedSessionEndGraceExpiry(graceStart: graceStart)
 
         XCTAssertEqual(Self.sensorID, manager.state.sensorID)
     }
 
-    func testGraceExpiryWithoutCommsForgetsSensor() {
+    func testGraceExpiryWithoutCommsForgetsSensor() throws {
+        let manager = makeManager(gracePeriod: 100)
+
+        manager.sensorDisconnected(manager.sensor, suspectedEndOfSession: true)
+        let graceStart = try XCTUnwrap(manager.state.suspectedSessionEndAt)
+
+        manager.handleSuspectedSessionEndGraceExpiry(graceStart: graceStart)
+
+        XCTAssertNil(manager.state.sensorID)
+    }
+
+    /// An expiry from a superseded grace period must not forget the sensor.
+    func testStaleGraceExpiryDoesNotForgetSensor() {
         let manager = makeManager(gracePeriod: 100)
 
         manager.sensorDisconnected(manager.sensor, suspectedEndOfSession: true)
 
-        manager.handleSuspectedSessionEndGraceExpiry(graceStart: Date(timeIntervalSinceNow: -60))
+        manager.handleSuspectedSessionEndGraceExpiry(graceStart: Date(timeIntervalSinceNow: -3600))
 
-        XCTAssertNil(manager.state.sensorID)
+        XCTAssertEqual(Self.sensorID, manager.state.sensorID)
     }
 
     func testNonSuspectedDisconnectDoesNotForgetSensor() {
