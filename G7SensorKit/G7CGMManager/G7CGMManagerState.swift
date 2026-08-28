@@ -20,6 +20,11 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     public var latestReadingTimestamp: Date?
     public var latestConnect: Date?
     public var uploadReadings: Bool = true
+    /// When a suspected session end started its grace period, or nil if none is
+    /// pending. Persisted so a grace period survives app termination: the deferred
+    /// scan is an in-memory work item, so without this a genuinely ended session
+    /// would leave the manager tracking a sensor that will never advertise again.
+    public var suspectedSessionEndAt: Date?
 
     init() {
     }
@@ -36,6 +41,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.latestReadingTimestamp = rawValue["latestReadingTimestamp"] as? Date
         self.latestConnect = rawValue["latestConnect"] as? Date
         self.uploadReadings = rawValue["uploadReadings"] as? Bool ?? true
+        self.suspectedSessionEndAt = rawValue["suspectedSessionEndAt"] as? Date
     }
 
     public var rawValue: RawValue {
@@ -47,6 +53,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["latestReadingTimestamp"] = latestReadingTimestamp
         rawValue["latestConnect"] = latestConnect
         rawValue["uploadReadings"] = uploadReadings
+        rawValue["suspectedSessionEndAt"] = suspectedSessionEndAt
         return rawValue
     }
 }

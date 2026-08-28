@@ -36,6 +36,83 @@ final class G7CGMManagerTests: XCTestCase {
         return G7GlucoseMessage(data: Data(hexadecimalString: "4e00c35501002601000106008a00060187000f")!)!
     }
 
+    /// A grace period in flight when the app is terminated must be re-established
+    /// on restore: the deferred scan is an in-memory work item and does not survive.
+    /// Restore runs during init, so this goes through the internal init to pick up
+    /// the bluetooth seam, and uses the production default grace period.
+    private func makeRestoredManager(suspectedSessionEndAt: Date?,
+                                     latestReadingTimestamp: Date?) -> G7CGMManager {
+        var state = G7CGMManagerState()
+        state.sensorID = Self.sensorID
+        state.activatedAt = Date(timeIntervalSinceNow: -54000)
+        state.suspectedSessionEndAt = suspectedSessionEndAt
+        state.latestReadingTimestamp = latestReadingTimestamp
+
+        let sensor = G7Sensor(sensorID: state.sensorID, bluetoothManager: TestBluetoothManager())
+        return G7CGMManager(state: state, sensor: sensor)
+    }
+
+    func testRestoreForgetsSensorWhenGraceExpiredWhileNotRunning() {
+        // Grace started an hour ago, nothing heard since: the session really ended.
+        let manager = makeRestoredManager(
+            suspectedSessionEndAt: Date(timeIntervalSinceNow: -3600),
+            latestReadingTimestamp: Date(timeIntervalSinceNow: -7200)
+        )
+
+        XCTAssertNil(manager.state.sensorID)
+    }
+
+    func testRestoreKeepsSensorWhenReadingArrivedAfterGraceStart() {
+        // A reading after the grace period began proves the session survived.
+        let manager = makeRestoredManager(
+            suspectedSessionEndAt: Date(timeIntervalSinceNow: -3600),
+            latestReadingTimestamp: Date(timeIntervalSinceNow: -60)
+        )
+
+        XCTAssertEqual(Self.sensorID, manager.state.sensorID)
+        XCTAssertNil(manager.state.suspectedSessionEndAt)
+    }
+
+    func testRestoreKeepsSensorWhileGraceStillRunning() {
+        // Terminated one minute into a 15-minute grace period: still within the
+        // window, so keep the sensor and let the re-armed deferral decide.
+        let manager = makeRestoredManager(
+            suspectedSessionEndAt: Date(timeIntervalSinceNow: -60),
+            latestReadingTimestamp: Date(timeIntervalSinceNow: -120)
+        )
+
+        XCTAssertEqual(Self.sensorID, manager.state.sensorID)
+        XCTAssertNotNil(manager.state.suspectedSessionEndAt)
+    }
+
+    func testRestoreWithNoPendingGraceLeavesSensorAlone() {
+        let manager = makeRestoredManager(
+            suspectedSessionEndAt: nil,
+            latestReadingTimestamp: Date(timeIntervalSinceNow: -7200)
+        )
+
+        XCTAssertEqual(Self.sensorID, manager.state.sensorID)
+    }
+
+    func testSuspectedSessionEndPersistsGraceStart() {
+        let manager = makeManager(gracePeriod: 10)
+
+        manager.sensorDisconnected(manager.sensor, suspectedEndOfSession: true)
+
+        XCTAssertNotNil(manager.state.suspectedSessionEndAt)
+    }
+
+    func testReadingClearsPersistedGraceStart() {
+        let manager = makeManager(gracePeriod: 10)
+
+        manager.sensorDisconnected(manager.sensor, suspectedEndOfSession: true)
+        XCTAssertNotNil(manager.state.suspectedSessionEndAt)
+
+        manager.sensor(manager.sensor, didRead: okGlucoseMessage)
+
+        XCTAssertNil(manager.state.suspectedSessionEndAt)
+    }
+
     func testSuspectedSessionEndKeepsSensorDuringGracePeriod() {
         let manager = makeManager(gracePeriod: 10)
 
