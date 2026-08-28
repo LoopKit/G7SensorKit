@@ -230,6 +230,8 @@ public class G7CGMManager: CGMManager {
         lockedState = Locked(state)
         self.sensor = sensor
         sensor.delegate = self
+        // A grace period may have been in flight when the app was last terminated.
+        restorePendingSuspectedSessionEnd()
     }
 
     public var rawState: RawStateValue {
@@ -386,6 +388,10 @@ extension G7CGMManager: G7SensorDelegate {
             return
         }
 
+        mutateState { state in
+            state.suspectedSessionEndAt = graceStart
+        }
+
         logDeviceCommunication("Suspected session end; waiting \(suspectedSessionEndGracePeriod.minutes) minutes for communication to resume before scanning for new sensor.", type: .connection)
         // Wall-clock deadline: a mach-time deadline pauses while the device
         // sleeps, which could postpone detection of a genuinely ended session.
@@ -398,6 +404,11 @@ extension G7CGMManager: G7SensorDelegate {
         // A message may have arrived after this expiry was already dispatched;
         // any communication since the grace period began proves the session is alive.
         if let lastComms = lastSensorCommsDate.value, lastComms > graceStart {
+            if state.suspectedSessionEndAt != nil {
+                mutateState { state in
+                    state.suspectedSessionEndAt = nil
+                }
+            }
             logDeviceCommunication("Communication received during suspected session end grace period; keeping sensor.", type: .connection)
             return
         }
@@ -413,6 +424,55 @@ extension G7CGMManager: G7SensorDelegate {
             item = nil
         }
         pendingItem?.cancel()
+
+        // Only mutate when there is something to clear: this runs on every glucose
+        // and backfill message, and mutateState notifies observers and persists.
+        if state.suspectedSessionEndAt != nil {
+            mutateState { state in
+                state.suspectedSessionEndAt = nil
+            }
+        }
+    }
+
+    /// Re-establish a grace period that was in flight when the app was last terminated.
+    ///
+    /// The deferred scan is an in-memory `DispatchWorkItem`, so it does not survive
+    /// termination. Without this, an app killed inside the window would leave a
+    /// genuinely ended session tracked forever -- the sensor never advertises again
+    /// and nothing re-arms the scan, so the user has to scan manually.
+    private func restorePendingSuspectedSessionEnd() {
+        guard let graceStart = state.suspectedSessionEndAt else { return }
+
+        // Communication after the grace period began proves the session was alive.
+        if let latestReadingTimestamp = state.latestReadingTimestamp, latestReadingTimestamp > graceStart {
+            mutateState { state in
+                state.suspectedSessionEndAt = nil
+            }
+            return
+        }
+
+        let deadline = graceStart.addingTimeInterval(suspectedSessionEndGracePeriod)
+        guard deadline > Date() else {
+            // The window elapsed while we were not running, with no reading since.
+            logDeviceCommunication("Grace period for suspected session end expired while app was not running.", type: .connection)
+            scanForNewSensor()
+            return
+        }
+
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.handleSuspectedSessionEndGraceExpiry(graceStart: graceStart)
+        }
+        var scheduled = false
+        _ = suspectedSessionEndScanItem.mutate { item in
+            if item == nil {
+                item = workItem
+                scheduled = true
+            }
+        }
+        guard scheduled else { return }
+
+        logDeviceCommunication("Resuming suspected session end grace period; \(Int(deadline.timeIntervalSinceNow / 60)) minutes remaining.", type: .connection)
+        DispatchQueue.global(qos: .utility).asyncAfter(wallDeadline: .now() + deadline.timeIntervalSinceNow, execute: workItem)
     }
 
     public func sensor(_ sensor: G7Sensor, logComms comms: String) {
