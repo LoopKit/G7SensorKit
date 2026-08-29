@@ -128,8 +128,15 @@ class G7BluetoothManager: NSObject {
         super.init()
 
         managerQueue.sync {
-            self.centralManager = CBCentralManager(delegate: self, queue: managerQueue, options: [CBCentralManagerOptionRestoreIdentifierKey: "com.loudnate.CGMBLEKit"])
+            self.centralManager = self.makeCentralManager(queue: self.managerQueue)
         }
+    }
+
+    /// Factory seam so tests can substitute a central manager without the state
+    /// restoration option, which raises an exception outside an app with the
+    /// bluetooth-central background mode.
+    func makeCentralManager(queue: DispatchQueue) -> CBCentralManager {
+        return CBCentralManager(delegate: self, queue: queue, options: [CBCentralManagerOptionRestoreIdentifierKey: "com.loudnate.CGMBLEKit"])
     }
 
     // MARK: - Actions
