@@ -132,7 +132,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     private func handleGlucoseMessage(message: G7GlucoseMessage, peripheralManager: G7PeripheralManager) {
         activationDate = Date().addingTimeInterval(-TimeInterval(message.messageTimestamp))
         peripheralManager.perform { (peripheral) in
-            self.log.debug("Listening for backfill responses")
+            self.log.default("Listening for backfill responses")
             // Subscribe to backfill updates
             do {
                 try peripheral.listenToCharacteristic(.backfill)
@@ -199,7 +199,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         }
 
         peripheralManager.perform { (peripheral) in
-            self.log.info("Listening for authentication responses for %{public}@", String(describing: peripheralManager.peripheral.name))
+            // .default so this survives into a sysdiagnose: info and debug are
+            // memory-only and are not written to the log archive, which makes the
+            // auth handshake invisible in field diagnostics.
+            self.log.default("Listening for authentication responses for %{public}@", String(describing: peripheralManager.peripheral.name))
             do {
                 try peripheral.listenToCharacteristic(.authentication)
                 self.pendingAuth = true
@@ -319,7 +322,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReceiveAuthenticationResponse response: Data) {
 
         if let message = AuthChallengeRxMessage(data: response), message.isBonded, message.isAuthenticated {
-            log.debug("Observed authenticated session. enabling notifications for control characteristic.")
+            log.default("Observed authenticated session. enabling notifications for control characteristic.")
             pendingAuth = false
             peripheralManager.perform { (peripheral) in
                 do {
@@ -332,7 +335,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 }
             }
         } else {
-            log.debug("Ignoring authentication response: %{public}@", response.hexadecimalString)
+            log.default("Ignoring authentication response: %{public}@", response.hexadecimalString)
         }
     }
 
