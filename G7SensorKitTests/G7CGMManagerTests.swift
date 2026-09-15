@@ -25,7 +25,7 @@ final class G7CGMManagerTests: XCTestCase {
         var state = G7CGMManagerState()
         state.sensorID = Self.sensorID
         state.activatedAt = Date(timeIntervalSinceNow: -54000) // ~15h old session
-        let sensor = G7Sensor(sensorID: state.sensorID, bluetoothManager: TestBluetoothManager())
+        let sensor = G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, bluetoothManager: TestBluetoothManager())
         let manager = G7CGMManager(state: state, sensor: sensor)
         manager.suspectedSessionEndGracePeriod = gracePeriod
         return manager
@@ -48,7 +48,7 @@ final class G7CGMManagerTests: XCTestCase {
         state.suspectedSessionEndAt = suspectedSessionEndAt
         state.latestReadingTimestamp = latestReadingTimestamp
 
-        let sensor = G7Sensor(sensorID: state.sensorID, bluetoothManager: TestBluetoothManager())
+        let sensor = G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, bluetoothManager: TestBluetoothManager())
         return G7CGMManager(state: state, sensor: sensor)
     }
 

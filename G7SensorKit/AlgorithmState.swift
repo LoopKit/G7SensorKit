@@ -37,6 +37,10 @@ public enum AlgorithmState: RawRepresentable {
         case sensorFailedDueToRestart = 22
         case expired = 24
         case sensorFailed = 25
+        // Reported by newer firmware (first seen on Stelo).
+        case transmitterFailed = 27
+        case sivFailed = 28
+        case sessionFailedOutOfRange = 29
         case sessionEnded = 26
     }
 
@@ -67,7 +71,7 @@ public enum AlgorithmState: RawRepresentable {
         }
 
         switch state {
-        case .sensorFailed, .sensorFailedDuetoCountsAberration, .sensorFailedDuetoResidualAberration, .sessionFailedDueToTransmitterError, .sessionFailedDueToUnrecoverableError, .sensorFailedDueToProgressiveSensorDecline, .sensorFailedDueToHighCountsAberration, .sensorFailedDueToLowCountsAberration, .sensorFailedDueToRestart:
+        case .sensorFailed, .sensorFailedDuetoCountsAberration, .sensorFailedDuetoResidualAberration, .sessionFailedDueToTransmitterError, .sessionFailedDueToUnrecoverableError, .sensorFailedDueToProgressiveSensorDecline, .sensorFailedDueToHighCountsAberration, .sensorFailedDueToLowCountsAberration, .sensorFailedDueToRestart, .transmitterFailed, .sivFailed, .sessionFailedOutOfRange:
             return true
         default:
             return false
