@@ -28,6 +28,10 @@ extension G7CGMManager: CGMManagerUI {
         return nil
     }
 
+    public static var pickerImage: UIImage? {
+        return UIImage(named: "g7", in: Bundle(for: G7SettingsViewModel.self), compatibleWith: nil)
+    }
+
     public static func setupViewController(bluetoothProvider: LoopKit.BluetoothProvider, displayGlucosePreference: DisplayGlucosePreference, colorPalette: LoopKitUI.LoopUIColorPalette, allowDebugFeatures: Bool, prefersToSkipUserInteraction: Bool) -> LoopKitUI.SetupUIResult<LoopKitUI.CGMManagerViewController, LoopKitUI.CGMManagerUI>
     {
         let vc = G7UICoordinator(colorPalette: colorPalette, displayGlucosePreference: displayGlucosePreference, allowDebugFeatures: allowDebugFeatures)
