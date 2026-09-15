@@ -182,12 +182,6 @@
             "value" : "---"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "– – –"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -337,12 +331,6 @@
             "value" : "%1$@ יכול לקרוא נתונים מחיישן G7, אבל תצטרך להשתמש באפליקציית Dexcom G7 כדי לצמד, לכייל ולנהל את החיישן."
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@ G7 सीजीएम की रीडिंग्स पढ़ सकता है लेकिन सीजीएम सेन्सर के मैनज्मेंट, सेन्सर पैरिंग और कैलिब्रेशन की लिए dexcom का G7 ऐप ही इस्तेमाल करना चाहिए।"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -394,7 +382,7 @@
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ poate citi datele G7 CGM, dar pentru cuplare, calibrare și alte activități de gestionare a senzorului, va trebui să folosiți aplicația Dexcom G7."
+            "value" : "%1$@ poate citi datele senzorului de glicemie G7, dar pentru cuplare, calibrare și alte activități de gestionare a senzorului, va trebui să folosiți aplicația Dexcom G7."
           }
         },
         "ru" : {
@@ -503,6 +491,12 @@
             "value" : "このCGMを削除しますか?"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 CGM을 삭제하시겠습니까?"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -542,7 +536,7 @@
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sunteți sigur că doriți să ștergeți acest CGM?"
+            "value" : "Sunteți sigur că doriți să ștergeți acest senzor de glicemie?"
           }
         },
         "ru" : {
@@ -643,6 +637,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bluetooth"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "블루투스"
           }
         },
         "nb" : {
@@ -782,12 +782,6 @@
             "value" : "ביטול"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "निरस्त"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -845,7 +839,7 @@
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Renunță"
+            "value" : "Anulați"
           }
         },
         "ru" : {
@@ -946,6 +940,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impostazioni"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oppsett"
           }
         },
         "nb-NO" : {
@@ -1085,6 +1091,18 @@
             "value" : "Connesso"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "연결됨"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tilkoblet"
+          }
+        },
         "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1222,6 +1240,12 @@
             "value" : "In fase di Connessione"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tilkobler"
+          }
+        },
         "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1357,6 +1381,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continua"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fortsett"
           }
         },
         "nb-NO" : {
@@ -1502,6 +1532,12 @@
             "value" : "CGMを削除"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CGM 삭제"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1541,7 +1577,7 @@
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ștergeți CGM"
+            "value" : "Ștergeți senzor de glicemie"
           }
         },
         "ru" : {
@@ -1634,12 +1670,6 @@
           }
         },
         "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dexcom G7"
-          }
-        },
-        "hi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dexcom G7"
@@ -1799,6 +1829,12 @@
             "value" : "Fine"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "완료"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1936,12 +1972,6 @@
             "value" : "גלוקוז"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "शुगर"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1958,6 +1988,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "血糖値"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "혈당"
           }
         },
         "nb" : {
@@ -2097,12 +2133,6 @@
             "value" : "סיום זמן חסד"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ग्रेस समय समाप्त"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2113,6 +2143,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fine Periodo supplementare"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "유예 기간 만료"
           }
         },
         "nb" : {
@@ -2250,12 +2286,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "זמן חסר שנשאר"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "बचा हुआ ग्रेस समय"
           }
         },
         "hu" : {
@@ -2401,12 +2431,6 @@
             "value" : "גבוה"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HIGH"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2550,12 +2574,6 @@
             "value" : "חיבור אחרון"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "लास्ट  कनेक्ट"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2566,6 +2584,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ultima connessione"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마지막 연결"
           }
         },
         "nb" : {
@@ -2710,6 +2734,12 @@
             "value" : "Ultima lettura"
           }
         },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "마지막 측정값"
+          }
+        },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2839,12 +2869,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "נמוך"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "LOW"
           }
         },
         "hu" : {
@@ -2996,12 +3020,6 @@
             "value" : "שם"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "नाम"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3018,6 +3036,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "プリセット名"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이름"
           }
         },
         "nb" : {
@@ -3142,7 +3166,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Open Dexcom App"
+            "value" : "Ouvrir l'app Dexcom"
           }
         },
         "he" : {
@@ -3161,6 +3185,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apri l'app Dexcom"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "덱스콤 앱 열기"
           }
         },
         "nb" : {
@@ -3284,7 +3314,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Recherche du nouveau capteur"
+            "value" : "Rechercher un nouveau capteur"
           }
         },
         "he" : {
@@ -3303,6 +3333,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scansiona un nuovo sensore"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새 센서 검색"
           }
         },
         "nb" : {
@@ -3448,6 +3484,12 @@
             "value" : "Lettura"
           }
         },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skanner"
+          }
+        },
         "nb-NO" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3571,12 +3613,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "מחפש\nחיישן"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर ढूँड रहा है"
           }
         },
         "hu" : {
@@ -3722,12 +3758,6 @@
             "value" : "מחפש חיישן"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर ढूँड रहा है"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3869,12 +3899,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "החיישן\nפג"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर समाप्त"
           }
         },
         "hu" : {
@@ -4020,12 +4044,6 @@
             "value" : "כשל\nבחיישן"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर ख़राब"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4167,12 +4185,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "בעייה\nבחיישן"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर ख़राबी"
           }
         },
         "hu" : {
@@ -4318,12 +4330,6 @@
             "value" : "חיישן\nבהכנה"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर का शुरुआती समय"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4467,12 +4473,6 @@
             "value" : "תוקף חיישן"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर समाप्ति"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4483,6 +4483,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scadenza sensore"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "센서 만료"
           }
         },
         "nb" : {
@@ -4620,12 +4626,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "החיישן פג"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर समाप्त हो गया"
           }
         },
         "hu" : {
@@ -4771,12 +4771,6 @@
             "value" : "תוקף החיישן"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर समाप्त"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4787,6 +4781,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Il sensore scade"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "센서 만료까지"
           }
         },
         "nb" : {
@@ -4924,12 +4924,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "החיישן נכשל"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर ख़राब हो गया है"
           }
         },
         "hu" : {
@@ -5075,12 +5069,6 @@
             "value" : "התחלת חיישן"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सेन्सर  शुरू"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5091,6 +5079,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inizializzazione sensore"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "센서 시작"
           }
         },
         "nb" : {
@@ -5222,12 +5216,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "האות\nאבד"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सिग्नल लॉस"
           }
         },
         "hu" : {
@@ -5373,12 +5361,6 @@
             "value" : "שעה"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "समय"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5389,6 +5371,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Orario"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시간"
           }
         },
         "nb" : {
@@ -5522,12 +5510,6 @@
             "value" : "מגמה"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ट्रेंड"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5544,6 +5526,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "トレンド"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "추세"
           }
         },
         "nb" : {
@@ -5677,12 +5665,6 @@
             "value" : "העלה קריאות"
           }
         },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "अपलोड रीडिंग्स"
-          }
-        },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5693,6 +5675,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Carica letture"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "측정값 업로드"
           }
         },
         "nb" : {
@@ -5824,12 +5812,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ההכנה הסתיימה"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "शुरुआती वॉर्म अप पूर्ण"
           }
         },
         "hu" : {

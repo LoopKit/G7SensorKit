@@ -102,14 +102,15 @@ extension G7CGMManager: CGMManagerUI {
     public var cgmLifecycleProgress: DeviceLifecycleProgress? {
         switch lifecycleState {
         case .ok:
-            // show remaining lifetime, if < 24 hours
+            // show remaining lifetime, if < 48 hours
             guard let expiration = sensorExpiresAt else {
                 return nil
             }
             let remaining = max(0, expiration.timeIntervalSinceNow)
 
-            if remaining < .hours(24) {
-                return G7LifecycleProgress(percentComplete: 1-(remaining/lifetime), progressState: .warning)
+            if remaining < .hours(48) {
+                let progressState: DeviceLifecycleProgressState = remaining < .hours(24) ? .warning : .normalCGM
+                return G7LifecycleProgress(percentComplete: 1-(remaining/lifetime), progressState: progressState)
             }
             return nil
         case .gracePeriod:
