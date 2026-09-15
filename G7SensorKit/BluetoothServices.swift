@@ -35,6 +35,12 @@ enum CGMServiceCharacteristicUUID: String, CBUUIDRawValue {
 
     // Read/Write/Notify
     case backfill = "F8083536-849E-531C-C594-30F1F86A4EA5"
+
+    /// Write/Notify. Carries the bulk payloads of the direct pairing
+    /// handshake (J-PAKE round certificates, X.509 certificates, the key
+    /// challenge signature), streamed in 20-byte chunks while the
+    /// authentication characteristic carries the framing.
+    case certificate = "F8083538-849E-531C-C594-30F1F86A4EA5"
 }
 
 
@@ -54,6 +60,7 @@ extension G7PeripheralManager.Configuration {
                     CGMServiceCharacteristicUUID.authentication.cbUUID,
                     CGMServiceCharacteristicUUID.control.cbUUID,
                     CGMServiceCharacteristicUUID.backfill.cbUUID,
+                    CGMServiceCharacteristicUUID.certificate.cbUUID,
                 ]
             ],
             notifyingCharacteristics: [:],
