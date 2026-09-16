@@ -36,10 +36,13 @@ final class G7PairingViewModel: ObservableObject {
         onSuccess: @escaping (_ peripheralIdentifier: UUID, _ sharedKey: Data, _ deviceName: String?, _ handoff: G7PairingHandoff?) -> Void
     ) {
         self.pairingCode = pairingCode
-        self.serial = serial
-        // The sensor a session already holds is never the one being paired;
-        // trying it just earns a rejection.
-        self.excludedPeripheral = cgmManager?.state.peripheralIdentifier
+        // The sensor a session already holds is not the one being replaced;
+        // trying it with the new code just earns a rejection. The same code
+        // entered again means the same sensor, though: re-pairing it, so it
+        // is the one to look for, by serial when the session has learned it.
+        let isCurrentSensor = cgmManager?.state.pairingCode == pairingCode
+        self.serial = serial ?? (isCurrentSensor ? cgmManager?.state.transmitterVersion?.serialNumberString : nil)
+        self.excludedPeripheral = isCurrentSensor ? nil : cgmManager?.state.peripheralIdentifier
         self.onLog = onLog
         self.onSuccess = onSuccess
         service = G7PairingService(cgmManager: cgmManager)
