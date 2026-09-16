@@ -22,6 +22,7 @@
 		310BA65F04D790184F86A2AF /* G7PreviousSensorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A3F076AE2157B22DE43B91A /* G7PreviousSensorView.swift */; };
 		3B0FD2A52D803BF100E5E921 /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3B0FD2A42D803BF000E5E921 /* LoopKitUI.framework */; };
 		3C0E7E072DEBAD9E27C4E3E8 /* G7LifecycleAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BAFBA741A5D33EDA31E9122 /* G7LifecycleAlert.swift */; };
+		3EDC19C8067352F7FBC21C26 /* G7DisplayType.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0ED7F4C52EF2B7DCF8DFFB /* G7DisplayType.swift */; };
 		49563257D2DEE29AABBFEC7D /* G7P256.swift in Sources */ = {isa = PBXBuildFile; fileRef = 081992BE86DC6126B0151B4F /* G7P256.swift */; };
 		576A7AA8FC9457FE0F540A86 /* G7Authenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899E19256E3224A54FA35AD8 /* G7Authenticator.swift */; };
 		58C2B6119E4710D970C3AB5D /* G7PairingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72D3DBE7E0F724F99BFB7BC0 /* G7PairingViewModel.swift */; };
@@ -250,6 +251,7 @@
 		F2A62D050A4DCCED5F4A51F9 /* G7AlertsFromLoopView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7AlertsFromLoopView.swift; sourceTree = "<group>"; };
 		F3BAC6D6BA20FCF904FA1465 /* G7NotificationPermissionsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7NotificationPermissionsView.swift; sourceTree = "<group>"; };
 		F5018527436D26E887380354 /* TransmitterVersionMessage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TransmitterVersionMessage.swift; sourceTree = "<group>"; };
+		FB0ED7F4C52EF2B7DCF8DFFB /* G7DisplayType.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7DisplayType.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -483,6 +485,7 @@
 				C17F5142291EB36700555EB5 /* AuthChallengeRxMessage.swift */,
 				F5018527436D26E887380354 /* TransmitterVersionMessage.swift */,
 				DF238DACCD930310363D3EB5 /* G7CalibrationMessage.swift */,
+				FB0ED7F4C52EF2B7DCF8DFFB /* G7DisplayType.swift */,
 			);
 			path = Messages;
 			sourceTree = "<group>";
@@ -791,6 +794,7 @@
 				14BC59D876A3473596F29B02 /* G7SensorRecord.swift in Sources */,
 				D3CEBAE892F7B88160295F5F /* G7CalibrationRecord.swift in Sources */,
 				FD0DF29C00B05DECD53A4E2C /* G7CalibrationMessage.swift in Sources */,
+				3EDC19C8067352F7FBC21C26 /* G7DisplayType.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

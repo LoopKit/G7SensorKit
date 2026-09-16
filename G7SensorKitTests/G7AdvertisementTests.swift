@@ -25,6 +25,9 @@ class G7AdvertisementTests: XCTestCase {
         let advertisement = G7Advertisement(name: "DXCM12", manufacturerData: manufacturerData(serial: "123456789012", typesInUse: 0x02))
         XCTAssertEqual(advertisement.serialChecksum, CRC16.xmodem(Array("123456789012".utf8)))
         XCTAssertEqual(advertisement.isPhoneSlotHeld, true)
+        XCTAssertEqual(advertisement.typesInUse.map { $0 & 0x02 }, 0x02)
+        XCTAssertEqual(G7DisplayType.phone.typesInUseMask, 0x02)
+        XCTAssertEqual(G7DisplayType.medical.typesInUseMask, 0x01)
         XCTAssertTrue(advertisement.isSupportedSensor)
     }
 

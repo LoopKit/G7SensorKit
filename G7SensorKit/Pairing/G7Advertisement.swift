@@ -28,9 +28,6 @@ import Foundation
 ///   for a while, so a held slot is a reason to try other sensors first.
 struct G7Advertisement: Equatable {
 
-    /// A sensor's own display type identifier for a phone.
-    static let phoneDisplayType: UInt8 = 0x02
-
     /// The name the sensor advertises before it is paired: "DXCMxx" (G7),
     /// "DX02xx" (ONE+) or "DX01xx" (Stelo). The full "Dexcomxx" name only
     /// appears once connected.
@@ -40,9 +37,18 @@ struct G7Advertisement: Equatable {
     /// was present and well formed.
     let serialChecksum: UInt16?
 
-    /// Whether a phone-type display currently holds the sensor's slot. Nil
-    /// when the advertisement did not say.
-    let isPhoneSlotHeld: Bool?
+    /// The types-in-use byte: which display types currently hold a slot.
+    /// Nil when the advertisement did not say.
+    let typesInUse: UInt8?
+
+    /// Whether a display of this type currently holds its slot on the sensor.
+    func isSlotHeld(for displayType: G7DisplayType) -> Bool? {
+        typesInUse.map { $0 & displayType.typesInUseMask != 0 }
+    }
+
+    var isPhoneSlotHeld: Bool? {
+        isSlotHeld(for: .phone)
+    }
 
     init?(peripheral: CBPeripheral, advertisementData: [String: Any]) {
         guard let name = (advertisementData[CBAdvertisementDataLocalNameKey] as? String) ?? peripheral.name else {
@@ -59,12 +65,12 @@ struct G7Advertisement: Equatable {
               data[0] == 0xD0, data[1] == 0x00
         else {
             serialChecksum = nil
-            isPhoneSlotHeld = nil
+            typesInUse = nil
             return
         }
 
         serialChecksum = UInt16(data[2]) | UInt16(data[3]) << 8
-        isPhoneSlotHeld = data[4] & G7Advertisement.phoneDisplayType != 0
+        typesInUse = data[4]
     }
 
     /// Whether this looks like a sensor family we know how to pair with.

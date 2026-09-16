@@ -44,7 +44,7 @@ final class G7CalibrationTests: XCTestCase {
         XCTAssertEqual(bounds.lastCalibrationTime, 49182)
         XCTAssertEqual(bounds.processingStatus, .inProgress)
         XCTAssertTrue(bounds.calibrationsPermitted)
-        XCTAssertEqual(bounds.lastDisplayType, 4)
+        XCTAssertEqual(bounds.lastDisplayType, .receiver)
         XCTAssertEqual(bounds.lastProcessingUpdateTime, 49450)
         XCTAssertTrue(bounds.hasCalibration)
 

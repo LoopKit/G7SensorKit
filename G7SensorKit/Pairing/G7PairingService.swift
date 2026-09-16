@@ -105,6 +105,10 @@ public final class G7PairingService {
     /// The session's central, when re-pairing; nil during first-time setup,
     /// where the run creates the central the new session will adopt.
     private let borrowedBluetoothManager: G7BluetoothManager?
+
+    /// The slot this client takes on the sensor; also which slot's lease in
+    /// an advertisement matters when ordering candidates.
+    let displayType: G7DisplayType
     private weak var previousDelegate: G7BluetoothManagerDelegate?
     /// The sensor the borrowed central was following, to hand back if the
     /// run does not replace it.
@@ -131,12 +135,13 @@ public final class G7PairingService {
     /// - Parameter cgmManager: the manager being re-paired, if any. Its
     ///   session's central is borrowed for the run; with none, the run
     ///   creates the central the new session will adopt.
-    public convenience init(cgmManager: G7CGMManager?) {
-        self.init(bluetoothManager: cgmManager?.sensor.bluetoothManager)
+    public convenience init(cgmManager: G7CGMManager?, displayType: G7DisplayType = .phone) {
+        self.init(bluetoothManager: cgmManager?.sensor.bluetoothManager, displayType: cgmManager?.displayType ?? displayType)
     }
 
-    init(bluetoothManager: G7BluetoothManager?) {
+    init(bluetoothManager: G7BluetoothManager?, displayType: G7DisplayType = .phone) {
         borrowedBluetoothManager = bluetoothManager
+        self.displayType = displayType
     }
 
     /// After `.succeeded`: the central and connection for the session to take
@@ -387,7 +392,8 @@ public final class G7PairingService {
         let authenticator = G7Authenticator(
             pairingCode: pairingCode,
             storedSharedKey: nil,
-            stepTimeout: G7Authenticator.pairingStepTimeout
+            stepTimeout: G7Authenticator.pairingStepTimeout,
+            displayType: displayType
         )
         authenticator.logHandler = { [weak self] message in
             self?.onMain { self?.onLog?(message) }
@@ -498,7 +504,7 @@ extension G7PairingService: G7BluetoothManagerDelegate {
         let id = peripheral.identifier
         onMain { [weak self] in
             guard let self = self, self.isRunActive else { return }
-            let isHeld = advertisement.isPhoneSlotHeld ?? false
+            let isHeld = advertisement.isSlotHeld(for: displayType) ?? false
             if self.planner.addCandidate(id: id, name: advertisement.name, isPhoneSlotHeld: isHeld) {
                 self.report(isHeld
                     ? "Found \(advertisement.name); another phone connected recently, so trying others first"
@@ -506,7 +512,7 @@ extension G7PairingService: G7BluetoothManagerDelegate {
                 if case .scanning = self.state {
                     self.setState(.scanning(candidates: self.planner.candidates.map(\.name)))
                 }
-            } else if let isHeld = advertisement.isPhoneSlotHeld, self.planner.updateSlot(id: id, isPhoneSlotHeld: isHeld) {
+            } else if let isHeld = advertisement.isSlotHeld(for: displayType), self.planner.updateSlot(id: id, isPhoneSlotHeld: isHeld) {
                 self.report("\(advertisement.name) slot is now \(isHeld ? "held" : "free")")
             }
             self.armCandidateWatchdog()

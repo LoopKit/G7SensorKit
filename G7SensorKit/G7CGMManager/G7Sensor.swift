@@ -187,12 +187,17 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         lockedCredentials.value.sensorID
     }
 
-    convenience init(mode: G7SessionMode, credentials: G7SensorCredentials) {
-        self.init(mode: mode, credentials: credentials, bluetoothManager: G7BluetoothManager())
+    /// Which of the sensor's display slots this session takes: a phone by
+    /// default; a watch app would take its own, alongside the phone's.
+    let displayType: G7DisplayType
+
+    convenience init(mode: G7SessionMode, credentials: G7SensorCredentials, displayType: G7DisplayType = .phone) {
+        self.init(mode: mode, credentials: credentials, bluetoothManager: G7BluetoothManager(), displayType: displayType)
     }
 
-    init(mode: G7SessionMode, credentials: G7SensorCredentials, bluetoothManager: G7BluetoothManager) {
+    init(mode: G7SessionMode, credentials: G7SensorCredentials, bluetoothManager: G7BluetoothManager, displayType: G7DisplayType = .phone) {
         self.mode = mode
+        self.displayType = displayType
         self.lockedCredentials = Locked(credentials)
         self.bluetoothManager = bluetoothManager
         bluetoothManager.delegate = self
@@ -465,7 +470,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             storedSharedKey: credentials.sharedKey,
             stepTimeout: credentials.sharedKey == nil
                 ? G7Authenticator.pairingStepTimeout
-                : G7Authenticator.reconnectStepTimeout
+                : G7Authenticator.reconnectStepTimeout,
+            displayType: displayType
         )
         authenticator.logHandler = { [weak self] message in
             self?.logToDevice(message, type: .connection)

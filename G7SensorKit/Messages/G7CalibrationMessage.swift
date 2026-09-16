@@ -84,7 +84,7 @@ public struct G7CalibrationBoundsMessage: SensorMessage, Equatable {
     public let lastCalibrationTime: UInt32
     public let processingStatus: G7CalibrationProcessingStatus
     public let calibrationsPermitted: Bool
-    public let lastDisplayType: UInt8
+    public let lastDisplayType: G7DisplayType
     public let lastProcessingUpdateTime: UInt32
     public let data: Data
 
@@ -104,7 +104,7 @@ public struct G7CalibrationBoundsMessage: SensorMessage, Equatable {
         lastCalibrationTime = data[9..<13].to(UInt32.self)
         processingStatus = G7CalibrationProcessingStatus(byte: data[13])
         calibrationsPermitted = data[14] == 1
-        lastDisplayType = data[15]
+        lastDisplayType = G7DisplayType(rawValue: data[15]) ?? .unknown
         lastProcessingUpdateTime = data[16..<20].to(UInt32.self)
     }
 }
