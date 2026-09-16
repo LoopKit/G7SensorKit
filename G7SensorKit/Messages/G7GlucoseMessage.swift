@@ -5,6 +5,10 @@
 //  Created by Pete Schwamb on 9/24/22.
 //  Copyright © 2022 LoopKit Authors. All rights reserved.
 //
+//  The alignment of the fields and trend handling with the official app is
+//  from DexKit by Erik Tolboom (https://github.com/nightscout/DexKit), from
+//  JADX reverse engineering of the app.
+//
 
 import Foundation
 import LoopKit
@@ -31,8 +35,14 @@ public struct G7GlucoseMessage: SensorMessage, Equatable {
         return messageTimestamp - UInt32(age)
     }
 
+    /// Beyond this rate the Dexcom apps show no arrow at all. The wire value
+    /// is Int8 tenths, so up to about 12.7 arrives; the thresholds below
+    /// match the official table, and this cap keeps a wild rate from being
+    /// drawn as a confident triple arrow.
+    public static let maximumTrendRateForArrow = 8.0
+
     public var trendType: LoopKit.GlucoseTrend? {
-        guard let trend = trend else {
+        guard let trend = trend, abs(trend) <= G7GlucoseMessage.maximumTrendRateForArrow else {
             return nil
         }
 

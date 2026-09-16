@@ -42,6 +42,15 @@ class G7PeripheralManager: NSObject {
         }
     }
 
+    /// Makes this manager the peripheral's delegate again, in case another
+    /// manager for the same peripheral took the role in the meantime.
+    func reclaimPeripheral() {
+        if peripheral.delegate !== self {
+            log.error("Reclaiming peripheral %{public}@ from %{public}@", peripheral, String(describing: peripheral.delegate))
+            peripheral.delegate = self
+        }
+    }
+
     /// The dispatch queue used to serialize operations on the peripheral
     let queue = DispatchQueue(label: "com.loopkit.PeripheralManager.queue", qos: .unspecified)
 
@@ -53,6 +62,14 @@ class G7PeripheralManager: NSObject {
 
     /// Any error surfaced during the active operation
     private var commandError: Error?
+
+    /// Persistent per-characteristic update handlers. The pairing handshake
+    /// installs these to collect streamed chunks, which the one-shot command
+    /// conditions cannot do: the sensor starts streaming on the certificate
+    /// characteristic before its acknowledgement lands on the authentication
+    /// characteristic, and acknowledgements themselves can arrive while our
+    /// own write is still pending. Guarded by `commandLock`.
+    private var valueUpdateHandlers: [CBUUID: (Data) -> Void] = [:]
 
     private(set) weak var central: CBCentralManager?
 
@@ -79,6 +96,15 @@ class G7PeripheralManager: NSObject {
         peripheral.delegate = self
 
         assertConfiguration()
+    }
+
+    /// Installs (or with a nil handler, removes) a persistent handler that
+    /// receives every value update for `characteristic`, ahead of the
+    /// unsolicited-notification path to the delegate.
+    func setValueUpdateHandler(for characteristic: CGMServiceCharacteristicUUID, handler: ((Data) -> Void)?) {
+        commandLock.lock()
+        valueUpdateHandlers[characteristic.cbUUID] = handler
+        commandLock.unlock()
     }
 
     func requestExtendedVersion() throws {
@@ -426,9 +452,11 @@ extension G7PeripheralManager: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         commandLock.lock()
 
+        // On an error the state does not change, so match the characteristic
+        // alone; otherwise the error is lost and the command only times out.
         if let index = commandConditions.firstIndex(where: { (condition) -> Bool in
-            if case .notificationStateUpdate(characteristicUUID: characteristic.uuid, enabled: characteristic.isNotifying) = condition {
-                return true
+            if case .notificationStateUpdate(characteristicUUID: characteristic.uuid, enabled: let enabled) = condition {
+                return error != nil || enabled == characteristic.isNotifying
             } else {
                 return false
             }
@@ -469,6 +497,7 @@ extension G7PeripheralManager: CBPeripheralDelegate {
         commandLock.lock()
 
         var notifyDelegate = false
+        var streamedValue: (handler: (Data) -> Void, value: Data)?
 
         if let index = commandConditions.firstIndex(where: { (condition) -> Bool in
             if case .valueUpdate(characteristic: characteristic, matching: let matching) = condition {
@@ -483,13 +512,28 @@ extension G7PeripheralManager: CBPeripheralDelegate {
             if commandConditions.isEmpty {
                 commandLock.broadcast()
             }
+        } else if let handler = valueUpdateHandlers[characteristic.uuid], let value = characteristic.value {
+            // Deliberately ahead of the `commandConditions.isEmpty` gate below:
+            // handshake traffic arrives while our own writes are still pending,
+            // and dropping it there is what an installed handler exists to avoid.
+            streamedValue = (handler, value) // execute after the unlock
         } else if let macro = configuration.valueUpdateMacros[characteristic.uuid] {
             macro(self)
-        } else if commandConditions.isEmpty {
+        } else {
+            // Unconditionally, pending command or not. The sensor answers a
+            // control write with a notification a moment after the write
+            // response, and if the next write (a backfill request) is already
+            // in flight by then, gating on "no command pending" threw the
+            // glucose reply away. Seen in the field as signal loss while the
+            // sensor connected on schedule every five minutes.
             notifyDelegate = true // execute after the unlock
         }
 
         commandLock.unlock()
+
+        if let streamedValue = streamedValue {
+            streamedValue.handler(streamedValue.value)
+        }
 
         if notifyDelegate {
             // If we weren't expecting this notification, pass it along to the delegate
