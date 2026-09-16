@@ -5,6 +5,10 @@
 //  Created by Nathan Racklyeft on 11/22/15.
 //  Copyright © 2015 Nathan Racklyeft. All rights reserved.
 //
+//  The failure codes and the protocol notes that go with them are from DexKit
+//  by Erik Tolboom (https://github.com/nightscout/DexKit), recovered from
+//  PacketLogger captures and reverse engineering of the official app.
+//
 
 import Foundation
 

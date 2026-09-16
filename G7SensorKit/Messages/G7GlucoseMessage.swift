@@ -5,6 +5,10 @@
 //  Created by Pete Schwamb on 9/24/22.
 //  Copyright © 2022 LoopKit Authors. All rights reserved.
 //
+//  The alignment of the fields and trend handling with the official app is
+//  from DexKit by Erik Tolboom (https://github.com/nightscout/DexKit), from
+//  JADX reverse engineering of the app.
+//
 
 import Foundation
 import LoopKit

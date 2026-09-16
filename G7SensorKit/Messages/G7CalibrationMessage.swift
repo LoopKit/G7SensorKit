@@ -4,6 +4,9 @@
 //
 //  Copyright © 2026 LoopKit Authors. All rights reserved.
 //
+//  The processing-status values and the bounds message layout are from DexKit
+//  by Erik Tolboom (https://github.com/nightscout/DexKit).
+//
 
 import Foundation
 
