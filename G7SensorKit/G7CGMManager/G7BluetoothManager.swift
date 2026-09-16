@@ -250,6 +250,7 @@ class G7BluetoothManager: NSObject {
                 activePeripheralManager = peripheralManager
             }
             peripheralManager.delegate = self
+            peripheralManager.reclaimPeripheral()
             managedPeripherals[peripheralManager.peripheral.identifier] = peripheralManager
         }
     }
@@ -419,6 +420,18 @@ class G7BluetoothManager: NSObject {
         return isConnected
     }
 
+    /// The manager already attached to this peripheral, if there is one. A
+    /// candidate dropped from `managedPeripherals` on disconnect is still the
+    /// peripheral's delegate, and may still have a handshake running; a
+    /// second manager would take the delegate role from it, and its commands
+    /// would never hear back.
+    private func makeOrReusePeripheralManager(_ peripheral: CBPeripheral) -> G7PeripheralManager {
+        if let existing = peripheral.delegate as? G7PeripheralManager {
+            return existing
+        }
+        return G7PeripheralManager(peripheral: peripheral, configuration: .dexcomG7, centralManager: centralManager)
+    }
+
     private func handleDiscoveredPeripheral(_ peripheral: CBPeripheral, advertisementData: [String: Any] = [:]) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
@@ -430,11 +443,7 @@ class G7BluetoothManager: NSObject {
                 if let peripheralManager = activePeripheralManager {
                     peripheralManager.peripheral = peripheral
                 } else {
-                    activePeripheralManager = G7PeripheralManager(
-                        peripheral: peripheral,
-                        configuration: .dexcomG7,
-                        centralManager: centralManager
-                    )
+                    activePeripheralManager = makeOrReusePeripheralManager(peripheral)
                     activePeripheralManager?.delegate = self
                 }
                 self.managedPeripherals[peripheral.identifier] = activePeripheralManager
@@ -452,11 +461,7 @@ class G7BluetoothManager: NSObject {
                     }
                 } else {
                     log.default("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
-                    let peripheralManager = G7PeripheralManager(
-                        peripheral: peripheral,
-                        configuration: .dexcomG7,
-                        centralManager: centralManager
-                    )
+                    let peripheralManager = makeOrReusePeripheralManager(peripheral)
                     peripheralManager.delegate = self
                     self.managedPeripherals[peripheral.identifier] = peripheralManager
                     self.centralManager.connect(peripheral)

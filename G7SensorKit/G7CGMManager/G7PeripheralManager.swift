@@ -42,6 +42,15 @@ class G7PeripheralManager: NSObject {
         }
     }
 
+    /// Makes this manager the peripheral's delegate again, in case another
+    /// manager for the same peripheral took the role in the meantime.
+    func reclaimPeripheral() {
+        if peripheral.delegate !== self {
+            log.error("Reclaiming peripheral %{public}@ from %{public}@", peripheral, String(describing: peripheral.delegate))
+            peripheral.delegate = self
+        }
+    }
+
     /// The dispatch queue used to serialize operations on the peripheral
     let queue = DispatchQueue(label: "com.loopkit.PeripheralManager.queue", qos: .unspecified)
 
@@ -443,9 +452,11 @@ extension G7PeripheralManager: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         commandLock.lock()
 
+        // On an error the state does not change, so match the characteristic
+        // alone; otherwise the error is lost and the command only times out.
         if let index = commandConditions.firstIndex(where: { (condition) -> Bool in
-            if case .notificationStateUpdate(characteristicUUID: characteristic.uuid, enabled: characteristic.isNotifying) = condition {
-                return true
+            if case .notificationStateUpdate(characteristicUUID: characteristic.uuid, enabled: let enabled) = condition {
+                return error != nil || enabled == characteristic.isNotifying
             } else {
                 return false
             }

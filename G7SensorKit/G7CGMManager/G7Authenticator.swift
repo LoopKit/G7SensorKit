@@ -163,8 +163,14 @@ final class G7Authenticator {
             ? "Authenticating with the saved key"
             : "Pairing: running the key exchange")
 
-        try peripheral.setNotifyValue(true, for: .certificate)
-        try peripheral.setNotifyValue(true, for: .authentication)
+        do {
+            try peripheral.setNotifyValue(true, for: .certificate)
+            try peripheral.setNotifyValue(true, for: .authentication)
+        } catch {
+            report("Could not subscribe to the sensor's characteristics: \(error)"
+                + (G7Authenticator.looksLikeStaleBond(error) ? ". The link could not be secured; the phone's Bluetooth bond for this sensor may be stale (Settings › Bluetooth › forget the sensor, then pair again)" : ""))
+            throw error
+        }
         report("Characteristics: \(peripheral.describeCharacteristic(.authentication)); "
             + "\(peripheral.describeCharacteristic(.certificate)); "
             + "\(peripheral.describeCharacteristic(.control))")
@@ -474,6 +480,18 @@ final class G7Authenticator {
 
     /// Logs to the system log (so it survives into a sysdiagnose) and, when
     /// set, to the host's device communication log.
+    /// CoreBluetooth's insufficient authentication/encryption ATT errors: the
+    /// sensor wants an encrypted link and the phone could not provide one,
+    /// which is what a bond the sensor no longer recognizes looks like.
+    static func looksLikeStaleBond(_ error: Error) -> Bool {
+        guard case PeripheralManagerError.cbPeripheralError(let underlying) = error,
+              let attError = underlying as? CBATTError
+        else {
+            return false
+        }
+        return attError.code == .insufficientAuthentication || attError.code == .insufficientEncryption
+    }
+
     private func report(_ message: String) {
         log.default("%{public}@", message)
         logHandler?(message)
