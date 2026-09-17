@@ -222,7 +222,7 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Blodsukker er utilgjengelig"
+            "value" : "Blodsukkerdata er ikke tilgjengelige"
           }
         },
         "nb-NO" : {
@@ -675,7 +675,7 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor er i ukjent tilstand %1$d"
+            "value" : "Sensorens status er ukjent %1$d"
           }
         },
         "nb-NO" : {
@@ -979,7 +979,7 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor er stoppet"
+            "value" : "Sensoren er stoppet"
           }
         },
         "nb-NO" : {
@@ -1134,7 +1134,7 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor varmer opp"
+            "value" : "Sensoren starter opp"
           }
         },
         "nb-NO" : {
