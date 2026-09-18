@@ -500,7 +500,7 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Er du sikker på at du vil slette denne CGM?"
+            "value" : "Er du sikker på at du vil slette denne CGM-en?"
           }
         },
         "nb-NO" : {
@@ -1541,7 +1541,7 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Slett CGM"
+            "value" : "Fjern CGM"
           }
         },
         "nb-NO" : {
@@ -4643,7 +4643,7 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor utløpt"
+            "value" : "Sensoren er utløpt"
           }
         },
         "nb-NO" : {
@@ -4941,7 +4941,7 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor feilet"
+            "value" : "Sensorfeil"
           }
         },
         "nb-NO" : {
@@ -5686,7 +5686,7 @@
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Last opp avlesninger"
+            "value" : "Last opp målinger"
           }
         },
         "nb-NO" : {
