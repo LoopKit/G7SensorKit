@@ -14,11 +14,14 @@ enum G7ProgressBarState {
     case sensorFailed
     case sensorExpired
     case searchingForSensor
+    case connecting
 
     var label: String {
         switch self {
         case .searchingForSensor:
             return LocalizedString("Searching for sensor", comment: "G7 Progress bar label when searching for sensor")
+        case .connecting:
+            return LocalizedString("Waiting for first reading", comment: "G7 Progress bar label after pairing, before the first reading")
         case .sensorExpired:
             return LocalizedString("Sensor expired", comment: "G7 Progress bar label when sensor expired")
         case .warmupProgress:
