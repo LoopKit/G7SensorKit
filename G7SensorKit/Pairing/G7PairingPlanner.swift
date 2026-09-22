@@ -5,7 +5,7 @@
 //  Copyright © 2026 LoopKit Authors. All rights reserved.
 //
 //  Derived from DexKit by Erik Tolboom (https://github.com/nightscout/DexKit):
-//  candidate planning follows its G7PairingPlanner.
+//  candidate planning follows its G7PairingRunner.
 //
 
 import Foundation
@@ -17,18 +17,29 @@ import Foundation
 /// sensors in range. The order matters: a sensor whose display slot is held
 /// by another phone will reject us, and four rejections in a row make a
 /// sensor stop accepting connections for a while. So unheld sensors go
-/// first, a sensor that rejects us is dropped rather than retried, and
-/// ordinary failures (a dropped link, a timeout) get a bounded number of
-/// retries before moving on.
+/// first, and within a class the strongest signal goes first — pairing
+/// happens with the phone held up to the freshly inserted sensor, so the
+/// intended one is usually (not always) the nearest and loudest. A sensor
+/// that rejects us is dropped rather than retried, and ordinary failures
+/// (a dropped link, a timeout) get a bounded number of retries before
+/// moving on.
 ///
 /// Pure bookkeeping with no Bluetooth of its own, so the policy is testable
 /// in isolation.
 struct G7PairingPlanner {
 
+    /// RSSI stand-in for an advertisement whose signal strength is unknown
+    /// (CoreBluetooth reports 127 when it cannot be read). Sorts weakest, so
+    /// candidates with a real reading are preferred, and equal-signal ties —
+    /// including every candidate when no signal is known — fall back to the
+    /// order already established.
+    static let unknownRSSI = Int.min
+
     struct Candidate: Equatable {
         let id: UUID
         let name: String
         var isPhoneSlotHeld: Bool
+        var rssi: Int
     }
 
     enum Action: Equatable {
@@ -36,6 +47,9 @@ struct G7PairingPlanner {
         case retryCurrent
         /// Move on to the next candidate.
         case advanceToNext
+        /// Every sensor discovered so far has been tried, but the scan is
+        /// still open: keep looking for the one the code belongs to.
+        case keepScanning
         /// Nothing left to try.
         case giveUp(reason: String)
     }
@@ -43,12 +57,24 @@ struct G7PairingPlanner {
     /// Ordinary failures tolerated per candidate before moving on.
     static let attemptsPerCandidate = 3
 
+    /// When the discovered candidates are exhausted, whether to keep scanning
+    /// for more rather than giving up. Manual code entry cannot tell the
+    /// intended sensor from a neighbour, so a sensor that does not match the
+    /// code is only a wrong guess, not a wrong code — the real one may not
+    /// have advertised yet. A scan (serial known) has already filtered to the
+    /// one sensor, so a mismatch there is a wrong code and stops.
+    let keepScanningWhenExhausted: Bool
+
     private(set) var candidates: [Candidate] = []
     private(set) var currentIndex = 0
     private var attemptsOnCurrent = 0
 
     /// Why candidates were dropped, for the failure message if nothing works.
     private(set) var abandonmentReasons: [String] = []
+
+    init(keepScanningWhenExhausted: Bool = false) {
+        self.keepScanningWhenExhausted = keepScanningWhenExhausted
+    }
 
     var currentCandidate: Candidate? {
         currentIndex < candidates.count ? candidates[currentIndex] : nil
@@ -59,57 +85,90 @@ struct G7PairingPlanner {
         attemptsOnCurrent + 1
     }
 
+    /// The message to show if the scan is stopped with nothing paired.
+    var exhaustionReason: String {
+        if candidates.isEmpty {
+            return LocalizedString(
+                "No sensor was found. Make sure the sensor is inserted and within range.",
+                comment: "Pairing failure reason when no G7 sensor was discovered"
+            )
+        }
+        if !abandonmentReasons.isEmpty {
+            return abandonmentReasons.joined(separator: "\n")
+        }
+        return LocalizedString(
+            "Could not pair with any sensor in range.",
+            comment: "Pairing failure reason when every discovered G7 sensor failed"
+        )
+    }
+
     /// Adds a newly discovered sensor. Returns false if it was already known.
     ///
-    /// New candidates go behind everything already tried, and behind
-    /// untried candidates of a better class: an unheld newcomer is queued
-    /// ahead of untried held candidates, since those are likely to reject us.
+    /// New candidates are ordered behind anything already tried, then by
+    /// class (unheld before held, since held ones are likely to reject us)
+    /// and by signal strength within a class.
     @discardableResult
-    mutating func addCandidate(id: UUID, name: String, isPhoneSlotHeld: Bool) -> Bool {
+    mutating func addCandidate(id: UUID, name: String, isPhoneSlotHeld: Bool, rssi: Int = unknownRSSI) -> Bool {
         guard !candidates.contains(where: { $0.id == id }) else {
             return false
         }
-        let candidate = Candidate(id: id, name: name, isPhoneSlotHeld: isPhoneSlotHeld)
-
-        // Never reorder anything at or before the current index: the current
-        // candidate may be mid-handshake.
-        let untried = candidates.indices.filter { $0 > currentIndex }
-        if !isPhoneSlotHeld, let firstHeld = untried.first(where: { candidates[$0].isPhoneSlotHeld }) {
-            candidates.insert(candidate, at: firstHeld)
-        } else {
-            candidates.append(candidate)
-        }
+        candidates.append(Candidate(id: id, name: name, isPhoneSlotHeld: isPhoneSlotHeld, rssi: rssi))
+        sortUntriedTail()
         return true
     }
 
     /// Records a fresh advertisement from a known candidate. A held slot
     /// frees up after ~15 minutes of silence, so a candidate deferred earlier
-    /// can become preferable. Returns whether anything changed.
+    /// can become preferable; a new signal reading can reorder it too.
+    /// Returns whether anything changed. A `nil` slot state or an
+    /// `unknownRSSI` reading leaves that stored value alone.
     @discardableResult
-    mutating func updateSlot(id: UUID, isPhoneSlotHeld: Bool) -> Bool {
-        guard let index = candidates.firstIndex(where: { $0.id == id }),
-              candidates[index].isPhoneSlotHeld != isPhoneSlotHeld
-        else {
+    mutating func updateSlot(id: UUID, isPhoneSlotHeld: Bool?, rssi: Int = unknownRSSI) -> Bool {
+        guard let index = candidates.firstIndex(where: { $0.id == id }) else {
             return false
         }
-        candidates[index].isPhoneSlotHeld = isPhoneSlotHeld
+        var changed = false
+        if let isPhoneSlotHeld = isPhoneSlotHeld, candidates[index].isPhoneSlotHeld != isPhoneSlotHeld {
+            candidates[index].isPhoneSlotHeld = isPhoneSlotHeld
+            changed = true
+        }
+        if rssi != G7PairingPlanner.unknownRSSI, candidates[index].rssi != rssi {
+            candidates[index].rssi = rssi
+            changed = true
+        }
+        guard changed else {
+            return false
+        }
+        sortUntriedTail()
+        return true
+    }
 
-        // Re-sort only the untried tail, preserving discovery order within
-        // each class.
+    /// Orders the untried tail: unheld before held, then strongest signal,
+    /// then the order already established (a stable sort, so equal readings —
+    /// and unknown ones — keep their place). Never touches the current
+    /// candidate or anything before it: the current one may be mid-handshake.
+    private mutating func sortUntriedTail() {
         let tailStart = currentIndex + 1
         guard tailStart < candidates.count else {
-            return true
+            return
         }
-        let tail = candidates[tailStart...]
-        candidates.replaceSubrange(tailStart..., with: tail.filter { !$0.isPhoneSlotHeld } + tail.filter { $0.isPhoneSlotHeld })
-        return true
+        let ordered = candidates[tailStart...].enumerated().sorted { lhs, rhs in
+            if lhs.element.isPhoneSlotHeld != rhs.element.isPhoneSlotHeld {
+                return !lhs.element.isPhoneSlotHeld
+            }
+            if lhs.element.rssi != rhs.element.rssi {
+                return lhs.element.rssi > rhs.element.rssi
+            }
+            return lhs.offset < rhs.offset
+        }.map(\.element)
+        candidates.replaceSubrange(tailStart..., with: ordered)
     }
 
     /// An ordinary failure on the current candidate: retry it, or move on if
     /// it has used up its attempts.
     mutating func recordFailure() -> Action {
         guard currentCandidate != nil else {
-            return giveUp()
+            return exhausted()
         }
         attemptsOnCurrent += 1
         if attemptsOnCurrent < G7PairingPlanner.attemptsPerCandidate {
@@ -122,7 +181,7 @@ struct G7PairingPlanner {
     /// does not belong to this code): drop it without retrying.
     mutating func abandonCurrentCandidate(reason: String) -> Action {
         guard let candidate = currentCandidate else {
-            return giveUp()
+            return exhausted()
         }
         abandonmentReasons.append("\(candidate.name): \(reason)")
         return advance()
@@ -131,22 +190,10 @@ struct G7PairingPlanner {
     private mutating func advance() -> Action {
         currentIndex += 1
         attemptsOnCurrent = 0
-        return currentCandidate != nil ? .advanceToNext : giveUp()
+        return currentCandidate != nil ? .advanceToNext : exhausted()
     }
 
-    private func giveUp() -> Action {
-        if candidates.isEmpty {
-            return .giveUp(reason: LocalizedString(
-                "No sensor was found. Make sure the sensor is inserted and within range.",
-                comment: "Pairing failure reason when no G7 sensor was discovered"
-            ))
-        }
-        if !abandonmentReasons.isEmpty {
-            return .giveUp(reason: abandonmentReasons.joined(separator: "\n"))
-        }
-        return .giveUp(reason: LocalizedString(
-            "Could not pair with any sensor in range.",
-            comment: "Pairing failure reason when every discovered G7 sensor failed"
-        ))
+    private func exhausted() -> Action {
+        keepScanningWhenExhausted ? .keepScanning : .giveUp(reason: exhaustionReason)
     }
 }

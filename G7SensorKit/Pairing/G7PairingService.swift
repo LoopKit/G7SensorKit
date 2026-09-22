@@ -205,6 +205,12 @@ public final class G7PairingService {
         self.pairingCode = code
         expectedSerial = serial
         excludedPeripheralIdentifier = excluded
+        // A scan knows the serial and has filtered to the one sensor, so a
+        // mismatch there is a wrong code and stops. Manual entry cannot tell
+        // the intended sensor from a neighbour, so keep looking until the
+        // scan deadline instead of failing on the first sensor that does not
+        // match the code.
+        planner = G7PairingPlanner(keepScanningWhenExhausted: serial == nil)
 
         #if targetEnvironment(simulator)
         startSimulatedRun()
@@ -230,13 +236,20 @@ public final class G7PairingService {
         manager.scanForPeripheral()
 
         let watchdog = DispatchWorkItem { [weak self] in
-            guard let self = self, case .scanning(let candidates) = self.state, candidates.isEmpty else {
+            guard let self = self, self.isRunActive, !self.authenticationInFlight else {
                 return
             }
-            self.fail(LocalizedString(
-                "No sensor was found in 20 minutes. Make sure the sensor is inserted and within range, and that no other phone or app is using it.",
-                comment: "Pairing failure reason when the scan for a G7 sensor times out"
-            ))
+            // With nothing ever found, or every sensor tried and none the
+            // code's, the deadline is where the run stops. A candidate still
+            // mid-handshake at the deadline is left to its own timeout.
+            if self.planner.candidates.isEmpty {
+                self.fail(LocalizedString(
+                    "No sensor was found in 20 minutes. Make sure the sensor is inserted and within range, and that no other phone or app is using it.",
+                    comment: "Pairing failure reason when the scan for a G7 sensor times out"
+                ))
+            } else {
+                self.fail(self.planner.exhaustionReason)
+            }
         }
         scanWatchdog = watchdog
         DispatchQueue.main.asyncAfter(deadline: .now() + G7PairingService.scanTimeout, execute: watchdog)
@@ -469,6 +482,15 @@ public final class G7PairingService {
                 armCandidateWatchdog()
             }
 
+        case .keepScanning:
+            // Manual entry: the sensors seen so far are not the code's, but the
+            // intended one may not have advertised yet. Keep looking until the
+            // scan watchdog's deadline rather than failing now.
+            setState(.scanning(candidates: planner.candidates.map(\.name)))
+            report("None of the sensors seen so far match the code; still scanning")
+            bluetoothManager?.disconnectAll()
+            bluetoothManager?.scanForPeripheral()
+
         case .giveUp(let reason):
             fail(reason)
         }
@@ -482,7 +504,7 @@ public final class G7PairingService {
 
 extension G7PairingService: G7BluetoothManagerDelegate {
 
-    func bluetoothManager(_ manager: G7BluetoothManager, shouldConnectPeripheral peripheral: CBPeripheral, advertisementData: [String: Any]) -> PeripheralConnectionCommand {
+    func bluetoothManager(_ manager: G7BluetoothManager, shouldConnectPeripheral peripheral: CBPeripheral, advertisementData: [String: Any], rssi: NSNumber) -> PeripheralConnectionCommand {
         // A finished run must never connect again: the sensor it just paired
         // belongs to the session manager now.
         guard !state.isFinished,
@@ -501,19 +523,22 @@ extension G7PairingService: G7BluetoothManagerDelegate {
             return .ignore
         }
 
+        // CoreBluetooth reports 127 when it cannot read the signal; only a
+        // real (negative dBm) reading orders candidates by proximity.
+        let signal = rssi.intValue < 0 ? rssi.intValue : G7PairingPlanner.unknownRSSI
         let id = peripheral.identifier
         onMain { [weak self] in
             guard let self = self, self.isRunActive else { return }
             let isHeld = advertisement.isSlotHeld(for: displayType) ?? false
-            if self.planner.addCandidate(id: id, name: advertisement.name, isPhoneSlotHeld: isHeld) {
+            if self.planner.addCandidate(id: id, name: advertisement.name, isPhoneSlotHeld: isHeld, rssi: signal) {
                 self.report(isHeld
                     ? "Found \(advertisement.name); another phone connected recently, so trying others first"
                     : "Found \(advertisement.name)")
                 if case .scanning = self.state {
                     self.setState(.scanning(candidates: self.planner.candidates.map(\.name)))
                 }
-            } else if let isHeld = advertisement.isSlotHeld(for: displayType), self.planner.updateSlot(id: id, isPhoneSlotHeld: isHeld) {
-                self.report("\(advertisement.name) slot is now \(isHeld ? "held" : "free")")
+            } else if self.planner.updateSlot(id: id, isPhoneSlotHeld: advertisement.isSlotHeld(for: displayType), rssi: signal) {
+                self.report("\(advertisement.name) advertisement updated")
             }
             self.armCandidateWatchdog()
         }

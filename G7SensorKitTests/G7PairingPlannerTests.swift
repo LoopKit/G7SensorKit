@@ -122,4 +122,76 @@ class G7PairingPlannerTests: XCTestCase {
         planner.updateSlot(id: a, isPhoneSlotHeld: true)
         XCTAssertEqual(planner.currentCandidate?.id, a, "a candidate mid-handshake must stay put")
     }
+
+    // MARK: - Signal strength ordering
+
+    /// Pairing happens with the phone up to the freshly inserted sensor, so
+    /// the intended one is usually the strongest signal: try the nearest
+    /// untried sensor first.
+    func testStrongerSignalGoesFirstWithinClass() {
+        var planner = G7PairingPlanner()
+        planner.addCandidate(id: a, name: "current", isPhoneSlotHeld: false, rssi: -50)
+        planner.addCandidate(id: b, name: "weak", isPhoneSlotHeld: false, rssi: -85)
+        planner.addCandidate(id: c, name: "strong", isPhoneSlotHeld: false, rssi: -42)
+        XCTAssertEqual(planner.candidates.map(\.name), ["current", "strong", "weak"])
+    }
+
+    /// Signal strength orders within a class but never ahead of it: a held
+    /// sensor is likely to reject us however strong it is.
+    func testSignalDoesNotOverrideHeldFreeOrder() {
+        var planner = G7PairingPlanner()
+        planner.addCandidate(id: a, name: "current", isPhoneSlotHeld: false, rssi: -50)
+        planner.addCandidate(id: b, name: "held-strong", isPhoneSlotHeld: true, rssi: -30)
+        planner.addCandidate(id: c, name: "free-weak", isPhoneSlotHeld: false, rssi: -88)
+        XCTAssertEqual(planner.candidates.map(\.name), ["current", "free-weak", "held-strong"])
+    }
+
+    /// With no signal reading, ordering is unchanged from discovery order.
+    func testUnknownSignalKeepsDiscoveryOrder() {
+        var planner = G7PairingPlanner()
+        planner.addCandidate(id: a, name: "current", isPhoneSlotHeld: false)
+        planner.addCandidate(id: b, name: "first", isPhoneSlotHeld: false)
+        planner.addCandidate(id: c, name: "second", isPhoneSlotHeld: false)
+        XCTAssertEqual(planner.candidates.map(\.name), ["current", "first", "second"])
+    }
+
+    /// A fresh advertisement can carry a new signal reading that reorders an
+    /// untried candidate; an unchanged reading reports no change.
+    func testUpdateSlotAppliesNewSignal() {
+        var planner = G7PairingPlanner()
+        planner.addCandidate(id: a, name: "current", isPhoneSlotHeld: false, rssi: -50)
+        planner.addCandidate(id: b, name: "b", isPhoneSlotHeld: false, rssi: -80)
+        planner.addCandidate(id: c, name: "c", isPhoneSlotHeld: false, rssi: -70)
+        XCTAssertEqual(planner.candidates.map(\.name), ["current", "c", "b"])
+
+        XCTAssertTrue(planner.updateSlot(id: b, isPhoneSlotHeld: nil, rssi: -30))
+        XCTAssertEqual(planner.candidates.map(\.name), ["current", "b", "c"])
+
+        XCTAssertFalse(planner.updateSlot(id: b, isPhoneSlotHeld: nil, rssi: -30), "no change reports no change")
+    }
+
+    // MARK: - Keep scanning after exhaustion (manual entry)
+
+    /// Manual entry cannot tell the intended sensor from a neighbour, so a
+    /// sensor that does not match the code is a wrong guess, not a wrong code:
+    /// keep looking, and let a later discovery become the next to try.
+    func testManualModeKeepsScanningAfterExhaustion() {
+        var planner = G7PairingPlanner(keepScanningWhenExhausted: true)
+        planner.addCandidate(id: a, name: "neighbour", isPhoneSlotHeld: false, rssi: -60)
+        XCTAssertEqual(planner.abandonCurrentCandidate(reason: "wrong sensor"), .keepScanning)
+        XCTAssertNil(planner.currentCandidate)
+
+        XCTAssertTrue(planner.addCandidate(id: b, name: "real", isPhoneSlotHeld: false, rssi: -45))
+        XCTAssertEqual(planner.currentCandidate?.name, "real", "a sensor found later still gets tried")
+    }
+
+    /// A scan has filtered to the one sensor by serial, so a mismatch there is
+    /// a wrong code and stops.
+    func testScanModeGivesUpAfterExhaustion() {
+        var planner = G7PairingPlanner(keepScanningWhenExhausted: false)
+        planner.addCandidate(id: a, name: "only", isPhoneSlotHeld: false)
+        guard case .giveUp = planner.abandonCurrentCandidate(reason: "wrong code") else {
+            return XCTFail("a scan should give up on a mismatch")
+        }
+    }
 }
