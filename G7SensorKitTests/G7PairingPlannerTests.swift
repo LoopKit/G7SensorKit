@@ -125,8 +125,9 @@ class G7PairingPlannerTests: XCTestCase {
 
     // MARK: - Signal strength ordering
 
-    /// The sensor being paired is in the user's hand, so it is almost always
-    /// the strongest signal: try the nearest untried sensor first.
+    /// Pairing happens with the phone up to the freshly inserted sensor, so
+    /// the intended one is usually the strongest signal: try the nearest
+    /// untried sensor first.
     func testStrongerSignalGoesFirstWithinClass() {
         var planner = G7PairingPlanner()
         planner.addCandidate(id: a, name: "current", isPhoneSlotHeld: false, rssi: -50)

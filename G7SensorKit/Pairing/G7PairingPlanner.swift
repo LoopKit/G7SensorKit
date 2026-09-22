@@ -17,11 +17,12 @@ import Foundation
 /// sensors in range. The order matters: a sensor whose display slot is held
 /// by another phone will reject us, and four rejections in a row make a
 /// sensor stop accepting connections for a while. So unheld sensors go
-/// first, and within a class the strongest signal goes first — the sensor
-/// being paired is in the user's hand, so it is almost always the nearest
-/// one. A sensor that rejects us is dropped rather than retried, and
-/// ordinary failures (a dropped link, a timeout) get a bounded number of
-/// retries before moving on.
+/// first, and within a class the strongest signal goes first — pairing
+/// happens with the phone held up to the freshly inserted sensor, so the
+/// intended one is usually (not always) the nearest and loudest. A sensor
+/// that rejects us is dropped rather than retried, and ordinary failures
+/// (a dropped link, a timeout) get a bounded number of retries before
+/// moving on.
 ///
 /// Pure bookkeeping with no Bluetooth of its own, so the policy is testable
 /// in isolation.
