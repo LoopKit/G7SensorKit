@@ -73,6 +73,9 @@ public class G7CGMManager: CGMManager {
     }
     private let lockedState: Locked<G7CGMManagerState>
 
+    /// Sends readings to Dexcom Share while an account is signed in.
+    private var shareUploader: G7ShareUploader?
+
     private let g7StateObservers = WeakSynchronizedSet<G7StateObserver>()
 
     public weak var cgmManagerDelegate: CGMManagerDelegate? {
@@ -280,6 +283,9 @@ public class G7CGMManager: CGMManager {
         lockedState = Locked(state)
         self.sensor = sensor
         sensor.delegate = self
+        if state.shareUsername != nil, let credentials = G7ShareCredentialStore().load() {
+            startShareUploader(credentials: credentials, uploadedThrough: state.shareUploadedThrough)
+        }
         sensor.latestReadingDate = state.latestReadingTimestamp
         // A calibration entered before the app was last terminated is still owed to the sensor.
         if let calibration = state.calibration, calibration.outcome == .pending {
@@ -485,6 +491,7 @@ extension G7CGMManager {
     /// `delete` only notifies, so the notification is re-issued here.
     public func delete(completion: @escaping () -> Void) {
         cancelSuspectedSessionEndScan()
+        signOutOfShare()
         sensor.stopScanning()
         retractAllLifecycleAlerts()
         recordSensorEndIfNeeded()
@@ -686,6 +693,84 @@ extension G7CGMManager: G7SensorDelegate {
     public func sensor(_ sensor: G7Sensor, didReceive transmitterVersion: TransmitterVersionMessage) {
         mutateState { state in
             state.transmitterVersion = transmitterVersion
+        }
+        shareUploader?.serial = transmitterVersion.serialNumberString
+        shareUploader?.uploadNow()
+    }
+
+    // MARK: - Dexcom Share
+
+    /// The signed-in Share account, if any.
+    public var shareAccount: (username: String, server: G7ShareServer)? {
+        guard let username = state.shareUsername, let server = state.shareServer else { return nil }
+        return (username, server)
+    }
+
+    public var shareUploadStatus: G7ShareUploadStatus {
+        G7ShareUploadStatus(
+            lastUploadAt: state.shareLastUploadAt,
+            lastError: state.shareLastError,
+            lastErrorAt: state.shareLastErrorAt,
+            pendingCount: shareUploader?.status.pendingCount ?? 0
+        )
+    }
+
+    /// A client for the signed-in account, for managing followers.
+    public var shareClient: G7ShareClient? {
+        G7ShareCredentialStore().load().map { G7ShareClient(credentials: $0) }
+    }
+
+    /// Verifies the credentials with the service, keeps them, and starts
+    /// uploading. Throws the service's refusal if they are wrong.
+    public func signInToShare(_ credentials: G7ShareCredentials) async throws {
+        let client = G7ShareClient(credentials: credentials)
+        try await client.signIn()
+        try G7ShareCredentialStore().save(credentials)
+        mutateState { state in
+            state.shareUsername = credentials.username
+            state.shareServer = credentials.server
+            state.shareUploadedThrough = nil
+            state.shareLastUploadAt = nil
+            state.shareLastError = nil
+            state.shareLastErrorAt = nil
+        }
+        logDeviceCommunication("Signed in to Dexcom Share as \(credentials.username) (\(credentials.server.rawValue))", type: .connection)
+        startShareUploader(credentials: credentials, uploadedThrough: nil, client: client)
+    }
+
+    public func signOutOfShare() {
+        guard state.shareUsername != nil || shareUploader != nil else { return }
+        shareUploader = nil
+        G7ShareCredentialStore().delete()
+        mutateState { state in
+            state.shareUsername = nil
+            state.shareServer = nil
+            state.shareUploadedThrough = nil
+            state.shareLastUploadAt = nil
+            state.shareLastError = nil
+            state.shareLastErrorAt = nil
+        }
+        logDeviceCommunication("Signed out of Dexcom Share", type: .connection)
+    }
+
+    private func startShareUploader(credentials: G7ShareCredentials, uploadedThrough: Date?, client: G7ShareClient? = nil) {
+        let uploader = G7ShareUploader(client: client ?? G7ShareClient(credentials: credentials), uploadedThrough: uploadedThrough)
+        uploader.serial = state.transmitterVersion?.serialNumberString
+        uploader.onLog = { [weak self] message in
+            self?.logDeviceCommunication(message, type: .connection)
+        }
+        uploader.onStatusChange = { [weak self] status, uploadedThrough in
+            self?.mutateState { state in
+                state.shareUploadedThrough = uploadedThrough
+                state.shareLastUploadAt = status.lastUploadAt
+                state.shareLastError = status.lastError
+                state.shareLastErrorAt = status.lastErrorAt
+            }
+        }
+        shareUploader = uploader
+        // Recent readings that have not been sent yet.
+        if let latest = state.latestReading, let latestDate = state.latestReadingTimestamp, let glucose = latest.glucose, latest.hasReliableGlucose, !latest.glucoseIsDisplayOnly {
+            uploader.enqueue([G7ShareReading(date: latestDate, glucose: Int(glucose), trend: latest.trendType)])
         }
     }
 
@@ -947,6 +1032,10 @@ extension G7CGMManager: G7SensorDelegate {
         let unit = LoopUnit.milligramsPerDeciliter
         let quantity = LoopQuantity(unit: unit, doubleValue: Double(min(max(glucose, GlucoseLimits.minimum), GlucoseLimits.maximum)))
 
+        if !message.glucoseIsDisplayOnly {
+            shareUploader?.enqueue([G7ShareReading(date: latestReadingTimestamp, glucose: Int(glucose), trend: message.trendType)])
+        }
+
         updateDelegate(with: .newData([
             NewGlucoseSample(
                 date: latestReadingTimestamp,
@@ -1023,6 +1112,11 @@ extension G7CGMManager: G7SensorDelegate {
                 device: device
             )
         }
+
+        shareUploader?.enqueue(backfill.compactMap { entry in
+            guard let glucose = entry.glucose, entry.hasReliableGlucose, !entry.glucoseIsDisplayOnly else { return nil }
+            return G7ShareReading(date: activationDate.addingTimeInterval(TimeInterval(entry.timestamp)), glucose: Int(glucose), trend: entry.trendType)
+        })
 
         updateDelegate(with: .newData(samples))
     }

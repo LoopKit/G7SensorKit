@@ -87,6 +87,15 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     public var calibrationBounds: G7CalibrationBoundsMessage?
     public var calibrationBoundsDate: Date?
 
+    /// Dexcom Share upload: the account (its password is in the keychain),
+    /// what has been sent, and the last outcome. Nil when signed out.
+    public var shareUsername: String?
+    public var shareServer: G7ShareServer?
+    public var shareUploadedThrough: Date?
+    public var shareLastUploadAt: Date?
+    public var shareLastError: String?
+    public var shareLastErrorAt: Date?
+
     /// When a suspected session end started its grace period, or nil if none is
     /// pending. Persisted so a grace period survives app termination: the deferred
     /// scan is an in-memory work item, so without this a genuinely ended session
@@ -136,6 +145,12 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.calibration = (rawValue["calibration"] as? G7CalibrationRecord.RawValue).flatMap(G7CalibrationRecord.init(rawValue:))
         self.calibrationBounds = (rawValue["calibrationBounds"] as? Data).flatMap(G7CalibrationBoundsMessage.init(data:))
         self.calibrationBoundsDate = rawValue["calibrationBoundsDate"] as? Date
+        self.shareUsername = rawValue["shareUsername"] as? String
+        self.shareServer = (rawValue["shareServer"] as? String).flatMap(G7ShareServer.init(rawValue:))
+        self.shareUploadedThrough = rawValue["shareUploadedThrough"] as? Date
+        self.shareLastUploadAt = rawValue["shareLastUploadAt"] as? Date
+        self.shareLastError = rawValue["shareLastError"] as? String
+        self.shareLastErrorAt = rawValue["shareLastErrorAt"] as? Date
         self.suspectedSessionEndAt = rawValue["suspectedSessionEndAt"] as? Date
     }
 
@@ -164,6 +179,12 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["calibration"] = calibration?.rawValue
         rawValue["calibrationBounds"] = calibrationBounds?.data
         rawValue["calibrationBoundsDate"] = calibrationBoundsDate
+        rawValue["shareUsername"] = shareUsername
+        rawValue["shareServer"] = shareServer?.rawValue
+        rawValue["shareUploadedThrough"] = shareUploadedThrough
+        rawValue["shareLastUploadAt"] = shareLastUploadAt
+        rawValue["shareLastError"] = shareLastError
+        rawValue["shareLastErrorAt"] = shareLastErrorAt
         rawValue["suspectedSessionEndAt"] = suspectedSessionEndAt
         return rawValue
     }
