@@ -288,12 +288,12 @@ public final class G7ShareClient {
             createdContact = true
         } catch let error as G7ShareError where error.isContactNameTaken {
             // A contact of that name is already on the account, e.g. from an
-            // invitation that did not complete. Reuse it if it can be found.
-            guard let existing = try await listFollowers().first(where: { $0.contactName.caseInsensitiveCompare(name) == .orderedSame }) else {
-                throw G7ShareError.service(code: G7ShareError.contactNameTaken, message: LocalizedString("A contact with this name already exists on the account but is not among the followers. Use a different name, or remove the contact in the Dexcom app.", comment: "Share error: contact name taken and not listed"))
+            // invitation that did not complete. Reuse it.
+            guard let existing = try await existingContactId(named: name, sessionId: sessionId) else {
+                throw G7ShareError.service(code: G7ShareError.contactNameTaken, message: LocalizedString("A contact with this name already exists on the account but could not be found. Use a different name.", comment: "Share error: contact name taken and not found"))
             }
-            logHandler?("Reusing existing contact \(existing.contactId) for \(name)")
-            contactId = existing.contactId
+            logHandler?("Reusing existing contact \(existing) for \(name)")
+            contactId = existing
         }
 
         let invitation: [String: Any] = [
@@ -320,6 +320,24 @@ public final class G7ShareClient {
             }
         }
         return contactId
+    }
+
+    /// The id of an existing contact, by name: among the followers, or
+    /// through `ReadContactByName` for a contact with no subscription.
+    private func existingContactId(named name: String, sessionId: String) async throws -> String? {
+        if let follower = try await listFollowers().first(where: { $0.contactName.caseInsensitiveCompare(name) == .orderedSame }) {
+            return follower.contactId
+        }
+        let data = try await send("Publisher/ReadContactByName", query: ["sessionId": sessionId, "contactName": name], body: nil)
+        let value = try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
+        if let id = value as? String, !id.isEmpty {
+            return id
+        }
+        if let object = value as? [String: Any], let id = (object["ContactId"] ?? object["Id"]) as? String {
+            return id
+        }
+        logHandler?("ReadContactByName answered with something unexpected: \(String(data: data.prefix(200), encoding: .utf8) ?? "")")
+        return nil
     }
 
     private func createInvitation(contactId: String, sessionId: String, body: [String: Any]) async throws {
