@@ -9,6 +9,8 @@ import SwiftUI
 
 struct G7PairingSuccessView: View {
     var deviceName: String?
+    /// Whether setup continues after this page (Dexcom Share sign-in).
+    var hasNextStep = false
     var didFinish: () -> Void
 
     @Environment(\.appName) private var appName
@@ -44,7 +46,9 @@ struct G7PairingSuccessView: View {
             Spacer()
 
             Button(action: didFinish) {
-                Text(LocalizedString("Done", comment: "Button title to finish setup"))
+                Text(hasNextStep
+                    ? LocalizedString("Continue", comment: "Button title to continue")
+                    : LocalizedString("Done", comment: "Button title to finish setup"))
                     .actionButtonStyle(.primary)
             }
         }

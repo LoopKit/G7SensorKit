@@ -52,6 +52,9 @@ class G7SettingsViewModel: ObservableObject {
     @Published private(set) var calibrationBounds: G7CalibrationBoundsMessage?
     @Published private(set) var hasPendingCalibration: Bool = false
     @Published private(set) var canCalibrate: Bool = false
+    @Published private(set) var shareUsername: String?
+    @Published private(set) var shareServer: G7ShareServer?
+    @Published private(set) var shareUploadStatus = G7ShareUploadStatus()
     
     let displayGlucosePreference: DisplayGlucosePreference
 
@@ -131,6 +134,25 @@ class G7SettingsViewModel: ObservableObject {
         calibrationBounds = cgmManager.state.calibrationBounds
         hasPendingCalibration = cgmManager.hasPendingCalibration
         canCalibrate = cgmManager.canCalibrate
+        shareUsername = cgmManager.shareAccount?.username
+        shareServer = cgmManager.shareAccount?.server
+        shareUploadStatus = cgmManager.shareUploadStatus
+    }
+
+    // MARK: - Dexcom Share
+
+    func signInToShare(_ credentials: G7ShareCredentials) async throws {
+        try await cgmManager.signInToShare(credentials)
+        await MainActor.run { updateValues() }
+    }
+
+    func signOutOfShare() {
+        cgmManager.signOutOfShare()
+        updateValues()
+    }
+
+    var shareClient: G7ShareClient? {
+        cgmManager.shareClient
     }
 
     // MARK: - Calibration

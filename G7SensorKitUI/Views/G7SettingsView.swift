@@ -38,6 +38,7 @@ struct G7SettingsView: View {
 
     @State private var showingDeletionSheet = false
     @State private var showingCalibration = false
+    @State private var showingShareSignIn = false
 
     init(didFinish: @escaping () -> Void, deleteCGM: @escaping () -> Void, pairNewSensor: @escaping () -> Void, pairCurrentSensor: @escaping () -> Void, viewModel: G7SettingsViewModel) {
         self.didFinish = didFinish
@@ -137,6 +138,7 @@ if viewModel.sessionMode == .eavesdropping {
 
             if viewModel.sessionMode == .direct {
                 calibrationSection
+                shareSection
             }
 
             Section () {
@@ -159,6 +161,15 @@ if viewModel.sessionMode == .eavesdropping {
         .navigationBarTitle(viewModel.title)
         .sheet(isPresented: $showingCalibration) {
             G7CalibrationFlowView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showingShareSignIn) {
+            NavigationView {
+                G7ShareSignInView(
+                    signIn: { try await viewModel.signInToShare($0) },
+                    didFinish: { showingShareSignIn = false }
+                )
+                .navigationBarItems(leading: Button(LocalizedString("Cancel", comment: "Button text to cancel G7 setup")) { showingShareSignIn = false })
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
@@ -378,6 +389,53 @@ if viewModel.sessionMode == .eavesdropping {
                     Text(LocalizedString("Calibrate", comment: "Button title to start calibrating the sensor"))
                 }
                 .disabled(!viewModel.canCalibrate)
+            }
+        }
+    }
+
+    /// Uploading to Dexcom Share, so followers keep seeing readings without
+    /// the Dexcom app. Direct mode only: while eavesdropping the Dexcom app
+    /// is uploading itself.
+    private var shareSection: some View {
+        Section(header: Text(LocalizedString("Dexcom Share", comment: "Section header for Dexcom Share upload"))) {
+            if let username = viewModel.shareUsername {
+                LabeledValueView(
+                    label: LocalizedString("Account", comment: "Row label for the signed-in Dexcom Share account"),
+                    value: username
+                )
+                if let lastUploadAt = viewModel.shareUploadStatus.lastUploadAt {
+                    LabeledValueView(
+                        label: LocalizedString("Last Upload", comment: "Row label for the last Dexcom Share upload time"),
+                        value: timeFormatter.string(from: lastUploadAt)
+                    )
+                }
+                if let error = viewModel.shareUploadStatus.lastError {
+                    warning(
+                        title: LocalizedString("Upload Problem", comment: "Title of the Dexcom Share upload error notice"),
+                        message: error + (viewModel.shareUploadStatus.lastErrorAt.map { " (" + timeFormatter.string(from: $0) + ")" } ?? ""),
+                        style: .critical
+                    )
+                } else if viewModel.shareUploadStatus.lastUploadAt == nil {
+                    Text(LocalizedString("Waiting for the first reading to upload.", comment: "Dexcom Share status before the first upload"))
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
+                if let client = viewModel.shareClient {
+                    NavigationLink(destination: G7ShareFollowersView(client: client)) {
+                        Text(LocalizedString("Followers", comment: "Row label opening the followers page"))
+                    }
+                }
+                Button(action: viewModel.signOutOfShare) {
+                    Text(LocalizedString("Sign Out", comment: "Button title to sign out of Dexcom Share"))
+                        .foregroundColor(guidanceColors.critical)
+                }
+            } else {
+                Button(action: { showingShareSignIn = true }) {
+                    Text(LocalizedString("Sign In to Dexcom Share", comment: "Button title to sign in to Dexcom Share from settings"))
+                }
+                Text(LocalizedString("Send readings to Dexcom Share so followers keep seeing your glucose in the Dexcom Follow app.", comment: "Dexcom Share section footnote when signed out"))
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
             }
         }
     }
