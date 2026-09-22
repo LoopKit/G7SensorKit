@@ -41,6 +41,12 @@ public enum G7ShareError: Error, Equatable {
     public static let duplicateEgvPosted = "DuplicateEgvPosted"
     public static let contactNameTaken = "ContactNameAlreadyExists"
 
+    /// CreateSubscriptionInvitation's refusal while a new contact has not
+    /// reached it yet ("Failed to read Contact by id").
+    public var isContactNotFound: Bool {
+        serviceCode?.localizedCaseInsensitiveContains("ContactIdNotFound") == true
+    }
+
     /// CreateContact's refusal when the account already has a contact of
     /// that name ("The contact name already exists for this account").
     public var isContactNameTaken: Bool {
@@ -301,16 +307,21 @@ public final class G7ShareClient {
             "Permissions": 1,
             "DisplayName": displayName,
         ]
-        do {
-            try await createInvitation(contactId: contactId, sessionId: sessionId, body: invitation)
-        } catch {
-            // A contact that was just created is sometimes not readable for
-            // the invitation straight away; give it a moment and try once
-            // more before giving up and taking the contact back out, so the
-            // name is free for another attempt.
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
+        // A contact that was just created takes the invitation side of the
+        // service a while to see (DeleteContact knows it at once; observed
+        // 2 s not always being enough), so keep trying with a growing wait.
+        // If it never appears, take the contact back out so the name is free
+        // for another attempt.
+        var attempt = 0
+        while true {
             do {
                 try await createInvitation(contactId: contactId, sessionId: sessionId, body: invitation)
+                return contactId
+            } catch let error as G7ShareError where error.isContactNotFound && attempt < G7ShareClient.invitationRetryDelays.count {
+                let delay = G7ShareClient.invitationRetryDelays[attempt]
+                attempt += 1
+                logHandler?("Contact not visible to the invitation yet; retrying in \(Int(delay)) s")
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             } catch {
                 if createdContact {
                     logHandler?("Invitation failed; removing the contact just created")
@@ -319,7 +330,6 @@ public final class G7ShareClient {
                 throw error
             }
         }
-        return contactId
     }
 
     /// The id of an existing contact, by name, among the followers. A
@@ -330,6 +340,8 @@ public final class G7ShareClient {
     private func existingContactId(named name: String, sessionId: String) async throws -> String? {
         try await listFollowers().first(where: { $0.contactName.caseInsensitiveCompare(name) == .orderedSame })?.contactId
     }
+
+    static let invitationRetryDelays: [TimeInterval] = [2, 4, 8]
 
     private func createInvitation(contactId: String, sessionId: String, body: [String: Any]) async throws {
         let _: String = try await post("Publisher/CreateSubscriptionInvitation", query: ["sessionId": sessionId, "contactId": contactId], body: body)
