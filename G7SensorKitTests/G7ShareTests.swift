@@ -48,6 +48,9 @@ final class G7ShareTests: XCTestCase {
         XCTAssertTrue(G7ShareError.service(code: "SSO_AuthenticatePasswordInvalid", message: nil).isCredentialsRejected)
         XCTAssertFalse(G7ShareError.service(code: "DuplicateEgvPosted", message: nil).isSessionExpired)
         XCTAssertNil(G7ShareError.http(status: 503).serviceCode)
+        XCTAssertTrue(G7ShareError.service(code: "MonitoringSessionAlreadyActive", message: nil).isMonitoringSessionAlreadyActive)
+        XCTAssertTrue(G7ShareError.service(code: "Unknown", message: "Publisher account already has an active monitoring session.").isMonitoringSessionAlreadyActive)
+        XCTAssertFalse(G7ShareError.service(code: "MonitoringSessionNotActive", message: nil).isMonitoringSessionAlreadyActive)
     }
 
     func testServers() {

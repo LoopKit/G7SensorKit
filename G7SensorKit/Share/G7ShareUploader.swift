@@ -108,7 +108,7 @@ final class G7ShareUploader {
                     self.status.lastErrorAt = Date()
                     self.status.pendingCount = self.pending.count
                     self.backoffUntil = Date().addingTimeInterval(G7ShareUploader.errorBackoff)
-                    self.onLog?("Dexcom Share upload failed: \(error.localizedDescription)")
+                    self.onLog?("Dexcom Share upload failed: \((error as? G7ShareError)?.logDescription ?? error.localizedDescription)")
                     self.onStatusChange?(self.status, self.uploadedThrough)
                 }
             }
@@ -145,7 +145,15 @@ final class G7ShareUploader {
             receiverReady = true
         }
         if !monitoringReady {
-            try await client.startRemoteMonitoringSession(serial: serial)
+            if try await client.isRemoteMonitoringSessionActive() {
+                onLog?("Dexcom Share monitoring session is already active")
+            } else {
+                do {
+                    try await client.startRemoteMonitoringSession(serial: serial)
+                } catch let error as G7ShareError where error.isMonitoringSessionAlreadyActive {
+                    // Started by someone else in the meantime; fine.
+                }
+            }
             monitoringReady = true
         }
         do {

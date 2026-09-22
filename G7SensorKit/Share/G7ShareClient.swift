@@ -40,6 +40,23 @@ public enum G7ShareError: Error, Equatable {
     public static let monitoringSessionNotActive = "MonitoringSessionNotActive"
     public static let duplicateEgvPosted = "DuplicateEgvPosted"
 
+    /// Starting a monitoring session when one is already running is refused
+    /// with "Publisher account already has an active monitoring session";
+    /// the session is there, which is all that was wanted.
+    public var isMonitoringSessionAlreadyActive: Bool {
+        guard case .service(let code, let message) = self else { return false }
+        return code.localizedCaseInsensitiveContains("AlreadyActive")
+            || (message ?? "").localizedCaseInsensitiveContains("already has an active monitoring session")
+    }
+
+    /// The code and message together, for the device log.
+    public var logDescription: String {
+        if case .service(let code, let message) = self {
+            return "\(code): \(message ?? "")"
+        }
+        return localizedDescription
+    }
+
     /// Whether the session id is dead and a fresh login may help.
     public var isSessionExpired: Bool {
         serviceCode == G7ShareError.sessionNotValid || serviceCode == G7ShareError.sessionIdNotFound
@@ -204,6 +221,11 @@ public final class G7ShareClient {
     public func assignReceiver(serial: String) async throws {
         let sessionId = try await requireSession()
         try await postExpectingNothing("Publisher/ReplacePublisherAccountMonitoredReceiver", query: ["sessionId": sessionId, "serialNumber": serial])
+    }
+
+    public func isRemoteMonitoringSessionActive() async throws -> Bool {
+        let sessionId = try await requireSession()
+        return try await post("Publisher/IsRemoteMonitoringSessionActive", query: ["sessionId": sessionId])
     }
 
     public func startRemoteMonitoringSession(serial: String) async throws {
