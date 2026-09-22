@@ -168,13 +168,16 @@ struct G7ShareInviteFollowerView: View {
                 Toggle(LocalizedString("No Data (1 hour)", comment: "Follower alert: no data"), isOn: $alerts.noDataEnabled)
             }
 
-            if let errorMessage = errorMessage {
-                Section {
-                    Text(errorMessage).foregroundColor(guidanceColors.critical)
-                }
-            }
         }
         .insetGroupedListStyle()
+        .alert(
+            LocalizedString("Invitation Failed", comment: "Title of the alert when a follower invitation is refused"),
+            isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
+        ) {
+            Button(LocalizedString("OK", comment: "Alert acknowledgment button label"), role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "")
+        }
         .navigationBarTitle(Text(LocalizedString("Invite Follower", comment: "Navigation title of the invite follower page")), displayMode: .inline)
         .navigationBarItems(
             leading: Button(LocalizedString("Cancel", comment: "Button text to cancel G7 setup")) { dismiss() },

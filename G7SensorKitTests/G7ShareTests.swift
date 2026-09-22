@@ -51,6 +51,9 @@ final class G7ShareTests: XCTestCase {
         XCTAssertTrue(G7ShareError.service(code: "MonitoringSessionAlreadyActive", message: nil).isMonitoringSessionAlreadyActive)
         XCTAssertTrue(G7ShareError.service(code: "Unknown", message: "Publisher account already has an active monitoring session.").isMonitoringSessionAlreadyActive)
         XCTAssertFalse(G7ShareError.service(code: "MonitoringSessionNotActive", message: nil).isMonitoringSessionAlreadyActive)
+        XCTAssertTrue(G7ShareError.service(code: "Unknown", message: "The contact name already exists for this account.").isContactNameTaken)
+        XCTAssertTrue(G7ShareError.service(code: "ContactNameAlreadyExists", message: nil).isContactNameTaken)
+        XCTAssertTrue(G7ShareError.service(code: "ContactIdNotFound", message: "Failed to read Contact by id.").isContactNotFound)
     }
 
     func testServers() {

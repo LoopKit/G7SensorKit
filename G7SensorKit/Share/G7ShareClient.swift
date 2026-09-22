@@ -39,6 +39,22 @@ public enum G7ShareError: Error, Equatable {
     public static let receiverSerialMismatch = "MonitoredReceiverSerialNumberDoesNotMatch"
     public static let monitoringSessionNotActive = "MonitoringSessionNotActive"
     public static let duplicateEgvPosted = "DuplicateEgvPosted"
+    public static let contactNameTaken = "ContactNameAlreadyExists"
+
+    /// CreateSubscriptionInvitation's refusal while a new contact has not
+    /// reached it yet ("Failed to read Contact by id").
+    public var isContactNotFound: Bool {
+        serviceCode?.localizedCaseInsensitiveContains("ContactIdNotFound") == true
+    }
+
+    /// CreateContact's refusal when the account already has a contact of
+    /// that name ("The contact name already exists for this account").
+    public var isContactNameTaken: Bool {
+        guard case .service(let code, let message) = self else { return false }
+        return code.localizedCaseInsensitiveContains("ContactNameAlreadyExists")
+            || code.localizedCaseInsensitiveContains("ContactAlreadyExists")
+            || (message ?? "").localizedCaseInsensitiveContains("contact name already exists")
+    }
 
     /// Starting a monitoring session when one is already running is refused
     /// with "Publisher account already has an active monitoring session";
@@ -167,6 +183,10 @@ public final class G7ShareClient {
 
     private(set) var sessionId: String?
 
+    /// Receives one line per request and refusal, for the device log. Never
+    /// carries credentials or the session id.
+    public var logHandler: ((String) -> Void)?
+
     static let userAgent = "Dexcom Share/3.0.2.11 CFNetwork/711.2.23 Darwin/14.0.0"
 
     public init(credentials: G7ShareCredentials, session: URLSession = .shared) {
@@ -267,13 +287,64 @@ public final class G7ShareClient {
     /// contact id, which is also what removes them.
     public func inviteFollower(name: String, email: String, displayName: String, alerts: G7ShareFollowerAlerts = G7ShareFollowerAlerts()) async throws -> String {
         let sessionId = try await requireSession()
-        let contactId: String = try await post("Publisher/CreateContact", query: ["sessionId": sessionId, "contactName": name, "emailAddress": email])
-        let _: String = try await post("Publisher/CreateSubscriptionInvitation", query: ["sessionId": sessionId, "contactId": contactId], body: [
+        let contactId: String
+        var createdContact = false
+        do {
+            contactId = try await post("Publisher/CreateContact", query: ["sessionId": sessionId, "contactName": name, "emailAddress": email])
+            createdContact = true
+        } catch let error as G7ShareError where error.isContactNameTaken {
+            // A contact of that name is already on the account, e.g. from an
+            // invitation that did not complete. Reuse it.
+            guard let existing = try await existingContactId(named: name, sessionId: sessionId) else {
+                throw G7ShareError.service(code: G7ShareError.contactNameTaken, message: LocalizedString("A contact with this name was left on the account by an earlier invitation that did not complete, and it cannot be reused. Invite them under a slightly different name.", comment: "Share error: contact name taken by an orphaned contact"))
+            }
+            logHandler?("Reusing existing contact \(existing) for \(name)")
+            contactId = existing
+        }
+
+        let invitation: [String: Any] = [
             "AlertSettings": alerts.json,
             "Permissions": 1,
             "DisplayName": displayName,
-        ])
-        return contactId
+        ]
+        // A contact that was just created takes the invitation side of the
+        // service a while to see (DeleteContact knows it at once; observed
+        // 2 s not always being enough), so keep trying with a growing wait.
+        // If it never appears, take the contact back out so the name is free
+        // for another attempt.
+        var attempt = 0
+        while true {
+            do {
+                try await createInvitation(contactId: contactId, sessionId: sessionId, body: invitation)
+                return contactId
+            } catch let error as G7ShareError where error.isContactNotFound && attempt < G7ShareClient.invitationRetryDelays.count {
+                let delay = G7ShareClient.invitationRetryDelays[attempt]
+                attempt += 1
+                logHandler?("Contact not visible to the invitation yet; retrying in \(Int(delay)) s")
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            } catch {
+                if createdContact {
+                    logHandler?("Invitation failed; removing the contact just created")
+                    try? await removeFollower(contactId: contactId)
+                }
+                throw error
+            }
+        }
+    }
+
+    /// The id of an existing contact, by name, among the followers. A
+    /// contact with no subscription cannot be found: `ReadContactByName`
+    /// belongs to the newer request generation and wants a signed request
+    /// ("String parameter 'signedRequest' cannot be null"), signed with a
+    /// key the Dexcom app holds.
+    private func existingContactId(named name: String, sessionId: String) async throws -> String? {
+        try await listFollowers().first(where: { $0.contactName.caseInsensitiveCompare(name) == .orderedSame })?.contactId
+    }
+
+    static let invitationRetryDelays: [TimeInterval] = [2, 4, 8]
+
+    private func createInvitation(contactId: String, sessionId: String, body: [String: Any]) async throws {
+        let _: String = try await post("Publisher/CreateSubscriptionInvitation", query: ["sessionId": sessionId, "contactId": contactId], body: body)
     }
 
     public func removeFollower(contactId: String) async throws {
@@ -303,15 +374,20 @@ public final class G7ShareClient {
         let request = try self.request(path, query: query, body: body)
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else {
+            logHandler?("\(path): no HTTP response")
             throw G7ShareError.invalidResponse
         }
         guard (200..<300).contains(http.statusCode) else {
             if let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let code = object["Code"] as? String {
-                log.error("%{public}@ refused: %{public}@ %{public}@", path, code, object["Message"] as? String ?? "")
+                let message = object["Message"] as? String ?? ""
+                log.error("%{public}@ refused: %{public}@ %{public}@", path, code, message)
+                logHandler?("\(path) refused: \(code) \(message)")
                 throw G7ShareError.service(code: code, message: object["Message"] as? String)
             }
+            logHandler?("\(path): HTTP \(http.statusCode) \(String(data: data.prefix(200), encoding: .utf8) ?? "")")
             throw G7ShareError.http(status: http.statusCode)
         }
+        logHandler?("\(path): OK (\(data.count) bytes)")
         return data
     }
 
