@@ -290,7 +290,7 @@ public final class G7ShareClient {
             // A contact of that name is already on the account, e.g. from an
             // invitation that did not complete. Reuse it.
             guard let existing = try await existingContactId(named: name, sessionId: sessionId) else {
-                throw G7ShareError.service(code: G7ShareError.contactNameTaken, message: LocalizedString("A contact with this name already exists on the account but could not be found. Use a different name.", comment: "Share error: contact name taken and not found"))
+                throw G7ShareError.service(code: G7ShareError.contactNameTaken, message: LocalizedString("A contact with this name was left on the account by an earlier invitation that did not complete, and it cannot be reused. Invite them under a slightly different name.", comment: "Share error: contact name taken by an orphaned contact"))
             }
             logHandler?("Reusing existing contact \(existing) for \(name)")
             contactId = existing
@@ -322,22 +322,13 @@ public final class G7ShareClient {
         return contactId
     }
 
-    /// The id of an existing contact, by name: among the followers, or
-    /// through `ReadContactByName` for a contact with no subscription.
+    /// The id of an existing contact, by name, among the followers. A
+    /// contact with no subscription cannot be found: `ReadContactByName`
+    /// belongs to the newer request generation and wants a signed request
+    /// ("String parameter 'signedRequest' cannot be null"), signed with a
+    /// key the Dexcom app holds.
     private func existingContactId(named name: String, sessionId: String) async throws -> String? {
-        if let follower = try await listFollowers().first(where: { $0.contactName.caseInsensitiveCompare(name) == .orderedSame }) {
-            return follower.contactId
-        }
-        let data = try await send("Publisher/ReadContactByName", query: ["sessionId": sessionId, "contactName": name], body: nil)
-        let value = try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
-        if let id = value as? String, !id.isEmpty {
-            return id
-        }
-        if let object = value as? [String: Any], let id = (object["ContactId"] ?? object["Id"]) as? String {
-            return id
-        }
-        logHandler?("ReadContactByName answered with something unexpected: \(String(data: data.prefix(200), encoding: .utf8) ?? "")")
-        return nil
+        try await listFollowers().first(where: { $0.contactName.caseInsensitiveCompare(name) == .orderedSame })?.contactId
     }
 
     private func createInvitation(contactId: String, sessionId: String, body: [String: Any]) async throws {
