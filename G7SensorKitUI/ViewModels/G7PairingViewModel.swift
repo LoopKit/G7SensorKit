@@ -126,7 +126,7 @@ final class G7PairingViewModel: ObservableObject {
             )
         case .scanning(let candidates):
             return String(
-                format: LocalizedString("Found %@", comment: "Pairing detail listing discovered sensors (1: comma-separated names)"),
+                format: LocalizedString("Found %@. If other Dexcom sensors are nearby, pairing checks each in turn until it finds the one your code belongs to, which can take a few minutes.", comment: "Pairing detail listing discovered sensors (1: comma-separated names)"),
                 candidates.joined(separator: ", ")
             )
         case .authenticating(let candidate, let attempt):

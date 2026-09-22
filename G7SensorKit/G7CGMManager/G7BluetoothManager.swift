@@ -51,7 +51,7 @@ protocol G7BluetoothManagerDelegate: AnyObject {
 
      - returns: PeripheralConnectionCommand indicating what should be done with this peripheral
      */
-    func bluetoothManager(_ manager: G7BluetoothManager, shouldConnectPeripheral peripheral: CBPeripheral, advertisementData: [String: Any]) -> PeripheralConnectionCommand
+    func bluetoothManager(_ manager: G7BluetoothManager, shouldConnectPeripheral peripheral: CBPeripheral, advertisementData: [String: Any], rssi: NSNumber) -> PeripheralConnectionCommand
 
     /**
      Asks the delegate whether peripherals restored by CoreBluetooth's state
@@ -432,11 +432,11 @@ class G7BluetoothManager: NSObject {
         return G7PeripheralManager(peripheral: peripheral, configuration: .dexcomG7, centralManager: centralManager)
     }
 
-    private func handleDiscoveredPeripheral(_ peripheral: CBPeripheral, advertisementData: [String: Any] = [:]) {
+    private func handleDiscoveredPeripheral(_ peripheral: CBPeripheral, advertisementData: [String: Any] = [:], rssi: NSNumber = 127) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
         if let delegate = delegate {
-            switch delegate.bluetoothManager(self, shouldConnectPeripheral: peripheral, advertisementData: advertisementData) {
+            switch delegate.bluetoothManager(self, shouldConnectPeripheral: peripheral, advertisementData: advertisementData, rssi: rssi) {
             case .makeActive:
                 log.default("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
 
@@ -524,7 +524,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         log.default("%{public}@: %{public}@, data = %{public}@", #function, peripheral, String(describing: advertisementData))
 
         managerQueue.async {
-            self.handleDiscoveredPeripheral(peripheral, advertisementData: advertisementData)
+            self.handleDiscoveredPeripheral(peripheral, advertisementData: advertisementData, rssi: RSSI)
         }
     }
 

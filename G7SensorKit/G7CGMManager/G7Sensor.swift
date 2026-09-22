@@ -687,7 +687,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         }
     }
 
-    func bluetoothManager(_ manager: G7BluetoothManager, shouldConnectPeripheral peripheral: CBPeripheral, advertisementData: [String: Any]) -> PeripheralConnectionCommand {
+    func bluetoothManager(_ manager: G7BluetoothManager, shouldConnectPeripheral peripheral: CBPeripheral, advertisementData: [String: Any], rssi: NSNumber) -> PeripheralConnectionCommand {
 
         let name = (advertisementData[CBAdvertisementDataLocalNameKey] as? String) ?? peripheral.name
 
