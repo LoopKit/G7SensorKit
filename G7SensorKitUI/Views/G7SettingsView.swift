@@ -48,14 +48,11 @@ struct G7SettingsView: View {
         self.viewModel = viewModel
     }
 
+    /// Weekday, date and time. `j` is the hour in the user's preferred
+    /// cycle, so the 24-Hour Time setting is honoured; `hh` would force AM/PM.
     private var timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
-
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        formatter.locale = Locale.current
-        formatter.setLocalizedDateFormatFromTemplate("E, MMM d, hh:mm")
-
+        formatter.setLocalizedDateFormatFromTemplate("EEEMMMdjmm")
         return formatter
     }()
 
