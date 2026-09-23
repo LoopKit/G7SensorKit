@@ -155,7 +155,6 @@ if viewModel.sessionMode == .eavesdropping {
         }
         .insetGroupedListStyle()
         .navigationBarItems(trailing: doneButton)
-        .navigationBarTitle(viewModel.title)
         .sheet(isPresented: $showingCalibration) {
             G7CalibrationFlowView(viewModel: viewModel)
         }

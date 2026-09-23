@@ -173,7 +173,6 @@ struct G7ApplySensorView: View {
         .sheet(isPresented: $showingSteps) {
             G7ApplyStepsView(didFinish: { showingSteps = false })
         }
-        .navigationBarTitle(Text(LocalizedString("New Sensor", comment: "Navigation title of the apply-sensor screen")), displayMode: .inline)
     }
 }
 

@@ -23,6 +23,9 @@ private enum G7Screen {
     /// let them through.
     case alertsFromLoop
     case notificationPermissions
+    /// Scan the applicator, or choose to type the code instead. Skipped
+    /// where there is no scanner to offer.
+    case scanCode
     case enterCode
     case pairing(code: String, serial: String?)
     case pairingSuccess(deviceName: String?)
@@ -88,7 +91,47 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
         !isPairingNewSensor && cgmManager?.sessionMode == .eavesdropping
     }
 
+    /// The navigation bar title for each pushed screen.
+    ///
+    /// Set on the controller rather than left to the SwiftUI views. A hosted
+    /// view's `navigationBarTitle` does reach its navigation item, but the bar
+    /// came up empty in the app anyway, and a title set here cannot be lost on
+    /// the way. Startup is deliberately untitled: it carries its own large
+    /// title in the content.
+    private func title(for screen: G7Screen) -> String? {
+        switch screen {
+        case .startup:
+            return nil
+        case .dexcomAppWarning:
+            return LocalizedString("Before You Pair", comment: "Navigation title of the Dexcom app warning screen")
+        case .applySensor:
+            return LocalizedString("New Sensor", comment: "Navigation title of the apply-sensor screen")
+        case .alertsFromLoop:
+            return LocalizedString("Alerts", comment: "Navigation title of the alerts hand-off page")
+        case .notificationPermissions:
+            return LocalizedString("Notifications", comment: "Navigation title of the notification permissions page")
+        case .scanCode:
+            return LocalizedString("Pairing Code", comment: "Navigation title of the pairing code entry screen")
+        case .enterCode:
+            return LocalizedString("Enter Code", comment: "Navigation title of the screen where the pairing code is typed")
+        case .pairing:
+            return LocalizedString("Pairing", comment: "Navigation title of the pairing progress screen")
+        case .pairingSuccess:
+            return LocalizedString("Paired", comment: "Navigation title of the pairing success screen")
+        case .shareSignIn:
+            return LocalizedString("Dexcom Share", comment: "Navigation title of the Share sign-in page")
+        case .settings:
+            return cgmManager?.localizedTitle
+        }
+    }
+
     private func viewController(for screen: G7Screen) -> UIViewController {
+        let controller = makeViewController(for: screen)
+        controller.title = title(for: screen)
+        return controller
+    }
+
+    private func makeViewController(for screen: G7Screen) -> UIViewController {
         switch screen {
         case .startup:
             let view = G7StartupView(
@@ -100,9 +143,7 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
                     }
                 }
             )
-            let controller = hostingController(view, largeTitle: false)
-            controller.title = nil
-            return controller
+            return hostingController(view, largeTitle: false)
 
         case .dexcomAppWarning:
             let view = G7DexcomAppWarningView(
@@ -113,7 +154,7 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
             return hostingController(view, largeTitle: false)
 
         case .applySensor:
-            let view = G7ApplySensorView { [weak self] in self?.navigate(to: .enterCode) }
+            let view = G7ApplySensorView { [weak self] in self?.navigateToCodeEntry() }
             return hostingController(view, largeTitle: false)
 
         case .alertsFromLoop:
@@ -121,12 +162,21 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
             return hostingController(view, largeTitle: false)
 
         case .notificationPermissions:
-            let view = G7NotificationPermissionsView { [weak self] in self?.navigate(to: .enterCode) }
+            let view = G7NotificationPermissionsView { [weak self] in self?.navigateToCodeEntry() }
+            return hostingController(view, largeTitle: false)
+
+        case .scanCode:
+            let view = G7ScanCodeView(
+                didScanCode: { [weak self] code, serial in
+                    self?.navigate(to: .pairing(code: code, serial: serial))
+                },
+                didChooseManualEntry: { [weak self] in self?.navigate(to: .enterCode) }
+            )
             return hostingController(view, largeTitle: false)
 
         case .enterCode:
-            let view = G7EnterCodeView { [weak self] code, serial in
-                self?.navigate(to: .pairing(code: code, serial: serial))
+            let view = G7EnterCodeView { [weak self] code in
+                self?.navigate(to: .pairing(code: code, serial: nil))
             }
             return hostingController(view, largeTitle: false)
 
@@ -231,8 +281,18 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
         } else if isReplacingDexcomAppSession {
             navigate(to: .alertsFromLoop)
         } else {
-            navigate(to: .enterCode)
+            navigateToCodeEntry()
         }
+    }
+
+    /// Asks for the pairing code, by way of the scan where there is a scanner
+    /// to offer. Without one there is nothing to choose between, so that
+    /// screen is skipped rather than shown with one way out.
+    private func navigateToCodeEntry() {
+        // `isSupported`, not `isAvailable`: a camera that is momentarily busy
+        // frees up again, and routing on that would strand someone on the
+        // typing screen with no way back to the scan.
+        navigate(to: G7PackageScannerView.isSupported ? .scanCode : .enterCode)
     }
 
     /// The pre-pairing setup, kept for someone who cannot pair the sensor

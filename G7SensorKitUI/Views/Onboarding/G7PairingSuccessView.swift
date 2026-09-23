@@ -54,6 +54,5 @@ struct G7PairingSuccessView: View {
         }
         .padding()
         .navigationBarBackButtonHidden(true)
-        .navigationBarTitle("", displayMode: .inline)
     }
 }
