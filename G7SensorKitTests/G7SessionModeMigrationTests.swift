@@ -212,6 +212,8 @@ final class G7SessionModeMigrationTests: XCTestCase {
         XCTAssertNil(manager.state.sharedKey, "the Dexcom app's pairing replaces ours")
         XCTAssertEqual(manager.state.pairingCode, "0420", "kept for pairing directly again")
         XCTAssertNil(manager.state.previousSensor)
+        XCTAssertNil(manager.state.pairedAt)
+        XCTAssertNil(manager.state.transmitterVersion, "the direct session's sensor details are not shown as if still paired")
     }
 
     func testPairingWithADifferentSensorReplacesTheFollowedOne() {

@@ -388,6 +388,14 @@ public class G7CGMManager: CGMManager {
             state.sharedKey = nil
             state.lastAuthenticationFailure = nil
             state.lastAuthenticationFailureDate = nil
+            // What the direct session learned about the sensor goes with it;
+            // the Dexcom app's session reports its own once it is up.
+            state.pairedAt = nil
+            state.transmitterVersion = nil
+            state.extendedVersion = nil
+            state.calibration = nil
+            state.calibrationBounds = nil
+            state.calibrationBoundsDate = nil
         }
         sensor.dropConnection()
         sensor.reconfigure(mode: .eavesdropping, credentials: newState.sensorCredentials)

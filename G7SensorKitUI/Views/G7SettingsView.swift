@@ -234,7 +234,7 @@ if viewModel.sessionMode == .eavesdropping {
                     value: serialNumber
                 )
             }
-            if let pairingCode = viewModel.pairingCode {
+            if viewModel.sessionMode == .direct, let pairingCode = viewModel.pairingCode {
                 // The applicator gets thrown away; this is where the code
                 // lives afterwards, for pairing the same sensor elsewhere.
                 copyableRow(
