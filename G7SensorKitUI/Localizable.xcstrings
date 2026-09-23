@@ -826,6 +826,9 @@
     "Bluetooth is off. Turn it on in Settings or Control Center to pair." : {
       "comment" : "Pairing screen notice when Bluetooth is powered off"
     },
+    "Bluetooth Unavailable" : {
+      "comment" : "Pairing status while the radio is off or not permitted"
+    },
     "By another app" : {
       "comment" : "Last calibration value when the sensor reports one this app did not enter"
     },
@@ -1007,6 +1010,9 @@
     },
     "Change Code" : {
       "comment" : "Button title to go back and edit the pairing code"
+    },
+    "Checking the sensors in range. This can take a few minutes." : {
+      "comment" : "Pairing guidance while working through the sensors that have been found"
     },
     "Choose a site. Adults: the back of the upper arm. Ages 7 and up may also use the abdomen; ages 2 to 6 may also use the upper buttocks." : {
       "comment" : "Apply step 1: choosing a site"
@@ -1937,6 +1943,9 @@
     },
     "Direct Connection Available" : {
       "comment" : "Title of the settings notice offering to pair directly"
+    },
+    "Do not let a Dexcom app use this sensor from now on. A sensor works with only one app at a time." : {
+      "comment" : "Reminder on the pairing success screen"
     },
     "Do not use a damaged applicator, and keep fingers away from the needle end." : {
       "comment" : "Apply step 3 note"
@@ -6319,6 +6328,9 @@
     },
     "Waiting for next reading" : {
       "comment" : "title for g7 settings connection status between readings in direct mode"
+    },
+    "Waiting for the sensor with serial %@, from the applicator you scanned. Sensors in range that cannot have that serial are skipped." : {
+      "comment" : "Pairing note shown while the scan is narrowed to a scanned sensor's serial (1: serial number)"
     },
     "Warmup" : {
       "comment" : "Row label for the sensor's warmup duration"

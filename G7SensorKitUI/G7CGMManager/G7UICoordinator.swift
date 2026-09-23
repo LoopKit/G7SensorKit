@@ -203,7 +203,11 @@ class G7UICoordinator: UINavigationController, CGMManagerOnboarding, CompletionN
 
         case .pairingSuccess(let deviceName):
             let offersShare = isInitialSetup && cgmManager?.shareAccount == nil
-            let view = G7PairingSuccessView(deviceName: deviceName, hasNextStep: offersShare) { [weak self] in
+            // The product to picture comes from the name the sensor
+            // advertised; `.g7` when it did not announce one, matching what
+            // the pairing screen showed a moment ago.
+            let model = deviceName.flatMap(G7SensorModel.init(advertisedName:)) ?? .g7
+            let view = G7PairingSuccessView(model: model, deviceName: deviceName, hasNextStep: offersShare) { [weak self] in
                 guard let self = self else { return }
                 if offersShare {
                     self.navigate(to: .shareSignIn)
