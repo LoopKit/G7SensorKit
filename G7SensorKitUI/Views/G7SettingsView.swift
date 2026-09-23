@@ -39,6 +39,8 @@ struct G7SettingsView: View {
     @State private var showingDeletionSheet = false
     @State private var showingCalibration = false
     @State private var showingShareSignIn = false
+    @State private var showingDexcomAppModeConfirmation = false
+    @State private var showingDexcomAppModeInstructions = false
 
     init(didFinish: @escaping () -> Void, deleteCGM: @escaping () -> Void, pairNewSensor: @escaping () -> Void, pairCurrentSensor: @escaping () -> Void, viewModel: G7SettingsViewModel) {
         self.didFinish = didFinish
@@ -142,6 +144,7 @@ if viewModel.sessionMode == .eavesdropping {
                 switch viewModel.sessionMode {
                 case .direct:
                     Button(LocalizedString("Pair New Sensor", comment: "Button title in settings to pair a replacement sensor"), action: pairNewSensor)
+                    Button(LocalizedString("Use with the Dexcom App Instead", comment: "Button title in settings to go back to reading through the Dexcom app"), action: { showingDexcomAppModeConfirmation = true })
                 case .eavesdropping:
                     if !self.viewModel.scanning {
                         Button("Scan for new sensor", action: {
@@ -158,6 +161,27 @@ if viewModel.sessionMode == .eavesdropping {
         .navigationBarTitle(viewModel.title)
         .sheet(isPresented: $showingCalibration) {
             G7CalibrationFlowView(viewModel: viewModel)
+        }
+        .confirmationDialog(
+            LocalizedString("Use with the Dexcom App Instead?", comment: "Title of the confirmation for switching back to the Dexcom app's session"),
+            isPresented: $showingDexcomAppModeConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(LocalizedString("Switch to the Dexcom App", comment: "Confirmation button to switch back to the Dexcom app's session")) {
+                viewModel.switchToDexcomAppMode()
+                showingDexcomAppModeInstructions = true
+            }
+            Button(LocalizedString("Cancel", comment: "Button text to cancel G7 setup"), role: .cancel) {}
+        } message: {
+            Text(String(format: LocalizedString("%1$@ will let go of the sensor and read through the Dexcom app's session again. Glucose and sensor alerts then come from the Dexcom app, and %1$@ stops uploading to Dexcom Share. You can pair directly again later with the sensor's code.", comment: "Message of the confirmation for switching back to the Dexcom app's session (1: appName)"), appName))
+        }
+        .alert(
+            LocalizedString("Now Set Up the Dexcom App", comment: "Title of the instructions after switching back to the Dexcom app's session"),
+            isPresented: $showingDexcomAppModeInstructions
+        ) {
+            Button(LocalizedString("OK", comment: "Alert acknowledgment button label"), role: .cancel) {}
+        } message: {
+            Text(String(format: LocalizedString("Install the Dexcom app, sign in, and add this sensor with its 4-digit pairing code%1$@. The sensor may take up to 15 minutes to accept the Dexcom app. %2$@ will show readings again once the Dexcom app is connected.", comment: "Instructions after switching back to the Dexcom app's session (1: the pairing code, if known; 2: appName)"), viewModel.pairingCode.map { " (" + $0 + ")" } ?? "", appName))
         }
         .sheet(isPresented: $showingShareSignIn) {
             NavigationView {
@@ -187,8 +211,8 @@ if viewModel.sessionMode == .eavesdropping {
             if viewModel.sessionMode == .eavesdropping {
             if viewModel.isDexcomAppInstalled {
                 warning(
-                    title: LocalizedString("Direct Connection Available", comment: "Title of the settings notice offering to pair directly"),
-                    message: String(format: LocalizedString("%1$@ is currently reading glucose through the Dexcom app's session. Pair the sensor directly to stop depending on the Dexcom app. You will need the sensor's 4-digit pairing code, and you must delete the Dexcom app first.", comment: "Body of the settings notice offering to pair directly (1: appName)"), appName),
+                    title: LocalizedString("Direct Connection Available (Optional)", comment: "Title of the settings notice offering to pair directly"),
+                    message: String(format: LocalizedString("%1$@ is reading glucose through the Dexcom app's session, and can keep doing so. If you would rather not depend on the Dexcom app, pair the sensor directly instead: you will need the sensor's 4-digit pairing code, and you must delete the Dexcom app first. You can switch back later.", comment: "Body of the settings notice offering to pair directly (1: appName)"), appName),
                     style: .informational
                 )
             } else {
