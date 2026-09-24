@@ -158,7 +158,6 @@ if viewModel.sessionMode == .eavesdropping {
         }
         .insetGroupedListStyle()
         .navigationBarItems(trailing: doneButton)
-        .navigationBarTitle(viewModel.title)
         .sheet(isPresented: $showingCalibration) {
             G7CalibrationFlowView(viewModel: viewModel)
         }
@@ -212,7 +211,7 @@ if viewModel.sessionMode == .eavesdropping {
             if viewModel.isDexcomAppInstalled {
                 warning(
                     title: LocalizedString("Direct Connection Available (Optional)", comment: "Title of the settings notice offering to pair directly"),
-                    message: String(format: LocalizedString("%1$@ is reading glucose through the Dexcom app's session, and can keep doing so. If you would rather not depend on the Dexcom app, pair the sensor directly instead: you will need the sensor's 4-digit pairing code, and you must delete the Dexcom app first. You can switch back later.", comment: "Body of the settings notice offering to pair directly (1: appName)"), appName),
+                    message: String(format: LocalizedString("%1$@ is reading glucose through the Dexcom app's session, and can keep doing so. If you would rather not depend on the Dexcom app, pair the sensor directly instead: you will need the sensor's 4-digit pairing code, and the Dexcom app has to come off this phone first: delete it, or offload it under Settings, General, iPhone Storage. You can switch back later.", comment: "Body of the settings notice offering to pair directly (1: appName)"), appName),
                     style: .informational
                 )
             } else {
@@ -322,8 +321,8 @@ if viewModel.sessionMode == .eavesdropping {
                 }
                 if viewModel.isDexcomAppInstalled {
                     warning(
-                        title: String(format: LocalizedString("Delete the %@ App", comment: "Title of the settings warning when a Dexcom app is installed in direct mode (1: app name)"), G7DexcomApp.installedAppNames),
-                        message: String(format: LocalizedString("%1$@ is connected to the sensor directly and does not need the %2$@ app. A sensor works with only one app at a time, so it will interfere with readings while it is installed.", comment: "Body of the settings warning when a Dexcom app is installed in direct mode (1: appName, 2: Dexcom app name)"), appName, G7DexcomApp.installedAppNames),
+                        title: String(format: LocalizedString("Stop the %@ App", comment: "Title of the settings warning when a Dexcom app is installed in direct mode (1: app name)"), G7DexcomApp.installedAppNames),
+                        message: String(format: LocalizedString("%1$@ is connected to the sensor directly and does not need the %2$@ app. A sensor works with only one app at a time, so it will take readings away for as long as it is on this phone. Delete it, or offload it under Settings, General, iPhone Storage.", comment: "Body of the settings warning when a Dexcom app is installed in direct mode (1: appName, 2: Dexcom app name)"), appName, G7DexcomApp.installedAppNames),
                         style: .critical
                     )
                 }

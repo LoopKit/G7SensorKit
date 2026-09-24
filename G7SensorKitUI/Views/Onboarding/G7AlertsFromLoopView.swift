@@ -62,7 +62,6 @@ struct G7AlertsFromLoopView: View {
             .padding()
             .background(Color(.systemBackground))
         }
-        .navigationBarTitle(Text(LocalizedString("Alerts", comment: "Navigation title of the alerts hand-off page")), displayMode: .inline)
     }
 
     private func section(title: String, icon: String, body: String, bullets: [String] = []) -> some View {

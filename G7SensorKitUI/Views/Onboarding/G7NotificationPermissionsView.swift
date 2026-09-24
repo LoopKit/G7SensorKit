@@ -81,7 +81,6 @@ struct G7NotificationPermissionsView: View {
             .padding()
             .background(Color(.systemBackground))
         }
-        .navigationBarTitle(Text(LocalizedString("Notifications", comment: "Navigation title of the notification permissions page")), displayMode: .inline)
         .onAppear(perform: refresh)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in refresh() }
     }

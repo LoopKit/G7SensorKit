@@ -188,6 +188,19 @@ public final class G7PairingService {
         code.count == 4 && code.allSatisfy(\.isNumber)
     }
 
+    /// Whether a scanned `serial` can narrow the scan.
+    ///
+    /// A sensor advertises a CRC16 of its serial's digits, never the serial
+    /// itself, so knowing the serial lets the run skip every sensor whose
+    /// advertisement cannot produce that CRC. A serial that is not plain
+    /// ASCII digits has no CRC to compare and narrows nothing, and the
+    /// screen must not claim a filter that is not running. Narrowing is all
+    /// it is: a CRC collision is possible, and an advertisement without
+    /// manufacturer data is kept either way, so the handshake still decides.
+    public static func canFilterBySerial(_ serial: String) -> Bool {
+        G7Advertisement.serialChecksum(for: serial) != nil
+    }
+
     /// Starts pairing with `pairingCode`. `serial` is the package serial when
     /// the code came from a scan; candidates that cannot have that serial
     /// are then skipped rather than tried.
@@ -308,6 +321,10 @@ public final class G7PairingService {
     /// CoreBluetooth reports `.unsupported` in the simulator. Walk the same
     /// states with a stand-in sensor so onboarding can be exercised.
     private func startSimulatedRun() {
+        // Set here too: the real path sets it alongside the scan it starts,
+        // which this stands in for, and without it the screen's elapsed timer
+        // never appears in the simulator.
+        scanStartedAt = Date()
         setState(.scanning(candidates: []))
         let name = "DXCM" + pairingCode.suffix(2)
         let authenticate = DispatchWorkItem { [weak self] in

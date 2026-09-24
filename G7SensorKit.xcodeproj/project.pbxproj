@@ -42,6 +42,7 @@
 		97F1FB097E42B4F376FA206F /* G7PairingPlannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21F6EDAE3E7F2B5FF3E87922 /* G7PairingPlannerTests.swift */; };
 		A3C2FD34AC1FB93C9DE1A066 /* G7BigUIntTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8990966223D8FEFF85D5D535 /* G7BigUIntTests.swift */; };
 		A49D784AE6D465FF59F20CA7 /* G7PackageScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56525F710EBD017C3949A51 /* G7PackageScannerView.swift */; };
+		C1A7B0DE10000002AAAA0002 /* G7ScanCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A7B0DE10000001AAAA0001 /* G7ScanCodeView.swift */; };
 		AEF5658ACA06903991663159 /* G7LifecycleAlertTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 724358361262BEA3A8F375AA /* G7LifecycleAlertTests.swift */; };
 		B139368E33ED6ED8694408FC /* G7SessionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CAA6FF14E0E9C16A25FD3B6 /* G7SessionMode.swift */; };
 		B60BB2E42BC649DA00D2BB39 /* Bundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60BB2E32BC649DA00D2BB39 /* Bundle.swift */; };
@@ -201,6 +202,7 @@
 		94A7A4E8FF66BE03B02B2E01 /* G7AuthCryptoTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7AuthCryptoTests.swift; sourceTree = "<group>"; };
 		9F9BEFF95BF6608CE8B1A7B2 /* G7SensorRecord.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7SensorRecord.swift; sourceTree = "<group>"; };
 		A56525F710EBD017C3949A51 /* G7PackageScannerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7PackageScannerView.swift; sourceTree = "<group>"; };
+		C1A7B0DE10000001AAAA0001 /* G7ScanCodeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7ScanCodeView.swift; sourceTree = "<group>"; };
 		B1A771C4DCFFA924E278E352 /* G7ChallengeSigner.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7ChallengeSigner.swift; sourceTree = "<group>"; };
 		B1DE9588AA9650F31A029AC0 /* G7SensorModel+Image.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "G7SensorModel+Image.swift"; sourceTree = "<group>"; };
 		B60BB2E32BC649DA00D2BB39 /* Bundle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Bundle.swift; path = G7SensorKitUI/Extensions/Bundle.swift; sourceTree = SOURCE_ROOT; };
@@ -354,6 +356,7 @@
 				11ED0ADBD1E5197198A0B215 /* G7DexcomAppWarningView.swift */,
 				854B2FDB6A6325716E4FD46D /* G7EnterCodeView.swift */,
 				A56525F710EBD017C3949A51 /* G7PackageScannerView.swift */,
+				C1A7B0DE10000001AAAA0001 /* G7ScanCodeView.swift */,
 				846E1ADD7624F7057E63E28C /* G7PairingSuccessView.swift */,
 				BF7CEC5E1884364C2F6DCCF4 /* G7PairingView.swift */,
 				090FCA4FBE539EA494492C16 /* G7StartupView.swift */,
@@ -879,6 +882,7 @@
 				69AE26EEA16A596AA47DF83A /* G7DexcomAppWarningView.swift in Sources */,
 				64F873CAFE778918BD2F749A /* G7EnterCodeView.swift in Sources */,
 				A49D784AE6D465FF59F20CA7 /* G7PackageScannerView.swift in Sources */,
+				C1A7B0DE10000002AAAA0002 /* G7ScanCodeView.swift in Sources */,
 				2A6FED527A83B3BFB84624E3 /* G7PairingSuccessView.swift in Sources */,
 				77A93A0B05D5ADEDF217770B /* G7PairingView.swift in Sources */,
 				72A6F9D68F93AE44814C3C3D /* G7StartupView.swift in Sources */,

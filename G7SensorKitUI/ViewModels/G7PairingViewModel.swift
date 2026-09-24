@@ -76,6 +76,48 @@ final class G7PairingViewModel: ObservableObject {
         service.scanStartedAt
     }
 
+    /// Which product to picture: the sensor under trial, or the most recent
+    /// one heard from before that. G7 until one of them says otherwise, since
+    /// the screen has to show something while the scan is still empty.
+    var displayModel: G7SensorModel {
+        switch state {
+        case .authenticating(let candidate, _):
+            return G7SensorModel(advertisedName: candidate) ?? .g7
+        case .scanning(let candidates):
+            return candidates.last.flatMap(G7SensorModel.init(advertisedName:)) ?? .g7
+        case .succeeded(_, _, let deviceName):
+            return deviceName.flatMap(G7SensorModel.init(advertisedName:)) ?? .g7
+        case .idle, .failed:
+            return .g7
+        }
+    }
+
+    /// The serial the scan is narrowed to: the one from the scanned
+    /// applicator (or the one the session already knows, when re-pairing its
+    /// own sensor), and only when it can actually narrow anything.
+    var filteredSerial: String? {
+        guard let serial = serial, G7PairingService.canFilterBySerial(serial) else {
+            return nil
+        }
+        return serial
+    }
+
+    /// Says so on screen when the run is only looking for one sensor. A user
+    /// watching it pass over a sensor sitting right next to the phone should
+    /// be able to see why.
+    var serialFilterNote: String? {
+        guard let serial = filteredSerial, isWorking else {
+            return nil
+        }
+        return String(
+            format: LocalizedString(
+                "Waiting for the sensor with serial %@, from the applicator you scanned. Sensors in range that cannot have that serial are skipped.",
+                comment: "Pairing note shown while the scan is narrowed to a scanned sensor's serial (1: serial number)"
+            ),
+            serial
+        )
+    }
+
     /// Why pairing cannot make progress right now, if the radio is the reason.
     var bluetoothProblem: String? {
         guard isWorking else { return nil }
@@ -99,6 +141,9 @@ final class G7PairingViewModel: ObservableObject {
     }
 
     var statusTitle: String {
+        if bluetoothProblem != nil {
+            return LocalizedString("Bluetooth Unavailable", comment: "Pairing status while the radio is off or not permitted")
+        }
         switch state {
         case .idle:
             return LocalizedString("Preparing…", comment: "Pairing status before the scan starts")
@@ -124,20 +169,19 @@ final class G7PairingViewModel: ObservableObject {
                 "Keep your phone near the sensor. A sensor that was recently used by the Dexcom app or another phone can take up to 15 minutes to become available; this screen will keep looking.",
                 comment: "Pairing guidance while scanning"
             )
-        case .scanning(let candidates):
-            return String(
-                format: LocalizedString("Found %@. If other Dexcom sensors are nearby, pairing checks each in turn until it finds the one your code belongs to, which can take a few minutes.", comment: "Pairing detail listing discovered sensors (1: comma-separated names)"),
-                candidates.joined(separator: ", ")
+        case .scanning, .authenticating:
+            // Deliberately about the run, not about a candidate. Which sensor
+            // is under trial, and which attempt it is on, are true but not
+            // things the user can act on, and read as claims about their
+            // situation: a neighbour's sensor rejecting the code is how the
+            // run learns it is a neighbour, not a sign the code is wrong, and
+            // a visible "attempt 2 of 3" invites cancelling to get a fresh
+            // three, which throws the run's evidence away and restarts its
+            // clock. That detail goes to the device log instead.
+            return LocalizedString(
+                "Checking the sensors in range. This can take a few minutes.",
+                comment: "Pairing guidance while working through the sensors that have been found"
             )
-        case .authenticating(let candidate, let attempt):
-            if attempt > 1 {
-                return String(
-                    format: LocalizedString("%1$@, attempt %2$d", comment: "Pairing detail for a retry (1: sensor name, 2: attempt number)"),
-                    candidate,
-                    attempt
-                )
-            }
-            return candidate
         case .succeeded(_, _, let deviceName):
             return deviceName
         case .failed(let reason):
