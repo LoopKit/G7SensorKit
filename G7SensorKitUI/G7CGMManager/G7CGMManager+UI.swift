@@ -142,8 +142,11 @@ extension G7CGMManager: CGMManagerUI {
     public var cgmLifecycleProgress: DeviceLifecycleProgress? {
         switch lifecycleState {
         case .ok:
-            // show remaining lifetime, if < 48 hours
-            guard let expiration = sensorExpiresAt else {
+            // Show remaining lifetime, if < 48 hours. Not before the sensor
+            // has said how long its session is: the 10-day default can put
+            // a 15-day sensor's expiry hours away for the second between a
+            // fresh pairing's first reading and the version reply.
+            guard state.extendedVersion != nil, let expiration = sensorExpiresAt else {
                 return nil
             }
             let remaining = max(0, expiration.timeIntervalSinceNow)
