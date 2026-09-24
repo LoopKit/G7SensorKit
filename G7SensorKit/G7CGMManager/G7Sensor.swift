@@ -310,6 +310,18 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         bluetoothManager.disconnect()
     }
 
+    /// Ends the session's use of Bluetooth for good: no delegate, so the
+    /// central's reconnect-on-disconnect goes nowhere, no active peripheral
+    /// to retrieve, and the link dropped. Without this a deleted manager
+    /// that lingered kept a connect request standing on its sensor, which
+    /// a new pairing run then never saw advertise.
+    public func shutDown() {
+        bluetoothManager.delegate = nil
+        bluetoothManager.disconnect()
+        bluetoothManager.forgetPeripheral()
+        bluetoothManager.setActivePeripheralIdentifier(nil)
+    }
+
     public var isScanning: Bool {
         return bluetoothManager.isScanning
     }

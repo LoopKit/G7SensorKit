@@ -520,7 +520,7 @@ extension G7CGMManager {
     public func delete(completion: @escaping () -> Void) {
         cancelSuspectedSessionEndScan()
         signOutOfShare()
-        sensor.stopScanning()
+        sensor.shutDown()
         retractAllLifecycleAlerts()
         recordSensorEndIfNeeded()
         archiveCurrentSensor(reason: .deleted)

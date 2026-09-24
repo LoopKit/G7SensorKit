@@ -478,6 +478,7 @@ final class G7SessionModeMigrationTests: XCTestCase {
         manager.delete { done.fulfill() }
         wait(for: [done], timeout: 2)
         XCTAssertEqual(manager.state.previousSensor?.endReason, .deleted)
+        XCTAssertNil(manager.sensor.bluetoothManager.delegate, "a deleted session must not keep reconnecting to its sensor")
     }
 
     func testAuthenticationPersistsTheDerivedKey() {
