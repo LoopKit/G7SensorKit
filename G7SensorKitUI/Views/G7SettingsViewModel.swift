@@ -304,6 +304,11 @@ class G7SettingsViewModel: ObservableObject {
         }
     }
 
+    func switchToDexcomAppMode() {
+        cgmManager.switchToDexcomAppMode()
+        updateValues()
+    }
+
     func scanForNewSensor() {
         cgmManager.scanForNewSensor()
     }

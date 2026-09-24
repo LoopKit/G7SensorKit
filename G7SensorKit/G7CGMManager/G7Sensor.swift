@@ -295,6 +295,12 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         bluetoothManager.scanForPeripheral()
     }
 
+    /// Lets go of the sensor's link without forgetting it, so another
+    /// display (the Dexcom app) can take the slot.
+    public func dropConnection() {
+        bluetoothManager.disconnect()
+    }
+
     public func resumeScanning() {
         bluetoothManager.setActivePeripheralIdentifier(lockedCredentials.value.peripheralIdentifier)
         bluetoothManager.scanForPeripheral()
