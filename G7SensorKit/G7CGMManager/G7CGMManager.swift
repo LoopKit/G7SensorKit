@@ -375,6 +375,34 @@ public class G7CGMManager: CGMManager {
         }
     }
 
+    /// Goes back to reading through the Dexcom app's session with the same
+    /// sensor. The stored key is dropped, so the Dexcom app's pairing takes
+    /// the phone's slot; the pairing code is kept for switching back. Loop
+    /// stops uploading to Dexcom Share while the Dexcom app does it.
+    public func switchToDexcomAppMode() {
+        guard state.sessionMode == .direct else { return }
+        logDeviceCommunication("Switching to the Dexcom app's session; dropping the stored key and the connection", type: .connection)
+        cancelSuspectedSessionEndScan()
+        let newState = mutateState { state in
+            state.sessionMode = .eavesdropping
+            state.sharedKey = nil
+            state.lastAuthenticationFailure = nil
+            state.lastAuthenticationFailureDate = nil
+            // What the direct session learned about the sensor goes with it;
+            // the Dexcom app's session reports its own once it is up.
+            state.pairedAt = nil
+            state.transmitterVersion = nil
+            state.extendedVersion = nil
+            state.calibration = nil
+            state.calibrationBounds = nil
+            state.calibrationBoundsDate = nil
+        }
+        sensor.dropConnection()
+        sensor.reconfigure(mode: .eavesdropping, credentials: newState.sensorCredentials)
+        sensor.latestReadingDate = newState.latestReadingTimestamp
+        sensor.resumeScanning()
+    }
+
     public var rawState: RawStateValue {
         return state.rawValue
     }
@@ -1042,7 +1070,8 @@ extension G7CGMManager: G7SensorDelegate {
         let unit = LoopUnit.milligramsPerDeciliter
         let quantity = LoopQuantity(unit: unit, doubleValue: Double(min(max(glucose, GlucoseLimits.minimum), GlucoseLimits.maximum)))
 
-        if !message.glucoseIsDisplayOnly {
+        // While eavesdropping the Dexcom app uploads the readings itself.
+        if !message.glucoseIsDisplayOnly, state.sessionMode == .direct {
             shareUploader?.enqueue([G7ShareReading(date: latestReadingTimestamp, glucose: Int(glucose), trend: message.trendType)])
         }
 
@@ -1123,10 +1152,12 @@ extension G7CGMManager: G7SensorDelegate {
             )
         }
 
-        shareUploader?.enqueue(backfill.compactMap { entry in
+        if state.sessionMode == .direct {
+            shareUploader?.enqueue(backfill.compactMap { entry in
             guard let glucose = entry.glucose, entry.hasReliableGlucose, !entry.glucoseIsDisplayOnly else { return nil }
             return G7ShareReading(date: activationDate.addingTimeInterval(TimeInterval(entry.timestamp)), glucose: Int(glucose), trend: entry.trendType)
         })
+        }
 
         updateDelegate(with: .newData(samples))
     }

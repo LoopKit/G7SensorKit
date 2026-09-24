@@ -197,6 +197,25 @@ final class G7SessionModeMigrationTests: XCTestCase {
         XCTAssertEqual(delegate.backfill.map(\.timestamp), [153807, 855794, 15862])
     }
 
+    func testSwitchingBackToTheDexcomAppKeepsTheSensorAndDropsTheKey() {
+        var state = G7CGMManagerState(rawValue: legacyRawState)
+        state.sessionMode = .direct
+        state.pairingCode = "0420"
+        state.sharedKey = Data(repeating: 7, count: 16)
+        let manager = makeManager(state: state)
+
+        manager.switchToDexcomAppMode()
+
+        XCTAssertEqual(manager.sessionMode, .eavesdropping)
+        XCTAssertEqual(manager.sensor.mode, .eavesdropping)
+        XCTAssertEqual(manager.state.sensorID, "DXCM99", "the same sensor is followed through the Dexcom app")
+        XCTAssertNil(manager.state.sharedKey, "the Dexcom app's pairing replaces ours")
+        XCTAssertEqual(manager.state.pairingCode, "0420", "kept for pairing directly again")
+        XCTAssertNil(manager.state.previousSensor)
+        XCTAssertNil(manager.state.pairedAt)
+        XCTAssertNil(manager.state.transmitterVersion, "the direct session's sensor details are not shown as if still paired")
+    }
+
     func testPairingWithADifferentSensorReplacesTheFollowedOne() {
         let state = G7CGMManagerState(rawValue: legacyRawState)
         let manager = makeManager(state: state)
