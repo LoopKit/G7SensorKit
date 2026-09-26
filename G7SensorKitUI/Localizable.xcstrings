@@ -2166,7 +2166,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Einde Verlenging"
+            "value" : "Einde verlenging"
           }
         },
         "pl" : {
@@ -2607,7 +2607,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Laatste Verbinding"
+            "value" : "Laatste verbinding"
           }
         },
         "pl" : {
@@ -2755,7 +2755,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Laatste Meting"
+            "value" : "Laatste meting"
           }
         },
         "pl" : {
@@ -3166,7 +3166,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ouvrir l'app Dexcom"
+            "value" : "Ouvrir l'application Dexcom"
           }
         },
         "he" : {
@@ -3463,7 +3463,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Balayage"
+            "value" : "Recherche en cours"
           }
         },
         "he" : {
@@ -4506,7 +4506,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sensor Vervaldatum "
+            "value" : "Sensor vervaldatum "
           }
         },
         "pl" : {
@@ -5698,7 +5698,7 @@
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Upload Metingen"
+            "value" : "Upload metingen"
           }
         },
         "pl" : {
