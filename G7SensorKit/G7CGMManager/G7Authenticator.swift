@@ -32,6 +32,9 @@ public enum G7AuthenticatorError: Error {
 
     /// Neither a stored key nor a pairing code was available.
     case noCredentials
+
+    /// The link was already gone when the handshake came to run.
+    case linkLost
 }
 
 extension G7AuthenticatorError: CustomStringConvertible {
@@ -73,6 +76,11 @@ extension G7AuthenticatorError: CustomStringConvertible {
             return LocalizedString(
                 "No pairing code or saved key is available for this sensor.",
                 comment: "Error description when a G7 authentication is attempted with no credentials"
+            )
+        case .linkLost:
+            return LocalizedString(
+                "The connection to the sensor was lost before authentication.",
+                comment: "Error description when the G7 link drops before authentication starts"
             )
         }
     }
@@ -148,6 +156,9 @@ final class G7Authenticator {
         peripheralManager.perform { peripheral in
             do {
                 completion(.success(try self.run(peripheral)))
+            } catch G7AuthenticatorError.linkLost {
+                self.report("Link dropped before authentication could start")
+                completion(.failure(G7AuthenticatorError.linkLost))
             } catch {
                 self.report("Authentication failed: \(error)")
                 peripheral.setValueUpdateHandler(for: .authentication, handler: nil)
@@ -160,6 +171,9 @@ final class G7Authenticator {
     private func run(_ peripheral: G7PeripheralManager) throws -> Result {
         guard storedSharedKey != nil || pairingCode != nil else {
             throw G7AuthenticatorError.noCredentials
+        }
+        guard peripheral.peripheral.state == .connected else {
+            throw G7AuthenticatorError.linkLost
         }
 
         report(storedSharedKey != nil
