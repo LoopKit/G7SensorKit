@@ -22,6 +22,9 @@ enum PeripheralConnectionCommand {
 }
 
 protocol G7BluetoothManagerDelegate: AnyObject {
+    /// A signal-strength reading for a connected peripheral, requested with `readRSSI()`.
+    func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReadRSSI rssi: NSNumber, error: Error?)
+
 
     /**
      Tells the delegate that the bluetooth manager has finished connecting to and discovering all required services of its peripheral
@@ -97,6 +100,10 @@ protocol G7BluetoothManagerDelegate: AnyObject {
     /// - Parameters:
     ///   - manager: The bluetooth manager
     func peripheralDidDisconnect(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, wasRemoteDisconnect: Bool)
+}
+
+extension G7BluetoothManagerDelegate {
+    func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReadRSSI rssi: NSNumber, error: Error?) {}
 }
 
 
@@ -591,7 +598,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
 
 extension G7BluetoothManager: G7PeripheralManagerDelegate {
     func peripheralManager(_ manager: G7PeripheralManager, didReadRSSI RSSI: NSNumber, error: Error?) {
-
+        delegate?.bluetoothManager(self, peripheralManager: manager, didReadRSSI: RSSI, error: error)
     }
 
     func peripheralManagerDidUpdateName(_ manager: G7PeripheralManager) {

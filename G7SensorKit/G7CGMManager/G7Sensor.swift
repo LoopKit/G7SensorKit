@@ -239,6 +239,22 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         )
     }
 
+    /// ", advertised -78 dBm", or nothing when CoreBluetooth had no reading
+    /// (127) — a reconnect to a known peripheral has no advertisement.
+    static func describeRSSI(_ rssi: NSNumber, label: String) -> String {
+        let value = rssi.intValue
+        return value < 0 ? ", \(label) \(value) dBm" : ""
+    }
+
+    func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReadRSSI rssi: NSNumber, error: Error?) {
+        guard isOurSensor(peripheralManager) else { return }
+        if let error = error {
+            logToDevice("Signal strength unavailable: \(error.localizedDescription)", type: .connection)
+        } else {
+            logToDevice("Signal strength \(rssi.intValue) dBm", type: .connection)
+        }
+    }
+
     private func logToDevice(_ message: String, type: DeviceLogEntryType) {
         delegateQueue.async {
             self.delegate?.sensor(self, log: message, type: type)
@@ -499,6 +515,9 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                     }
                 }
                 self.beginSession(peripheralManager)
+            case .failure(G7AuthenticatorError.linkLost):
+                // Nothing wrong with the sensor; the next connection retries.
+                self.pendingAuth = false
             case .failure(let error):
                 self.handleAuthenticationFailure(error)
             }
@@ -629,6 +648,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         // went unlogged and its disconnect left the pending flags set.
         if isOurSensor(peripheralManager) {
             shouldStopScanning = true
+            peripheralManager.peripheral.readRSSI()
             let name = credentials.sensorID ?? peripheralManager.peripheral.name ?? "sensor"
             delegateQueue.async {
                 self.delegate?.sensorDidConnect(self, name: name)
@@ -720,7 +740,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             guard peripheral.identifier == identifier else {
                 return .ignore
             }
-            logToDevice("Connecting to \(name)", type: .connection)
+            logToDevice("Connecting to \(name)" + G7Sensor.describeRSSI(rssi, label: "advertised"), type: .connection)
             return .makeActive
         }
 
