@@ -66,7 +66,6 @@ struct G7StartupView: View {
         }
         .padding()
         .environment(\.horizontalSizeClass, .compact)
-        .navigationBarTitle("")
         .navigationBarHidden(true)
     }
 }

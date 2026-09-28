@@ -5,25 +5,19 @@
 //  Copyright © 2026 LoopKit Authors. All rights reserved.
 //
 
-import AVFoundation
 import G7SensorKit
 import SwiftUI
 
-/// Collects the 4-digit pairing code, by typing or by scanning the
-/// applicator's Data Matrix.
+/// Collects the 4-digit pairing code by typing.
+///
+/// Scanning the applicator lives one screen back, in `G7ScanCodeView`, which
+/// is also where a scan's serial number comes from. Someone who arrives here
+/// has chosen to type, or has no camera to scan with, so this screen does one
+/// thing and raises the keyboard to do it.
 struct G7EnterCodeView: View {
-    var didEnterCode: (_ code: String, _ serial: String?) -> Void
+    var didEnterCode: (_ code: String) -> Void
 
     @State private var code = ""
-    /// The code and serial from a scanned applicator. The serial only rides
-    /// along while the code still matches what was scanned: it belongs to that
-    /// applicator,
-    /// not to whatever gets typed afterwards.
-    @State private var scannedCode: String?
-    @State private var scannedSerial: String?
-    @State private var showingScanner = false
-    @State private var showingCameraDenied = false
-    @State private var scanMessage: String?
 
     @FocusState private var codeFieldFocused: Bool
 
@@ -33,119 +27,91 @@ struct G7EnterCodeView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text(LocalizedString("Enter the 4-digit pairing code printed on the sensor applicator, or scan the applicator's barcode.", comment: "Instructions on the pairing code entry screen"))
+            Text(LocalizedString("Enter the 4-digit pairing code printed on the sensor applicator.", comment: "Instructions on the screen where the pairing code is typed by hand"))
                 .fixedSize(horizontal: false, vertical: true)
                 .foregroundColor(.secondary)
 
-            Text(LocalizedString("There is nothing to do in the Dexcom app first; the sensor is ready to pair as soon as it is on.", comment: "Reminder on the code entry screen that the Dexcom app is not involved"))
-                .font(.footnote)
-                .fixedSize(horizontal: false, vertical: true)
-                .foregroundColor(.secondary)
-
-            TextField(LocalizedString("Pairing Code", comment: "Placeholder for the pairing code field"), text: $code)
-                .keyboardType(.numberPad)
-                .textContentType(.oneTimeCode)
-                .font(.system(size: 34, weight: .semibold, design: .monospaced))
-                .multilineTextAlignment(.center)
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(10)
-                .focused($codeFieldFocused)
-                .onChange(of: code) { _, newValue in
-                    let digits = newValue.filter(\.isNumber)
-                    let trimmed = String(digits.prefix(4))
-                    if trimmed != newValue {
-                        code = trimmed
+            ZStack {
+                TextField("", text: $code)
+                    .focused($codeFieldFocused)
+                    .keyboardType(.numberPad)
+                    .disableAutocorrection(true)
+                    .foregroundColor(.clear)
+                    .accentColor(.clear)
+                    .opacity(0.02)
+                    .onChange(of: code) { _, newValue in
+                        // Sanitising re-enters this handler, so wait for
+                        // the second pass before acting on the code.
+                        let sanitized = String(newValue.filter(\.isNumber).prefix(4))
+                        guard sanitized == newValue else {
+                            code = sanitized
+                            return
+                        }
+                        autoSubmitIfComplete()
                     }
-                    if trimmed != scannedCode {
-                        scannedSerial = nil
+
+                HStack(spacing: 14) {
+                    ForEach(0 ..< 4, id: \.self) { index in
+                        let characters = Array(code)
+                        let character = index < characters.count ? String(characters[index]) : ""
+                        let isActive = index == characters.count
+
+                        Text(character)
+                            .font(.title.weight(.semibold).monospaced())
+                            .frame(width: 68, height: 68)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.primary.opacity(0.12))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .stroke(Color.accentColor, lineWidth: isActive ? 2 : 0)
+                            )
                     }
                 }
-
-            if G7PackageScannerView.isAvailable {
-                Button(action: scanTapped) {
-                    Label(LocalizedString("Scan Applicator", comment: "Button title to scan the applicator barcode"), systemImage: "qrcode.viewfinder")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
+                .frame(maxWidth: .infinity)
+                .allowsHitTesting(false)
             }
-
-            if let scanMessage = scanMessage {
-                Text(scanMessage)
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-            }
+            .frame(height: 68)
+            .contentShape(Rectangle())
+            .onTapGesture { codeFieldFocused = true }
 
             Spacer()
 
-            Button(action: { didEnterCode(code, scannedSerial) }) {
+            Button(action: { didEnterCode(code) }) {
                 Text(LocalizedString("Continue", comment: "Button title for starting setup"))
                     .actionButtonStyle(.primary)
             }
             .disabled(!isValid)
         }
         .padding()
-        .onAppear { codeFieldFocused = true }
-        .sheet(isPresented: $showingScanner) {
-            NavigationView {
-                G7PackageScannerView { package in
-                    showingScanner = false
-                    handleScannedPackage(package)
-                }
-                .navigationBarTitle(Text(LocalizedString("Scan Applicator", comment: "Navigation title of the applicator scanner")), displayMode: .inline)
-                .navigationBarItems(trailing: Button(LocalizedString("Cancel", comment: "Button text to cancel G7 setup")) {
-                    showingScanner = false
-                })
+        // Tap-to-dismiss on the whole screen fought the boxes' own tap
+        // gesture: one tap could set focus and clear it.
+        .onAppear {
+            // Focusing during the push lays the keyboard out against a
+            // container with no width yet, which is the TUIKeyplane
+            // constraint break. Let the transition settle first.
+            DispatchQueue.main.asyncAfter(deadline: .now() + G7EnterCodeView.focusDelay) {
+                codeFieldFocused = true
             }
-        }
-        .alert(
-            LocalizedString("Camera Access Is Off", comment: "Title of the alert shown when camera permission is denied"),
-            isPresented: $showingCameraDenied
-        ) {
-            Button(LocalizedString("Open Settings", comment: "Button title to open the iOS Settings app")) {
-                if let url = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(url)
-                }
-            }
-            Button(LocalizedString("Cancel", comment: "Button text to cancel G7 setup"), role: .cancel) {}
-        } message: {
-            Text(LocalizedString("Allow camera access in Settings to scan the code on the applicator, or type the 4 digits instead.", comment: "Message of the alert shown when camera permission is denied"))
-        }
-        .navigationBarTitle(Text(LocalizedString("Pairing Code", comment: "Navigation title of the pairing code entry screen")), displayMode: .inline)
-    }
-
-    /// The scanner shows a blank view without camera access, so ask first.
-    private func scanTapped() {
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .authorized:
-            showingScanner = true
-        case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { granted in
-                DispatchQueue.main.async {
-                    if granted {
-                        showingScanner = true
-                    } else {
-                        showingCameraDenied = true
-                    }
-                }
-            }
-        default:
-            showingCameraDenied = true
         }
     }
 
-    private func handleScannedPackage(_ package: G7SensorPackage) {
-        guard let pairingCode = package.pairingCode else {
-            scanMessage = package.isDexcom
-                ? LocalizedString("That barcode has no pairing code. Enter the code from the applicator instead.", comment: "Message after scanning a Dexcom barcode without a pairing code")
-                : LocalizedString("That doesn't look like a Dexcom applicator.", comment: "Message after scanning a non-Dexcom barcode")
-            return
-        }
-        scannedCode = pairingCode
-        scannedSerial = package.serial
-        code = pairingCode
-        scanMessage = package.serial.map { serial in
-            String(format: LocalizedString("Scanned sensor %@", comment: "Message after a successful package scan (1: serial number)"), serial)
+    /// Outlasts a navigation push without the keyboard feeling late.
+    private static let focusDelay: TimeInterval = 0.45
+
+    /// A complete code submits itself: with the boxes full there is nothing
+    /// left to enter and the number pad has no return key to dismiss it. The
+    /// delay lets the last box fill and the keyboard finish leaving, so its
+    /// dismissal does not overlap the next screen's push.
+    private func autoSubmitIfComplete() {
+        guard isValid, codeFieldFocused else { return }
+
+        codeFieldFocused = false
+        let submitted = code
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            guard code == submitted else { return }
+            didEnterCode(submitted)
         }
     }
 }
