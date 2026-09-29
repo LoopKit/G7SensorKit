@@ -73,6 +73,11 @@ public class G7CGMManager: CGMManager {
     }
     private let lockedState: Locked<G7CGMManagerState>
 
+    /// Whether this run has taken back a signal-loss alert that an earlier
+    /// build may have left scheduled. Done on the first reading, when the
+    /// delegate is known to be set.
+    private var didRetractLegacySignalLoss = false
+
     /// Sends readings to Dexcom Share while an account is signed in.
     private var shareUploader: G7ShareUploader?
 
@@ -630,14 +635,6 @@ extension G7CGMManager {
         }
     }
 
-    /// Arms the signal-loss alert to fire if no further reading arrives in
-    /// time. Called on every reading, so it keeps being pushed back while
-    /// readings flow and only ever fires after they stop.
-    private func rearmSignalLossAlert() {
-        retractLifecycleAlert(.signalLoss)
-        issueLifecycleAlert(.signalLoss, trigger: .delayed(interval: G7LifecycleAlert.signalLossInterval))
-    }
-
     private func raiseSensorFailedAlertIfNeeded(for message: G7GlucoseMessage) {
         guard message.algorithmState.sensorFailed, let sensorID = state.sensorID,
               state.sensorFailedAlertIssuedFor != sensorID
@@ -645,8 +642,6 @@ extension G7CGMManager {
             return
         }
         issueLifecycleAlert(.sensorFailed)
-        // A failed sensor will not send more readings; nothing to lose signal from.
-        retractLifecycleAlert(.signalLoss)
         mutateState { state in
             state.sensorFailedAlertIssuedFor = sensorID
             state.sensorFailureMessage = String(describing: message.algorithmState)
@@ -1020,7 +1015,10 @@ extension G7CGMManager: G7SensorDelegate {
             }
             retractLifecycleAlert(.connectionRefused)
         }
-        rearmSignalLossAlert()
+        if !didRetractLegacySignalLoss {
+            didRetractLegacySignalLoss = true
+            retractLifecycleAlert(.signalLoss)
+        }
         raiseSensorFailedAlertIfNeeded(for: message)
 
         // Receiving any glucose message proves the session is still active.
@@ -1121,7 +1119,6 @@ extension G7CGMManager: G7SensorDelegate {
                 mutateState { state in
                     state.latestReadingTimestamp = newestDate
                 }
-                rearmSignalLossAlert()
             }
         }
 

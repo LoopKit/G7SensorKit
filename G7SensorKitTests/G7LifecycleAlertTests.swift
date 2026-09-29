@@ -164,7 +164,7 @@ class G7LifecycleAlertManagerTests: XCTestCase {
         XCTAssertTrue(recorder.retracted.contains { $0.alertIdentifier == G7LifecycleAlert.sensorExpired.rawValue })
     }
 
-    func testReadingsRearmSignalLoss() {
+    func testReadingsDoNotScheduleSignalLoss() {
         var state = G7CGMManagerState()
         state.sensorID = "DXCM99"
         state.activatedAt = Date(timeIntervalSinceNow: -3600)
@@ -173,13 +173,8 @@ class G7LifecycleAlertManagerTests: XCTestCase {
         manager.sensor(manager.sensor, didRead: okReading)
         settle()
 
-        let signalLoss = recorder.issued.filter { $0.identifier.alertIdentifier == G7LifecycleAlert.signalLoss.rawValue }
-        XCTAssertEqual(signalLoss.count, 1)
-        guard case .delayed(let interval) = signalLoss[0].trigger else {
-            return XCTFail("signal loss must be scheduled ahead, not raised now")
-        }
-        XCTAssertEqual(interval, G7LifecycleAlert.signalLossInterval)
-        XCTAssertTrue(recorder.retracted.contains { $0.alertIdentifier == G7LifecycleAlert.signalLoss.rawValue }, "the previous arming is cleared first")
+        XCTAssertFalse(recorder.issued.contains { $0.identifier.alertIdentifier == G7LifecycleAlert.signalLoss.rawValue }, "Loop's not-looping alert covers a stop in readings")
+        XCTAssertTrue(recorder.retracted.contains { $0.alertIdentifier == G7LifecycleAlert.signalLoss.rawValue }, "one left by an earlier build is taken back")
     }
 
     func testRefusalRaisesOnceAndClearsOnReading() {
