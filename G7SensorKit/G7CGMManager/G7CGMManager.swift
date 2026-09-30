@@ -255,6 +255,9 @@ public class G7CGMManager: CGMManager {
     public convenience init(sessionMode: G7SessionMode, displayType: G7DisplayType = G7CGMManager.defaultDisplayType) {
         var state = G7CGMManagerState()
         state.sessionMode = sessionMode
+#if os(watchOS)
+        _ = G7WatchDirectRead.takeLegacyAdoptedPeripheral()
+#endif
         self.init(state: state, sensor: G7Sensor(mode: sessionMode, credentials: state.sensorCredentials, displayType: displayType))
     }
 
@@ -290,11 +293,32 @@ public class G7CGMManager: CGMManager {
         // The watch always reads directly: with no Dexcom app on the phone there is no session
         // to eavesdrop on. Without a code the arm stands down until one arrives from the phone.
         state.sessionMode = .direct
+        if let legacy = G7WatchDirectRead.takeLegacyAdoptedPeripheral(), state.peripheralIdentifier == nil {
+            state.peripheralIdentifier = legacy
+        }
 #endif
         let displayType = G7CGMManager.defaultDisplayType
         self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, displayType: displayType))
         sensor.needsVersionInfo = state.extendedVersion == nil
+#if os(watchOS)
+        if let latest = state.latestReadingTimestamp {
+            sensor.noteLatestReading(at: latest)
+        }
+#endif
     }
+
+    /// Posted on the main queue when `watchNeedsCodeFor` or `watchIsSearching` changes; the object
+    /// is the manager. Only the watch posts it.
+    public static let watchStatusDidChange = Notification.Name("G7CGMManagerWatchStatusDidChange")
+
+#if os(watchOS)
+
+    /// The sensor a watch connect reached without a pairing code; nil once one exists.
+    public var watchNeedsCodeFor: String? { sensor.watchNeedsCodeFor }
+
+    /// The watch is scanning for a sensor it has never connected to.
+    public var watchIsSearching: Bool { sensor.watchIsSearching }
+#endif
 
     /// Which of the sensor's display slots this app takes. A phone by
     /// default; a watch app takes its own, alongside the phone's.
@@ -805,6 +829,18 @@ extension G7CGMManager: G7SensorDelegate {
             state.peripheralIdentifier = sensor.credentials.peripheralIdentifier
             state.lastAuthenticationFailure = nil
             state.lastAuthenticationFailureDate = nil
+        }
+    }
+
+    public func sensor(_ sensor: G7Sensor, didAdoptPeripheral identifier: UUID?) {
+        mutateState { state in
+            state.peripheralIdentifier = identifier
+        }
+    }
+
+    public func sensorWatchStatusDidChange(_ sensor: G7Sensor) {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: G7CGMManager.watchStatusDidChange, object: self)
         }
     }
 
