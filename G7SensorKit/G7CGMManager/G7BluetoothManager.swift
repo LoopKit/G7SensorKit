@@ -620,6 +620,9 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
             // The daemon drops every request with the radio: a request we still believed lodged
             // would block the next lodge until the 3-miss test. Start clean at the next poweredOn.
             lodged = false; lodgedAt = nil; linkUpAt = nil
+            // Same for a scan: the next poweredOn has to be free to start one.
+            bootstrapPass = false
+            bootstrapTimer?.cancel(); bootstrapTimer = nil
 #endif
             if central.isScanning {
                 log.default("Stopping scan on central not powered on")
@@ -933,12 +936,21 @@ extension G7BluetoothManager {
         guard centralManager.state == .poweredOn, !bootstrapPass else { return }
         bootstrapPass = true
         lastBootstrapAt = Date()
-        watchLog("BOOTSTRAP scan pass — \(reason) (one pass, \(Int(G7WatchAcquisition.bootstrapScanCap)) s cap)")
+        // With no identifier there is nothing else to fall back on, so the scan stays up until the
+        // sensor is found. With one, a short pass and then the daemon-held connect is the better bet.
+        let untilFound = activePeripheralIdentifier == nil && rememberedPeripheralID == nil
+        watchLog(untilFound
+                 ? "BOOTSTRAP scan — \(reason) (no identifier yet: scanning until the sensor is found)"
+                 : "BOOTSTRAP scan pass — \(reason) (one pass, \(Int(G7WatchAcquisition.bootstrapScanCap)) s cap)")
         let services = [SensorServiceUUID.advertisement.cbUUID, SensorServiceUUID.cgmService.cbUUID]
         for p in centralManager.retrieveConnectedPeripherals(withServices: services) { handleDiscoveredPeripheral(p) }
         centralManager.registerForConnectionEvents(options: [CBConnectionEventMatchingOption.serviceUUIDs: services])
         centralManager.scanForPeripherals(withServices: [SensorServiceUUID.advertisement.cbUUID], options: nil)
         delegate?.bluetoothManagerScanningStatusDidChange(self)
+        guard !untilFound else {
+            G7WatchDirectRead.setSearching(true)
+            return
+        }
         let t = DispatchSource.makeTimerSource(queue: managerQueue)
         t.schedule(deadline: .now() + G7WatchAcquisition.bootstrapScanCap)
         t.setEventHandler { [weak self] in self?.managerQueue_endBootstrapPass(reason: "cap reached") }
@@ -951,6 +963,7 @@ extension G7BluetoothManager {
         bootstrapPass = false
         bootstrapTimer?.cancel(); bootstrapTimer = nil
         managerQueue_stopScanning()
+        G7WatchDirectRead.setSearching(false)
         watchLog("bootstrap pass over — \(reason)")
         guard reason != "connected" else { return }
         if let p = activePeripheral, p.state == .connecting { centralManager.cancelPeripheralConnection(p); lodged = false; lodgedAt = nil }
@@ -1029,6 +1042,27 @@ public enum G7WatchDirectRead {
             if let v = newValue { UserDefaults.standard.set(v, forKey: needsCodeKey) }
             else { UserDefaults.standard.removeObject(forKey: needsCodeKey) }
         }
+    }
+
+    /// Set while the watch scans for a sensor it has never connected to. Scanning runs at a much
+    /// better duty level with the app in front, so the user is asked to keep it open.
+    public static let searchingKey = "G7Lab.watchDirectRead.searching"
+    public static let searchStateDidChange = Notification.Name("G7WatchDirectReadSearchStateDidChange")
+
+    public static var isSearching: Bool {
+        UserDefaults.standard.bool(forKey: searchingKey)
+    }
+
+    static func setSearching(_ searching: Bool) {
+        guard searching != isSearching else { return }
+        UserDefaults.standard.set(searching, forKey: searchingKey)
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: searchStateDidChange, object: nil)
+        }
+    }
+
+    public static var searchingNote: String? {
+        isSearching ? "Looking for your sensor — keep Loop open on your watch until it connects." : nil
     }
 
     /// One-line glance note while a code is missing; nil otherwise.

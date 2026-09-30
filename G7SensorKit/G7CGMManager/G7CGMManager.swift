@@ -144,6 +144,11 @@ public class G7CGMManager: CGMManager {
         return activatedAt.addingTimeInterval(lifetime)
     }
 
+    /// Whether `sensorEndsAt` comes from the sensor's own reported session length rather than the default.
+    public var sensorSessionLengthIsKnown: Bool {
+        state.extendedVersion?.sessionLength != nil
+    }
+
     public var sensorEndsAt: Date? {
         guard let activatedAt = sensorActivatedAt else {
             return nil
@@ -229,10 +234,17 @@ public class G7CGMManager: CGMManager {
         self.init(sessionMode: .eavesdropping)
     }
 
+    /// The display slot this platform takes: a watch must never take the phone's slot.
+#if os(watchOS)
+    public static let defaultDisplayType = G7WatchDirectRead.displayType
+#else
+    public static let defaultDisplayType = G7DisplayType.phone
+#endif
+
     /// A manager with no sensor yet. Created at the start of setup, so the
     /// CGM exists and its device log carries the pairing from the first line;
     /// `applyPairingResult` completes it.
-    public convenience init(sessionMode: G7SessionMode, displayType: G7DisplayType = .phone) {
+    public convenience init(sessionMode: G7SessionMode, displayType: G7DisplayType = G7CGMManager.defaultDisplayType) {
         var state = G7CGMManagerState()
         state.sessionMode = sessionMode
         self.init(state: state, sensor: G7Sensor(mode: sessionMode, credentials: state.sensorCredentials, displayType: displayType))
@@ -243,7 +255,7 @@ public class G7CGMManager: CGMManager {
     /// With a `handoff`, the session is built around the central the pairing
     /// run used and takes over its authenticated connection, so the first
     /// reading arrives now rather than on the sensor's next advertisement.
-    public convenience init(pairingCode: String, peripheralIdentifier: UUID?, sharedKey: Data?, handoff: G7PairingHandoff? = nil, displayType: G7DisplayType = .phone) {
+    public convenience init(pairingCode: String, peripheralIdentifier: UUID?, sharedKey: Data?, handoff: G7PairingHandoff? = nil, displayType: G7DisplayType = G7CGMManager.defaultDisplayType) {
         var state = G7CGMManagerState()
         state.sessionMode = .direct
         state.pairingCode = pairingCode
@@ -270,10 +282,8 @@ public class G7CGMManager: CGMManager {
         // The watch always reads directly: with no Dexcom app on the phone there is no session
         // to eavesdrop on. Without a code the arm stands down until one arrives from the phone.
         state.sessionMode = .direct
-        let displayType = G7WatchDirectRead.displayType
-#else
-        let displayType = G7DisplayType.phone
 #endif
+        let displayType = G7CGMManager.defaultDisplayType
         self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, displayType: displayType))
         sensor.needsVersionInfo = state.extendedVersion == nil
     }
