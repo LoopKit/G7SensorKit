@@ -107,6 +107,13 @@ protocol G7BluetoothManagerDelegate: AnyObject {
     /// or a stored key for the sensor; while eavesdropping, always. The arm does not lodge a
     /// request it could only watch fail.
     func bluetoothManagerCanAuthenticate(_ manager: G7BluetoothManager) -> Bool
+
+    /// The watch adopted a peripheral as the sensor (nil when it let go of one), so the owner can
+    /// persist the identifier with the rest of the sensor's state.
+    func bluetoothManager(_ manager: G7BluetoothManager, didAdoptPeripheral identifier: UUID?)
+
+    /// `watchNeedsCodeFor` or `watchIsSearching` changed.
+    func bluetoothManagerWatchStatusDidChange(_ manager: G7BluetoothManager)
 #endif
 }
 
@@ -115,6 +122,8 @@ extension G7BluetoothManagerDelegate {
     /// Optional: only the watch produces these.
     func bluetoothManager(_ manager: G7BluetoothManager, logEvent line: String) {}
     func bluetoothManagerCanAuthenticate(_ manager: G7BluetoothManager) -> Bool { true }
+    func bluetoothManager(_ manager: G7BluetoothManager, didAdoptPeripheral identifier: UUID?) {}
+    func bluetoothManagerWatchStatusDidChange(_ manager: G7BluetoothManager) {}
 }
 #endif
 
@@ -162,15 +171,29 @@ class G7BluetoothManager: NSObject {
     private var bootstrapTimer: DispatchSourceTimer?
     /// When the last bootstrap pass started: a silent sensor is scanned for once per three bursts.
     private var lastBootstrapAt: Date?
-    /// The last reading's SENSOR timestamp, persisted: the 3-miss test and the grid survive a relaunch.
-    private var lastReadingAt: Date? {
-        get { (UserDefaults.standard.object(forKey: G7WatchAcquisition.lastReadingKey) as? Double).map { Date(timeIntervalSince1970: $0) } }
-        set { UserDefaults.standard.set(newValue?.timeIntervalSince1970, forKey: G7WatchAcquisition.lastReadingKey) }
+    /// The last reading's sensor timestamp, for the 3-miss test and the grid. Seeded at launch
+    /// from the manager's persisted `latestReadingTimestamp` (`noteReading`).
+    private var lastReadingAt: Date?
+
+    private let lockedNeedsCodeFor = Locked<String?>(nil)
+    private let lockedIsSearching = Locked(false)
+
+    /// The sensor a connect reached without a pairing code; nil once one exists.
+    var watchNeedsCodeFor: String? { lockedNeedsCodeFor.value }
+
+    /// Scanning for a sensor this watch has never connected to.
+    var watchIsSearching: Bool { lockedIsSearching.value }
+
+    private func setWatchNeedsCodeFor(_ name: String?) {
+        guard lockedNeedsCodeFor.value != name else { return }
+        lockedNeedsCodeFor.value = name
+        delegate?.bluetoothManagerWatchStatusDidChange(self)
     }
-    /// The adopted peripheral's CoreBluetooth identifier, persisted: a relaunch re-adopts without a scan.
-    private var rememberedPeripheralID: UUID? {
-        get { UserDefaults.standard.string(forKey: G7WatchAcquisition.adoptedPeripheralKey).flatMap(UUID.init(uuidString:)) }
-        set { UserDefaults.standard.set(newValue?.uuidString, forKey: G7WatchAcquisition.adoptedPeripheralKey) }
+
+    private func setWatchIsSearching(_ searching: Bool) {
+        guard lockedIsSearching.value != searching else { return }
+        lockedIsSearching.value = searching
+        delegate?.bluetoothManagerWatchStatusDidChange(self)
     }
 #endif
 
@@ -194,7 +217,10 @@ class G7BluetoothManager: NSObject {
             oldValue?.delegate = nil
             lockedPeripheralIdentifier.value = activePeripheralManager?.peripheral.identifier
 #if os(watchOS)
-            rememberedPeripheralID = activePeripheralManager?.peripheral.identifier
+            let identifier = activePeripheralManager?.peripheral.identifier
+            if identifier != oldValue?.peripheral.identifier {
+                delegate?.bluetoothManager(self, didAdoptPeripheral: identifier)
+            }
 #endif
         }
     }
@@ -559,6 +585,12 @@ class G7BluetoothManager: NSObject {
                 log.default("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
 
                 if let peripheralManager = activePeripheralManager {
+#if os(watchOS)
+                    if peripheralManager.peripheral.identifier != peripheral.identifier {
+                        lockedPeripheralIdentifier.value = peripheral.identifier
+                        delegate.bluetoothManager(self, didAdoptPeripheral: peripheral.identifier)
+                    }
+#endif
                     peripheralManager.peripheral = peripheral
                 } else {
                     activePeripheralManager = makeOrReusePeripheralManager(peripheral)
@@ -783,7 +815,7 @@ extension G7BluetoothManager: G7PeripheralManagerDelegate {
 // connect backs off heartbeatFailureBackoffSeconds and re-checks state, and the central opts into
 // restoration so watchOS relaunches us for the link. Deviations, each tied to a measurement:
 //  • how the next request reaches the daemon after each reading is the Diagnostics page's
-//    Re-lodge toggle (G7WatchAcquisition.relodge). `peteDelay` hands the daemon a start delay
+//    Re-lodge arm (G7WatchAcquisition.relodge). `peteDelay` hands the daemon a start delay
 //    aimed at the next reading — 298 − (now − bg_timestamp), his formula (measured 1 in 4: the
 //    daemon services a delayed connect 0.3–269 s late). `holdApp` holds the process 35 s after
 //    link-up and then lodges a plain connect (33 in 33, at 35 s of held runtime per cycle — the
@@ -815,7 +847,7 @@ extension G7BluetoothManager {
         dispatchPrecondition(condition: .onQueue(managerQueue))
         guard centralManager.state == .poweredOn else { return }
         refusals = 0
-        guard let id = activePeripheralIdentifier ?? rememberedPeripheralID,
+        guard let id = activePeripheralIdentifier,
               let peripheral = centralManager.retrievePeripherals(withIdentifiers: [id]).first else {
             managerQueue_startBootstrapPass(reason: "no adopted peripheral")
             return
@@ -902,11 +934,11 @@ extension G7BluetoothManager {
             // A link we cannot authenticate is one the sensor closes unencrypted ~10 s later — a
             // tally count every burst for nothing. Stand down; the code's arrival re-arms
             // (G7CGMManager.receivePairingCode → resumeScanning).
-            G7WatchDirectRead.needsCodeFor = peripheral.name
+            setWatchNeedsCodeFor(peripheral.name ?? "sensor")
             watchLog("no pairing code for \(peripheral.name ?? "sensor") — not lodging")
             return
         }
-        G7WatchDirectRead.needsCodeFor = nil
+        setWatchNeedsCodeFor(nil)
         lodged = true; lodgedAt = Date()
         let options = startDelay.map { [CBConnectPeripheralOptionStartDelayKey: NSNumber(value: $0)] }
         centralManager.connect(peripheral, options: options)
@@ -938,7 +970,7 @@ extension G7BluetoothManager {
         lastBootstrapAt = Date()
         // With no identifier there is nothing else to fall back on, so the scan stays up until the
         // sensor is found. With one, a short pass and then the daemon-held connect is the better bet.
-        let untilFound = activePeripheralIdentifier == nil && rememberedPeripheralID == nil
+        let untilFound = activePeripheralIdentifier == nil
         watchLog(untilFound
                  ? "BOOTSTRAP scan — \(reason) (no identifier yet: scanning until the sensor is found)"
                  : "BOOTSTRAP scan pass — \(reason) (one pass, \(Int(G7WatchAcquisition.bootstrapScanCap)) s cap)")
@@ -948,7 +980,7 @@ extension G7BluetoothManager {
         centralManager.scanForPeripherals(withServices: [SensorServiceUUID.advertisement.cbUUID], options: nil)
         delegate?.bluetoothManagerScanningStatusDidChange(self)
         guard !untilFound else {
-            G7WatchDirectRead.setSearching(true)
+            setWatchIsSearching(true)
             return
         }
         let t = DispatchSource.makeTimerSource(queue: managerQueue)
@@ -963,7 +995,7 @@ extension G7BluetoothManager {
         bootstrapPass = false
         bootstrapTimer?.cancel(); bootstrapTimer = nil
         managerQueue_stopScanning()
-        G7WatchDirectRead.setSearching(false)
+        setWatchIsSearching(false)
         watchLog("bootstrap pass over — \(reason)")
         guard reason != "connected" else { return }
         if let p = activePeripheral, p.state == .connecting { centralManager.cancelPeripheralConnection(p); lodged = false; lodgedAt = nil }
@@ -1027,64 +1059,47 @@ extension G7BluetoothManager {
 /// so the watch reads glucose with no Dexcom app present. The sensor's pairing code is entered
 /// once on the phone and rides to the watch inside the context's cgmManagerState.
 public enum G7WatchDirectRead {
-    /// Set when a connect reached a sensor we have no code for; cleared as soon as one exists.
-    /// Surfaced by the glance and the diagnostics screen — the user's cue to enter it on the phone.
-    public static let needsCodeKey = "G7Lab.watchDirectRead.needsCode"
     /// The display slot the watch declares at authentication (`G7DisplayType`): a watch. An
     /// alternating experiment (2026-09-16/17, ~45 bursts as `.medical`, ~30 as `.watch`) found
     /// no difference in burst hit rate or link-up lateness, and the stored key survives either
     /// slot — so the honest declaration it is.
     public static let displayType: G7DisplayType = .watch
 
-    public static var needsCodeFor: String? {
-        get { UserDefaults.standard.string(forKey: needsCodeKey) }
-        set {
-            if let v = newValue { UserDefaults.standard.set(v, forKey: needsCodeKey) }
-            else { UserDefaults.standard.removeObject(forKey: needsCodeKey) }
-        }
+    /// Before this state lived in the sensor's manager state, the adopted peripheral was kept in
+    /// user defaults under this key. Read once to migrate, then removed.
+    static let legacyAdoptedPeripheralKey = "G7Lab.timedConnect.adoptedPeripheral"
+    static let legacyDefaultsKeys = [legacyAdoptedPeripheralKey, "G7Lab.timedConnect.anchor",
+                                     "G7Lab.watchDirectRead.needsCode", "G7Lab.watchDirectRead.searching", "G7Lab.relodge"]
+
+    /// Returns the legacy adopted-peripheral identifier, if any, and removes every legacy key.
+    static func takeLegacyAdoptedPeripheral() -> UUID? {
+        let defaults = UserDefaults.standard
+        let identifier = defaults.string(forKey: legacyAdoptedPeripheralKey).flatMap(UUID.init(uuidString:))
+        legacyDefaultsKeys.forEach(defaults.removeObject(forKey:))
+        return identifier
     }
 
-    /// Set while the watch scans for a sensor it has never connected to. Scanning runs at a much
-    /// better duty level with the app in front, so the user is asked to keep it open.
-    public static let searchingKey = "G7Lab.watchDirectRead.searching"
-    public static let searchStateDidChange = Notification.Name("G7WatchDirectReadSearchStateDidChange")
-
-    public static var isSearching: Bool {
-        UserDefaults.standard.bool(forKey: searchingKey)
+    /// Glance note while the watch scans for a sensor it has never connected to.
+    public static func searchingNote(_ searching: Bool) -> String? {
+        searching ? "Looking for your sensor — keep Loop open on your watch until it connects." : nil
     }
 
-    static func setSearching(_ searching: Bool) {
-        guard searching != isSearching else { return }
-        UserDefaults.standard.set(searching, forKey: searchingKey)
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: searchStateDidChange, object: nil)
-        }
-    }
-
-    public static var searchingNote: String? {
-        isSearching ? "Looking for your sensor — keep Loop open on your watch until it connects." : nil
-    }
-
-    /// One-line glance note while a code is missing; nil otherwise.
-    public static var needsCodeNote: String? {
-        needsCodeFor.map { "Sensor code needed for \($0) — enter it in Loop ▸ Dexcom G7 on the phone (it is shown in the Dexcom app)." }
+    /// Glance note while a code is missing.
+    public static func needsCodeNote(for sensor: String?) -> String? {
+        sensor.map { "Sensor code needed for \($0) — enter it in Loop ▸ Dexcom G7 on the phone (it is shown in the Dexcom app)." }
     }
 }
 
 /// The watch's ONE acquisition design (lean-out step 7, 2026-09-16): a single daemon-held request
-/// per burst, re-lodged after each close through the arm the Diagnostics page selects. Pure, so
+/// per burst, re-lodged after each close. Pure, so
 /// WatchAppTests can pin it. The G7BluetoothManager extension above is the stateful half.
 public enum G7WatchAcquisition {
-    /// How the next request reaches the daemon after each reading (Diagnostics ▸ Sensor ▸ Re-lodge).
+    /// How the next request reaches the daemon after each reading.
     /// `peteDelay`: a start delay aimed at the next reading — Pete's 298 − (now − bg_timestamp);
     /// measured 1 in 4, the daemon serving a delayed connect 0.3–269 s late. `holdApp`: hold the
     /// process 35 s after link-up, then a plain connect; 33 in 33, at 35 s of runtime per cycle.
     public enum Relodge: String, CaseIterable { case peteDelay, holdApp }
-    public static let relodgeKey = "G7Lab.relodge"
-    public static let relodgeDefault: Relodge = .holdApp
-    public static var relodge: Relodge {
-        UserDefaults.standard.string(forKey: relodgeKey).flatMap(Relodge.init(rawValue:)) ?? relodgeDefault
-    }
+    public static let relodge: Relodge = .holdApp
     /// Link-up → the ~3.5-s read, the sensor's close, and its 20–24-s advertising tail all sit inside
     /// 35 s. A request that lands after this never reconnects into the tail.
     public static let tailClearanceSeconds: TimeInterval = 35
@@ -1104,9 +1119,6 @@ public enum G7WatchAcquisition {
     public static let refusalBackoffSeconds: TimeInterval = 30
     /// A didFailToConnect this soon after the call is the daemon declining the request itself.
     public static let synchronousRefusalWindow: TimeInterval = 2
-    // Key STRINGS unchanged from the timed-connect era, so the first build re-adopts without a scan.
-    public static let adoptedPeripheralKey = "G7Lab.timedConnect.adoptedPeripheral"
-    public static let lastReadingKey = "G7Lab.timedConnect.anchor"
 
     /// The next grid-aligned fire time strictly after `now + margin`, on the reading's own grid.
     public static func nextFire(anchor: Date, now: Date, margin: TimeInterval = 1) -> Date {
