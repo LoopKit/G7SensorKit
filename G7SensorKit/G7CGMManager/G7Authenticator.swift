@@ -259,28 +259,40 @@ final class G7Authenticator {
         }
         let jpake = G7JPAKE(pairingCode: pairingCode)
 
-        let sensorRound1 = try exchangeRound(peripheral, round: 0, ours: jpake.makeRound1())
-        let sensorRound2 = try exchangeRound(peripheral, round: 1, ours: jpake.makeRound2())
+        // The sensor drops the link after about four seconds without a reply, so everything we can
+        // compute ahead of its request is computed ahead of it.
+        let computeStart = Date()
+        let ourRound1 = jpake.makeRound1()
+        let ourRound2 = jpake.makeRound2()
+        let precomputeSeconds = Date().timeIntervalSince(computeStart)
+
+        let sensorRound1 = try exchangeRound(peripheral, round: 0, ours: ourRound1)
+        let sensorRound2 = try exchangeRound(peripheral, round: 1, ours: ourRound2)
+
+        let round3Start = Date()
+        let ourRound3 = try jpake.makeRound3(peerRound1: sensorRound1, peerRound2: sensorRound2)
+        let round3Seconds = Date().timeIntervalSince(round3Start)
+
         let sensorRound3 = try requestSensorRound(peripheral, round: 2)
 
-        // Advisory only: the sensor does not require us to check its proofs,
-        // and the AES challenge below is the real gate. On hardware they do
-        // not verify under the transcript format we use for our own (which
-        // the sensor accepts), so the sensor's side evidently hashes
-        // something differently; noted, not acted on.
+        let deriveStart = Date()
+        let secret = try jpake.deriveSharedSecret(peerRound2: sensorRound2, peerRound3: sensorRound3)
+        try peripheral.writeCertificateBytes(ourRound3)
+        let deriveSeconds = Date().timeIntervalSince(deriveStart)
+
+        report(String(format: "Key exchange complete (compute: rounds 1-2 %.0f ms before the first request, round 3 %.0f ms, secret %.0f ms)",
+                      precomputeSeconds * 1000, round3Seconds * 1000, deriveSeconds * 1000))
+
+        // Advisory only, and checked after we have replied: the sensor does not require us to
+        // check its proofs, and the AES challenge below is the real gate. On hardware they do not
+        // verify under the transcript format we use for our own (which the sensor accepts), so the
+        // sensor's side evidently hashes something differently; noted, not acted on.
         let proofsVerified = jpake.validateRound1Or2(sensorRound1)
             && jpake.validateRound1Or2(sensorRound2)
             && jpake.validateRound3(peerRound1: sensorRound1, peerRound3: sensorRound3)
         if !proofsVerified {
             report("Key exchange: the sensor's proofs did not verify under our transcript format (advisory)")
         }
-
-        // Derive before sending our own round 3: the sensor may drop the link
-        // as soon as it has what it needs.
-        let secret = try jpake.deriveSharedSecret(peerRound2: sensorRound2, peerRound3: sensorRound3)
-        try peripheral.writeCertificateBytes(jpake.makeRound3(peerRound1: sensorRound1, peerRound2: sensorRound2))
-
-        report("Key exchange complete")
         return secret.prefix(16)
     }
 

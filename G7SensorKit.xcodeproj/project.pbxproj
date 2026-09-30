@@ -138,6 +138,7 @@
 		C1D0C0DE2F0700010000CAFE /* G7CGMManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */; };
 		C1E71720292D84FE00DA646F /* G7ProgressBarState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E7171F292D84FE00DA646F /* G7ProgressBarState.swift */; };
 		FADE00000000000000000335 /* G7GlucoseMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F50E8291EAC6500555EB5 /* G7GlucoseMessage.swift */; };
+		FC325E86CDFE4002B0A5C260 /* G7P256Field.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F713A6F599C418A89815F3F /* G7P256Field.swift */; };
 		FADE00000000000000000311 /* LoopKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FADE00000000000000000301 /* LoopKit.framework */; };
 		CF8E76B21D92A5ED046EBA26 /* G7Advertisement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C635B2D3F90E42F5907A39 /* G7Advertisement.swift */; };
 		D2F6C2D8999636C3D4F31DB1 /* G7AdvertisementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 742542EDF25C573BA2E8B09A /* G7AdvertisementTests.swift */; };
@@ -154,6 +155,7 @@
 		E654B56A0D3A74C9199EE1B7 /* G7SensorPackage.swift in Sources */ = {isa = PBXBuildFile; fileRef = EADB2921131FCF7BE4BAAA78 /* G7SensorPackage.swift */; };
 		26707EC9128F04EFFD6C5F67 /* G7LifecycleAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BAFBA741A5D33EDA31E9122 /* G7LifecycleAlert.swift */; };
 		EA756ED51BB567AB19020B47 /* G7CalibrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDCCED9AACFF7A7EF879459 /* G7CalibrationTests.swift */; };
+		F49075E6D62246F58AAE544E /* G7P256Field.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F713A6F599C418A89815F3F /* G7P256Field.swift */; };
 		EE80FBB62E9FF65D5946BBD7 /* G7ChallengeSigner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A771C4DCFFA924E278E352 /* G7ChallengeSigner.swift */; };
 		EF41639FF51B727324A04A49 /* G7NotificationPermissionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3BAC6D6BA20FCF904FA1465 /* G7NotificationPermissionsView.swift */; };
 		F5F8174E48028D9B111B8C59 /* G7JPAKETests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6888359A74F9F636FBDCA8BB /* G7JPAKETests.swift */; };
@@ -244,6 +246,7 @@
 		7B28BDB6307B48D8B1DA03E3 /* G7BigUInt.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7BigUInt.swift; sourceTree = "<group>"; };
 		846E1ADD7624F7057E63E28C /* G7PairingSuccessView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7PairingSuccessView.swift; sourceTree = "<group>"; };
 		854B2FDB6A6325716E4FD46D /* G7EnterCodeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7EnterCodeView.swift; sourceTree = "<group>"; };
+		5F713A6F599C418A89815F3F /* G7P256Field.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7P256Field.swift; sourceTree = "<group>"; };
 		8990966223D8FEFF85D5D535 /* G7BigUIntTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7BigUIntTests.swift; sourceTree = "<group>"; };
 		899E19256E3224A54FA35AD8 /* G7Authenticator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7Authenticator.swift; sourceTree = "<group>"; };
 		8BA8EE3244D1FE42461E792D /* G7CalibrationRecord.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7CalibrationRecord.swift; sourceTree = "<group>"; };
@@ -380,6 +383,7 @@
 			children = (
 				7B28BDB6307B48D8B1DA03E3 /* G7BigUInt.swift */,
 				081992BE86DC6126B0151B4F /* G7P256.swift */,
+				5F713A6F599C418A89815F3F /* G7P256Field.swift */,
 				6C50AD3678079467EE110CD1 /* G7AES.swift */,
 				B1A771C4DCFFA924E278E352 /* G7ChallengeSigner.swift */,
 				31D1424E75ED6303B966EF89 /* G7DexcomCredentials.swift */,
@@ -914,6 +918,7 @@
 				E8FB02B2CD67D716E7D4E2D1 /* G7DexcomCredentials.swift in Sources */,
 				B2BB5E4180C00166DED29A6A /* G7JPAKE.swift in Sources */,
 				E4908B22ECA55851278BBC6D /* G7P256.swift in Sources */,
+				FC325E86CDFE4002B0A5C260 /* G7P256Field.swift in Sources */,
 				FE87266E3AE98CA87D903665 /* G7PCert.swift in Sources */,
 				2BC9F3807D05FB72B54407C6 /* G7Authenticator.swift in Sources */,
 				D1C4D5C2F3BA5FD6DD38F7B5 /* G7CalibrationRecord.swift in Sources */,
@@ -986,6 +991,7 @@
 				DCA90BB5CD02D44CB4B9C56E /* G7ShareCredentials.swift in Sources */,
 				E27AD9A53440FCF6DE60C086 /* G7ShareClient.swift in Sources */,
 				DC2AF055A5745BBE1CA98CA4 /* G7ShareUploader.swift in Sources */,
+				F49075E6D62246F58AAE544E /* G7P256Field.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

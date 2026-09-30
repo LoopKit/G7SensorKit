@@ -144,121 +144,18 @@ enum G7P256 {
         })
     }
 
-    // MARK: - Point arithmetic
-
-    /// Jacobian projective coordinates: (X, Y, Z) is the affine point
-    /// (X/Z², Y/Z³). Used internally so a scalar multiplication needs one
-    /// modular inversion at the end instead of one per bit.
-    private struct Jacobian {
-        var x: G7BigUInt
-        var y: G7BigUInt
-        var z: G7BigUInt
-
-        var isInfinity: Bool {
-            z.isZero
-        }
-
-        static let infinity = Jacobian(x: .one, y: .one, z: .zero)
-    }
-
-    private static func jacobian(from point: G7P256Point) -> Jacobian {
-        point.isInfinity ? .infinity : Jacobian(x: point.x, y: point.y, z: .one)
-    }
-
-    private static func affine(from point: Jacobian) -> G7P256Point {
-        guard !point.isInfinity, let zInverse = fieldInverse(point.z) else {
-            return .infinity
-        }
-        let zInverse2 = fieldSquare(zInverse)
-        let zInverse3 = fieldMul(zInverse2, zInverse)
-        return G7P256Point(x: fieldMul(point.x, zInverse2), y: fieldMul(point.y, zInverse3))
-    }
-
-    /// Point doubling, using the a = -3 shortcut ("dbl-2001-b").
-    private static func double(_ point: Jacobian) -> Jacobian {
-        guard !point.isInfinity, !point.y.isZero else {
-            return .infinity
-        }
-        let delta = fieldSquare(point.z)
-        let gamma = fieldSquare(point.y)
-        let beta = fieldMul(point.x, gamma)
-        let alpha = fieldMul(
-            G7BigUInt(3),
-            fieldMul(fieldSub(point.x, delta), fieldAdd(point.x, delta))
-        )
-        let eightBeta = fieldMul(G7BigUInt(8), beta)
-        let x = fieldSub(fieldSquare(alpha), eightBeta)
-        let z = fieldSub(fieldSub(fieldSquare(fieldAdd(point.y, point.z)), gamma), delta)
-        let y = fieldSub(
-            fieldMul(alpha, fieldSub(fieldMul(G7BigUInt(4), beta), x)),
-            fieldMul(G7BigUInt(8), fieldSquare(gamma))
-        )
-        return Jacobian(x: x, y: y, z: z)
-    }
-
-    /// Point addition ("add-2007-bl").
-    private static func add(_ lhs: Jacobian, _ rhs: Jacobian) -> Jacobian {
-        if lhs.isInfinity {
-            return rhs
-        }
-        if rhs.isInfinity {
-            return lhs
-        }
-
-        let z1z1 = fieldSquare(lhs.z)
-        let z2z2 = fieldSquare(rhs.z)
-        let u1 = fieldMul(lhs.x, z2z2)
-        let u2 = fieldMul(rhs.x, z1z1)
-        let s1 = fieldMul(lhs.y, fieldMul(rhs.z, z2z2))
-        let s2 = fieldMul(rhs.y, fieldMul(lhs.z, z1z1))
-
-        if u1 == u2 {
-            return s1 == s2 ? double(lhs) : .infinity
-        }
-
-        let h = fieldSub(u2, u1)
-        let i = fieldSquare(fieldMul(G7BigUInt(2), h))
-        let j = fieldMul(h, i)
-        let r = fieldMul(G7BigUInt(2), fieldSub(s2, s1))
-        let v = fieldMul(u1, i)
-
-        let x = fieldSub(fieldSub(fieldSquare(r), j), fieldMul(G7BigUInt(2), v))
-        let y = fieldSub(
-            fieldMul(r, fieldSub(v, x)),
-            fieldMul(G7BigUInt(2), fieldMul(s1, j))
-        )
-        let z = fieldMul(
-            fieldSub(fieldSub(fieldSquare(fieldAdd(lhs.z, rhs.z)), z1z1), z2z2),
-            h
-        )
-        return Jacobian(x: x, y: y, z: z)
-    }
-
-    // MARK: - Public operations
+    // MARK: - Point arithmetic (fixed-width field, see `G7P256Field`)
 
     static func add(_ lhs: G7P256Point, _ rhs: G7P256Point) -> G7P256Point {
-        affine(from: add(jacobian(from: lhs), jacobian(from: rhs)))
+        (G7P256Jacobian(lhs) + G7P256Jacobian(rhs)).affine
     }
 
-    /// Left-to-right double-and-add. Not constant time: the values being
-    /// multiplied here are ephemeral handshake scalars on a link that is
-    /// already physically local, and the alternative is a much larger
-    /// implementation to audit.
     static func multiply(_ point: G7P256Point, by scalar: G7BigUInt) -> G7P256Point {
         let scalar = scalar.modulo(order)
         guard !scalar.isZero, !point.isInfinity else {
             return .infinity
         }
-
-        let base = jacobian(from: point)
-        var result = Jacobian.infinity
-        for index in stride(from: scalar.bitWidth - 1, through: 0, by: -1) {
-            result = double(result)
-            if scalar.bit(at: index) {
-                result = add(result, base)
-            }
-        }
-        return affine(from: result)
+        return G7P256Jacobian(point).multiplied(byBigEndian: scalar.bigEndianBytes(paddedTo: 32)).affine
     }
 
     static func multiplyGenerator(by scalar: G7BigUInt) -> G7P256Point {
