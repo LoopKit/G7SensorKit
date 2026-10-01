@@ -421,7 +421,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     private func handleGlucoseMessage(message: G7GlucoseMessage, peripheralManager: G7PeripheralManager) {
         activationDate = Date().addingTimeInterval(-TimeInterval(message.messageTimestamp))
-        // The reading's own timestamp: the watch arm's miss clock and grid (G7WatchAcquisition).
+        // The reading's own timestamp: the watch arm's miss clock (G7WatchAcquisition).
         bluetoothManager.noteReading(at: Date().addingTimeInterval(-TimeInterval(message.age)))
         let credentials = lockedCredentials.value
 
