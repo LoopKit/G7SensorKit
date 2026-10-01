@@ -281,11 +281,9 @@ public class G7CGMManager: CGMManager {
         let state = G7CGMManagerState(rawValue: rawState)
         self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, displayType: state.displayType))
         sensor.needsVersionInfo = state.extendedVersion == nil
-#if os(watchOS)
         if let latest = state.latestReadingTimestamp {
             sensor.noteLatestReading(at: latest)
         }
-#endif
     }
 
     /// DeviceConfigurationSharing: read the sensor another controller follows, directly.

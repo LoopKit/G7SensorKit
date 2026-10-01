@@ -337,12 +337,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         bluetoothManager.disconnect()
     }
 
-#if os(watchOS)
-    /// Seeds the watch arm's reading clock after a relaunch.
+    /// Seeds the acquisition arm's reading clock after a relaunch; nothing without an arm.
     func noteLatestReading(at date: Date) {
         bluetoothManager.noteReading(at: date)
     }
-#endif
 
     public func resumeScanning() {
         bluetoothManager.setActivePeripheralIdentifier(lockedCredentials.value.peripheralIdentifier)
@@ -419,7 +417,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     private func handleGlucoseMessage(message: G7GlucoseMessage, peripheralManager: G7PeripheralManager) {
         activationDate = Date().addingTimeInterval(-TimeInterval(message.messageTimestamp))
-        // The reading's own timestamp: the watch arm's miss clock (G7WatchAcquisition).
+        // The reading's own timestamp, for the acquisition arm's miss clock.
         bluetoothManager.noteReading(at: Date().addingTimeInterval(-TimeInterval(message.age)))
         let credentials = lockedCredentials.value
 
