@@ -1017,20 +1017,6 @@ public enum G7WatchDirectRead {
     /// hit rate or link-up lateness, and the stored key survives either.
     public static let displayType: G7DisplayType = .watch
 
-    /// Before this state lived in the sensor's manager state, the adopted peripheral was kept in
-    /// user defaults under this key. Read once to migrate, then removed.
-    static let legacyAdoptedPeripheralKey = "G7Lab.timedConnect.adoptedPeripheral"
-    static let legacyDefaultsKeys = [legacyAdoptedPeripheralKey, "G7Lab.timedConnect.anchor",
-                                     "G7Lab.watchDirectRead.needsCode", "G7Lab.watchDirectRead.searching", "G7Lab.relodge"]
-
-    /// Returns the legacy adopted-peripheral identifier, if any, and removes every legacy key.
-    static func takeLegacyAdoptedPeripheral() -> UUID? {
-        let defaults = UserDefaults.standard
-        let identifier = defaults.string(forKey: legacyAdoptedPeripheralKey).flatMap(UUID.init(uuidString:))
-        legacyDefaultsKeys.forEach(defaults.removeObject(forKey:))
-        return identifier
-    }
-
     /// Glance note while the watch scans for a sensor it has never connected to.
     public static func searchingNote(_ searching: Bool) -> String? {
         searching ? "Looking for your sensor — keep Loop open on your watch until it connects." : nil

@@ -255,9 +255,6 @@ public class G7CGMManager: CGMManager {
     public convenience init(sessionMode: G7SessionMode, displayType: G7DisplayType = G7CGMManager.defaultDisplayType) {
         var state = G7CGMManagerState()
         state.sessionMode = sessionMode
-#if os(watchOS)
-        _ = G7WatchDirectRead.takeLegacyAdoptedPeripheral()
-#endif
         self.init(state: state, sensor: G7Sensor(mode: sessionMode, credentials: state.sensorCredentials, displayType: displayType))
     }
 
@@ -288,12 +285,7 @@ public class G7CGMManager: CGMManager {
     }
 
     public required convenience init?(rawState: RawStateValue) {
-        var state = G7CGMManagerState(rawValue: rawState)
-#if os(watchOS)
-        if let legacy = G7WatchDirectRead.takeLegacyAdoptedPeripheral(), state.peripheralIdentifier == nil {
-            state.peripheralIdentifier = legacy
-        }
-#endif
+        let state = G7CGMManagerState(rawValue: rawState)
         let displayType = G7CGMManager.defaultDisplayType
         self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, displayType: displayType))
         sensor.needsVersionInfo = state.extendedVersion == nil
