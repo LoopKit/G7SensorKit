@@ -7,11 +7,8 @@
 
 import Foundation
 
-/// A P-256 field element in Montgomery form, four 64-bit limbs, least significant first.
-///
-/// Fixed width and allocation free: the sensor drops a key exchange after about four seconds of
-/// silence, and the array-backed `G7BigUInt` arithmetic took several seconds per scalar
-/// multiplication on a watch.
+/// A P-256 field element in Montgomery form, four 64-bit limbs, least significant first. Fixed width
+/// and allocation free: `G7BigUInt` was too slow on a watch for the sensor's ~4 s handshake timeout.
 struct G7P256Field: Equatable {
     var l0: UInt64
     var l1: UInt64
@@ -326,9 +323,8 @@ struct G7P256Jacobian {
         return G7P256Jacobian(x: newX, y: newY, z: newZ)
     }
 
-    /// Fixed 4-bit window: 252 doublings and at most 64 additions after a 14-addition table.
-    /// Not constant time, like the implementation it replaces: the scalars are ephemeral
-    /// handshake values on a physically local link.
+    /// Fixed 4-bit window: 252 doublings and at most 64 additions after a 14-addition table. Not
+    /// constant time, like the code it replaces: the scalars are ephemeral, on a physically local link.
     func multiplied(byBigEndian scalar: Data) -> G7P256Jacobian {
         var table = [G7P256Jacobian](repeating: .infinity, count: 16)
         table[1] = self

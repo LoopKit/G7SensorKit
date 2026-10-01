@@ -102,6 +102,10 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     /// would leave the manager tracking a sensor that will never advertise again.
     public var suspectedSessionEndAt: Date?
 
+    /// Built from another controller's export (DeviceConfigurationSharing): the sensor and its code
+    /// were passed in, so setup, pairing and the sensor's lifecycle belong to that controller.
+    public var configuredByAnotherController: Bool = false
+
     init() {
     }
 
@@ -152,6 +156,12 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.shareLastError = rawValue["shareLastError"] as? String
         self.shareLastErrorAt = rawValue["shareLastErrorAt"] as? Date
         self.suspectedSessionEndAt = rawValue["suspectedSessionEndAt"] as? Date
+        self.configuredByAnotherController = rawValue["configuredByAnotherController"] as? Bool ?? false
+        // A manager passed its configuration reads directly: there is no session to eavesdrop on.
+        // Without a code it stands down until a new configuration brings one.
+        if configuredByAnotherController {
+            self.sessionMode = .direct
+        }
     }
 
     public var rawValue: RawValue {
@@ -186,6 +196,34 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["shareLastError"] = shareLastError
         rawValue["shareLastErrorAt"] = shareLastErrorAt
         rawValue["suspectedSessionEndAt"] = suspectedSessionEndAt
+        if configuredByAnotherController {
+            rawValue["configuredByAnotherController"] = true
+        }
         return rawValue
+    }
+}
+
+extension G7CGMManagerState {
+    /// What another controller needs to read this sensor directly: its identity, activation and
+    /// pairing code. The link, key and readings are this controller's own.
+    var sharedState: RawValue {
+        var shared = G7CGMManagerState()
+        shared.sensorID = sensorID
+        shared.activatedAt = activatedAt
+        shared.pairingCode = pairingCode
+        return shared.rawValue
+    }
+
+    /// Another controller's shared state as a manager of its own, reading directly.
+    static func adopted(from shared: RawValue) -> G7CGMManagerState {
+        let passed = G7CGMManagerState(rawValue: shared)
+        var state = G7CGMManagerState()
+        state.sensorID = passed.sensorID
+        state.activatedAt = passed.activatedAt
+        state.pairingCode = passed.pairingCode
+        state.sessionMode = .direct
+        state.pairedAt = Date()
+        state.configuredByAnotherController = true
+        return state
     }
 }

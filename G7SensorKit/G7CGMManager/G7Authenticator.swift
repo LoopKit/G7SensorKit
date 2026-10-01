@@ -283,10 +283,11 @@ final class G7Authenticator {
         report(String(format: "Key exchange complete (compute: rounds 1-2 %.0f ms before the first request, round 3 %.0f ms, secret %.0f ms)",
                       precomputeSeconds * 1000, round3Seconds * 1000, deriveSeconds * 1000))
 
-        // Advisory only, and checked after we have replied: the sensor does not require us to
-        // check its proofs, and the AES challenge below is the real gate. On hardware they do not
-        // verify under the transcript format we use for our own (which the sensor accepts), so the
-        // sensor's side evidently hashes something differently; noted, not acted on.
+        // Advisory only: the sensor does not require us to check its proofs,
+        // and the AES challenge below is the real gate. On hardware they do
+        // not verify under the transcript format we use for our own (which
+        // the sensor accepts), so the sensor's side evidently hashes
+        // something differently; noted, not acted on.
         let proofsVerified = jpake.validateRound1Or2(sensorRound1)
             && jpake.validateRound1Or2(sensorRound2)
             && jpake.validateRound3(peerRound1: sensorRound1, peerRound3: sensorRound3)

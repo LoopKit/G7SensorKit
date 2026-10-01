@@ -290,9 +290,6 @@ public class G7CGMManager: CGMManager {
     public required convenience init?(rawState: RawStateValue) {
         var state = G7CGMManagerState(rawValue: rawState)
 #if os(watchOS)
-        // The watch always reads directly: with no Dexcom app on the phone there is no session
-        // to eavesdrop on. Without a code the arm stands down until one arrives from the phone.
-        state.sessionMode = .direct
         if let legacy = G7WatchDirectRead.takeLegacyAdoptedPeripheral(), state.peripheralIdentifier == nil {
             state.peripheralIdentifier = legacy
         }
@@ -305,6 +302,19 @@ public class G7CGMManager: CGMManager {
             sensor.noteLatestReading(at: latest)
         }
 #endif
+    }
+
+    /// DeviceConfigurationSharing: read the sensor another controller follows, directly.
+    public required convenience init?(adopting configuration: SharedDeviceConfiguration) {
+        let state = G7CGMManagerState.adopted(from: configuration.state)
+        self.init(adopted: state, sensor: G7Sensor(mode: .direct, credentials: state.sensorCredentials,
+                                                   displayType: G7CGMManager.defaultDisplayType))
+    }
+
+    /// Asks the sensor for its version, as a restored manager does, so the session length is known.
+    convenience init(adopted state: G7CGMManagerState, sensor: G7Sensor) {
+        self.init(state: state, sensor: sensor)
+        sensor.needsVersionInfo = state.extendedVersion == nil
     }
 
     /// Posted on the main queue when `watchNeedsCodeFor` or `watchIsSearching` changes; the object
@@ -349,43 +359,12 @@ public class G7CGMManager: CGMManager {
     }
 
 #if os(watchOS)
-    // MARK: - Watch direct read (the pairing code arrives from the phone)
-
-    /// The phone's cgmManagerState arrived in a context: its current sensor and that sensor's
-    /// pairing code (entered on the phone). A new sensor is adopted by identity — no scan of our
-    /// own is needed to notice a sensor change; a code for the current sensor re-arms the arm.
-    public func receivePairingCode(_ code: String?, phoneSensorID: String?) {
-        let before = state
-        if let new = phoneSensorID, new != before.sensorID, let code {
-            logDeviceCommunication("direct-read: phone reports sensor \(new) (was \(before.sensorID ?? "none")) with its code — adopting and re-acquiring", type: .connection)
-            mutateState { state in
-                state.sensorID = new
-                state.pairingCode = code
-                state.sharedKey = nil
-                state.peripheralIdentifier = nil
-                state.activatedAt = nil
-                state.extendedVersion = nil
-                state.transmitterVersion = nil
-                state.sessionMode = .direct
-            }
-            sensor.reconfigure(mode: .direct, credentials: state.sensorCredentials)
-            sensor.reacquireForNewSensor()
-        } else if let code, code != before.pairingCode, phoneSensorID == before.sensorID || before.sensorID == nil {
-            logDeviceCommunication("direct-read: pairing code for \(before.sensorID ?? "the sensor") received from the phone", type: .connection)
-            mutateState { state in
-                state.pairingCode = code
-                state.sessionMode = .direct
-            }
-            sensor.reconfigure(mode: .direct, credentials: state.sensorCredentials)
-            sensor.resumeScanning()
-        }
-    }
-
     /// The user's "Reconnect sensor": drop the link or the lodged request and run one bootstrap
     /// pass for the SAME sensor, keeping its identity.
     public func reconnectG7() { sensor.reconnect() }
-#else
-    // MARK: - The watch's pairing code (entered here; rides to the watch inside cgmManagerState)
+#endif
+
+    // MARK: - The pairing code another controller needs (entered here; travels in the export)
 
     public enum WatchPairingCodeStatus: Equatable { case noSensor, needsCode, saved }
 
@@ -406,7 +385,6 @@ public class G7CGMManager: CGMManager {
         logDeviceCommunication("direct-read: pairing code saved for the watch (\(state.sensorID ?? "sensor"))", type: .connection)
         return true
     }
-#endif
 
     /// Adopts the result of a pairing run, switching to direct mode.
     ///
@@ -626,6 +604,14 @@ extension G7CGMManager {
     /// `delete` only notifies, so the notification is re-issued here.
     public func delete(completion: @escaping () -> Void) {
         cancelSuspectedSessionEndScan()
+        // A manager passed its configuration lets go of the sensor and nothing more: the sensor's
+        // lifecycle and records belong to the controller that passed it.
+        guard !state.configuredByAnotherController else {
+            sensor.stopScanning()
+            retractAllLifecycleAlerts()
+            notifyDelegateOfDeletion(completion: completion)
+            return
+        }
         signOutOfShare()
         sensor.stopScanning()
         retractAllLifecycleAlerts()
@@ -768,21 +754,18 @@ extension G7CGMManager: G7SensorDelegate {
         logDeviceCommunication("New sensor \(name) discovered, activated at \(activatedAt)", type: .connection)
 
         let shouldSwitchToNewSensor = true
-#if !os(watchOS)
-        // While eavesdropping, a held code was for the watch, and it belonged to the sensor just
-        // replaced: it goes, and the phone asks for the new one while it is in hand.
-        let watchCodeToReplace = state.sessionMode == .eavesdropping && state.pairingCode != nil && state.sensorID != name
-#endif
+        // While eavesdropping, a held code was for another controller, and it belonged to the sensor
+        // just replaced: it goes, and the user is asked for the new one while it is in hand.
+        let watchCodeToReplace = !state.configuredByAnotherController && state.sessionMode == .eavesdropping
+            && state.pairingCode != nil && state.sensorID != name
 
         if shouldSwitchToNewSensor {
             sensor.cancelPendingCalibration()
             mutateState { state in
-#if !os(watchOS)
                 if watchCodeToReplace {
                     state.pairingCode = nil
                     state.sharedKey = nil
                 }
-#endif
                 state.sensorID = name
                 state.activatedAt = activatedAt
                 state.calibration = nil
@@ -804,7 +787,6 @@ extension G7CGMManager: G7SensorDelegate {
                 delegate?.cgmManager(self, hasNew: [event])
             }
             scheduleSessionTimedAlerts()
-#if !os(watchOS)
             if watchCodeToReplace {
                 let content = Alert.Content(
                     title: "New sensor \(name)",
@@ -816,7 +798,6 @@ extension G7CGMManager: G7SensorDelegate {
                     Task { await delegate?.issueAlert(alert) }
                 }
             }
-#endif
         }
 
         return shouldSwitchToNewSensor
@@ -1028,7 +1009,7 @@ extension G7CGMManager: G7SensorDelegate {
         }
     }
 
-    /// The watch acquisition arm's log line, into the host's device log (Pete's
+    /// The watch acquisition arm's log line, into the host's device log (OmnipodKit's
     /// omnipodLogDeviceEvent shape). Nothing produces it on the phone.
     public func sensor(_ sensor: G7Sensor, logEvent line: String) {
         logDeviceCommunication("[g7-watch] " + line, type: .connection)
@@ -1073,6 +1054,15 @@ extension G7CGMManager: G7SensorDelegate {
             return
         }
 
+        // A manager passed its configuration does not decide the sensor ended: the controller that
+        // passed it does, and its next export carries the replacement. Keep reading this one.
+        if state.configuredByAnotherController {
+            logDeviceCommunication("No sensor communication since suspected session end; keeping the sensor this manager was passed.", type: .connection)
+            mutateState { $0.suspectedSessionEndAt = nil }
+            sensor.resumeScanning()
+            return
+        }
+
         logDeviceCommunication("No sensor communication since suspected session end.", type: .connection)
         scanForNewSensor()
     }
@@ -1104,9 +1094,10 @@ extension G7CGMManager: G7SensorDelegate {
 
         let remaining = graceStart.addingTimeInterval(suspectedSessionEndGracePeriod).timeIntervalSinceNow
         guard remaining > 0 else {
-            // The window elapsed while we were not running, with nothing heard since.
+            // The window elapsed while we were not running, with nothing heard since. The expiry
+            // decides as it would have live, so a passed manager keeps its sensor here too.
             logDeviceCommunication("Grace period for suspected session end expired while app was not running.", type: .connection)
-            scanForNewSensor()
+            handleSuspectedSessionEndGraceExpiry(graceStart: graceStart)
             return
         }
 
@@ -1197,11 +1188,9 @@ extension G7CGMManager: G7SensorDelegate {
         mutateState { state in
             state.latestReading = message
             state.latestReadingTimestamp = latestReadingTimestamp
-#if os(watchOS)
-            // A sensor adopted by identity (receivePairingCode) never passes through discovery,
-            // the only other place this is latched. Without it every reading is named "invalid".
-            if state.activatedAt == nil { state.activatedAt = activationDate }
-#endif
+            // A sensor passed in by identity may never pass through discovery, the only other place
+            // this is latched. Without it every reading is named "invalid".
+            if state.configuredByAnotherController, state.activatedAt == nil { state.activatedAt = activationDate }
         }
 
         guard let glucose = message.glucose else {
@@ -1359,5 +1348,15 @@ extension G7GlucoseMessage: GlucoseDisplayable {
         } else {
             return nil
         }
+    }
+}
+
+extension G7CGMManager: DeviceConfigurationSharing {
+    public func exportConfiguration() -> SharedDeviceConfiguration {
+        SharedDeviceConfiguration(managerIdentifier: pluginIdentifier, asOf: Date(), state: state.sharedState)
+    }
+
+    public var isConfiguredByAnotherController: Bool {
+        state.configuredByAnotherController
     }
 }

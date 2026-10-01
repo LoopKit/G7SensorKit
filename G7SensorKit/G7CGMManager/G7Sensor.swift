@@ -205,7 +205,6 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     /// Which of the sensor's display slots this session takes: a phone by
     /// default; a watch app would take its own, alongside the phone's.
-    /// Read at each authentication; the watch's slot experiment rewrites it between connections.
     let displayType: G7DisplayType
 
     convenience init(mode: G7SessionMode, credentials: G7SensorCredentials, displayType: G7DisplayType = G7CGMManager.defaultDisplayType) {
@@ -316,10 +315,6 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     /// Re-acquire the SAME sensor without forgetting it — the user's "Reconnect sensor".
     /// Contrast `scanForNewSensor`, which clears the credentials and rebuilds cold.
     public func reconnect() { bluetoothManager.reconnect() }
-
-    /// A new sensor was adopted by identity from the phone (`reconfigure` carried its name and
-    /// code): drop the old peripheral and go find it.
-    public func reacquireForNewSensor() { bluetoothManager.reacquireForNewSensor() }
 #endif
 
     public func scanForNewSensor() {

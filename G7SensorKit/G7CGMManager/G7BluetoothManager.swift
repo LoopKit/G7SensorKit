@@ -102,13 +102,12 @@ protocol G7BluetoothManagerDelegate: AnyObject {
     func peripheralDidDisconnect(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, wasRemoteDisconnect: Bool)
 
 #if os(watchOS)
-    /// One line from the watch acquisition arm for the host's device log (Pete's
+    /// One line from the watch acquisition arm for the host's device log (OmnipodKit's
     /// omnipodLogDeviceEvent shape): os_log alone never reaches the wrist's file log.
     func bluetoothManager(_ manager: G7BluetoothManager, logEvent line: String)
 
-    /// Whether a connection could be authenticated once it is up: in direct mode, a pairing code
-    /// or a stored key for the sensor; while eavesdropping, always. The arm does not lodge a
-    /// request it could only watch fail.
+    /// Whether a connection could be authenticated (direct: a pairing code or stored key;
+    /// eavesdropping: always). The arm does not lodge a request it could only watch fail.
     func bluetoothManagerCanAuthenticate(_ manager: G7BluetoothManager) -> Bool
 
     /// The watch adopted a peripheral as the sensor (nil when it let go of one), so the owner can
@@ -163,13 +162,12 @@ class G7BluetoothManager: NSObject {
 #if os(watchOS)
     // MARK: - Watch acquisition state — managerQueue only (the arm is the extension at the end of this file)
 
-    /// The in-flight handshake; nil between links.
     /// didConnect stamp; the tail clearance counts from here.
     private var linkUpAt: Date?
     /// Exactly one daemon-held request in flight.
     private var lodged = false
     private var lodgedAt: Date?
-    /// Consecutive synchronous refusals (Pete: back off, stop after two).
+    /// Consecutive synchronous refusals (back off, stop after two).
     private var refusals = 0
     /// A hold-then-connect is running (the holdApp arm); its end lodges.
     private var holdPending = false
@@ -271,9 +269,8 @@ class G7BluetoothManager: NSObject {
 
     // MARK: - Actions
 
-    // The public actions are fire-and-forget onto the manager queue (FIFO keeps callers'
-    // ordering — e.g. disconnect → forget → scan). None of them needs a synchronous result, and
-    // a synchronous hop from the main thread is what the 2026-09-12 watchdog kill was made of.
+    // Fire-and-forget onto the manager queue, which keeps callers' order: a synchronous hop from
+    // the main thread can wait behind a multi-second handshake and trip the system watchdog.
     func scanForPeripheral() {
         dispatchPrecondition(condition: .notOnQueue(managerQueue))
 
@@ -321,7 +318,7 @@ class G7BluetoothManager: NSObject {
     }
 
     /// A reading arrived (G7Sensor, every glucose message). Watch: stamps the arm's miss clock and
-    /// the grid the peteDelay re-lodge aims at — the reading's own sensor timestamp.
+    /// the grid the gridDelay re-lodge aims at — the reading's own sensor timestamp.
     func noteReading(at readingTimestamp: Date) {
 #if os(watchOS)
         managerQueue.async { self.lastReadingAt = readingTimestamp }
@@ -338,18 +335,6 @@ class G7BluetoothManager: NSObject {
             lastBootstrapAt = nil
             managerQueue_startBootstrapPass(reason: "user reconnect")     // armed FIRST so the cancel's close does not re-lodge
             if let p = activePeripheral, p.state != .disconnected { centralManager.cancelPeripheralConnection(p) }
-        }
-    }
-
-    /// The phone reported a NEW sensor we hold a code for (G7CGMManager.receivePairingCode):
-    /// forget the old one, find the new one.
-    func reacquireForNewSensor() {
-        managerQueue.async { [self] in
-            if let p = activePeripheral, p.state != .disconnected { centralManager.cancelPeripheralConnection(p) }
-            activePeripheralManager = nil            // clears the remembered id too (didSet)
-            lodged = false; lodgedAt = nil; linkUpAt = nil
-            lastBootstrapAt = nil
-            managerQueue_startBootstrapPass(reason: "new sensor from the phone")
         }
     }
 #endif
@@ -527,11 +512,8 @@ class G7BluetoothManager: NSObject {
 
     // MARK: - Accessors
 
-    // WATCHDOG KILL 2026-09-12 08:42 (0x8BADF00D, 10 s): the diagnostics page read these on the
-    // MAIN thread inside a SwiftUI update, `managerQueue.sync` waited behind a direct-auth
-    // handshake (blocking writes, up to 8 s each), and the BLE queue was itself waiting on
-    // SwiftUI's lock — a lock inversion. The UI must never block on this queue: wait at most
-    // 50 ms, otherwise hand back the last value the queue reported.
+    // The UI reads these on the main thread, where waiting behind a handshake on this queue can
+    // deadlock with SwiftUI. The watch waits at most 50 ms, then returns the last value read.
     private let readCacheLock = NSLock()
     private var readCache: [String: Bool] = [:]
 
@@ -544,7 +526,7 @@ class G7BluetoothManager: NSObject {
             done.signal()
         }
 #if os(watchOS)
-        _ = done.wait(timeout: .now() + 0.05)   // 2026-09-12 lock-inversion watchdog kill
+        _ = done.wait(timeout: .now() + 0.05)   // never block the UI on this queue
 #else
         done.wait()                             // stock semantics: a synchronous read of the queue's answer
 #endif
@@ -578,9 +560,8 @@ class G7BluetoothManager: NSObject {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
 #if os(watchOS)
-        // #101 churn fix (2026-08-10 23:31:52-59): a discovery during a pending connect issued
-        // ANOTHER connect() and minted a fresh G7PeripheralManager per event (~10/s). A pending
-        // connect is already doing everything a duplicate would; skip it.
+        // A pending connect already covers this peripheral; another connect here would mint a new
+        // peripheral manager per discovery event (~10/s).
         if peripheral.state == .connecting, managedPeripherals[peripheral.identifier] != nil {
             return
         }
@@ -798,7 +779,6 @@ extension G7BluetoothManager: G7PeripheralManagerDelegate {
             return
         }
 
-
         switch CGMServiceCharacteristicUUID(rawValue: characteristic.uuid.uuidString.uppercased()) {
         case .none, .communication?, .certificate?:
             // The certificate characteristic only carries handshake payloads,
@@ -816,40 +796,17 @@ extension G7BluetoothManager: G7PeripheralManagerDelegate {
 
 #if os(watchOS)
 // MARK: - The watch acquisition arm
-//
-// Shape: Pete's issueDelayedConnectProbe (OmnipodKit/Bluetooth/BluetoothManager.swift): one
-// daemon-held connect, one in flight (`lodged` ≙ delayedProbeInFlight), a synchronously refused
-// connect backs off heartbeatFailureBackoffSeconds and re-checks state, and the central opts into
-// restoration so watchOS relaunches us for the link. Deviations, each tied to a measurement:
-//  • how the next request reaches the daemon after each reading is the Diagnostics page's
-//    Re-lodge arm (G7WatchAcquisition.relodge). `peteDelay` hands the daemon a start delay
-//    aimed at the next reading — 298 − (now − bg_timestamp), his formula (measured 1 in 4: the
-//    daemon services a delayed connect 0.3–269 s late). `holdApp` holds the process 35 s after
-//    link-up and then lodges a plain connect (33 in 33, at 35 s of held runtime per cycle — the
-//    one thing his design forbids). The sensor closes the link ~3.5 s after the 0x4E read and
-//    advertises 20–24 s after that (sniffer); a request the daemon holds past +35 s never
-//    reconnects into that tail. Reconnecting into it produced reason-762 failures, five of which
-//    park bluetoothd's −70 dBm floor on the SHARED accept-list entry.
-//  • EVERY close of the adopted sensor — read done or not, handshake failed or not — re-lodges
-//    through the selected arm. A plain connect straight after a failure reconnected into the
-//    tail and produced a same-burst failure storm (58 of 77 handshakes, 2026-09-16 03:50–07:00);
-//    only the bootstrap pass and the refusal back-off ever issue one.
-//  • the handshake runs under performExpiringActivity: a relaunched app gets ~1–2 s, the full
-//    J-PAKE needs ~7 s (the fast path ~1.2 s).
-//  • two synchronous refusals stop re-lodging until the next real wake: the fork measured
-//    26,558 spin iterations in one wake before it had a guard.
-//  • with authentication OFF (ride the Dexcom watch app) the arm still lodges, but no handshake
-//    starts on connect: the stock passive observer reads whatever Dexcom's app authenticates.
+// One daemon-held connect in flight, re-lodged through `G7WatchAcquisition.relodge` after every
+// close of the sensor; state restoration lets the system relaunch the app for each link.
 extension G7BluetoothManager {
 
     fileprivate func watchLog(_ line: String) {
         log.default("[g7-watch] %{public}@", line)
-        delegate?.bluetoothManager(self, logEvent: line)      // → G7Sensor → G7CGMManager.logDeviceCommunication (Pete's omnipodLogDeviceEvent shape)
+        delegate?.bluetoothManager(self, logEvent: line)      // into the host's device log
     }
 
-    /// The stock scan entry on the watch. Runs at poweredOn, on G7Sensor.resumeScanning (the loop's
-    /// fetch, the foreground, a pairing code arriving), after a forget, after the bootstrap cap. A
-    /// real wake resets Pete's stop-after-two.
+    /// The stock scan entry on the watch (poweredOn, resumeScanning, after a forget or a bootstrap
+    /// pass). A real wake resets the refusal count.
     fileprivate func managerQueue_watchArm() {
         dispatchPrecondition(condition: .onQueue(managerQueue))
         guard centralManager.state == .poweredOn else { return }
@@ -860,10 +817,8 @@ extension G7BluetoothManager {
             return
         }
         managerQueue_adopt(peripheral)
-        // Three bursts with a request standing and nothing heard: the identifier is presumed
-        // stale (the fork's re-acquire pass, now only ever reached from a wake). A pass that found
-        // nothing restarts the count, so a sensor that is simply away is scanned for once per
-        // three bursts, not back to back.
+        // Three bursts missed with a request standing: presume the identifier stale and scan once.
+        // A pass restarts the count, so an absent sensor is scanned for once per three bursts.
         let reference = [lastReadingAt, lastBootstrapAt].compactMap { $0 }.max()
         let missed = G7WatchAcquisition.missedBursts(since: reference)
         if !bootstrapPass, peripheral.state != .connected, missed >= G7WatchAcquisition.missedBurstsBeforeBootstrap {
@@ -884,9 +839,8 @@ extension G7BluetoothManager {
         managedPeripherals[peripheral.identifier] = activePeripheralManager
     }
 
-    /// Every close of the adopted sensor, every late connect failure and every wake come through
-    /// here: the selected arm decides how the next request reaches the daemon. `sinceLinkUp` is 0
-    /// when the clearance must count from now (a failure with no link-up to measure from).
+    /// Every close, late connect failure and wake: the selected arm decides how the next request
+    /// reaches the daemon. A `sinceLinkUp` of 0 counts the tail clearance from now.
     fileprivate func managerQueue_relodge(_ peripheral: CBPeripheral, sinceLinkUp: TimeInterval, why: String) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
         guard !lodged, !holdPending else { return }
@@ -905,7 +859,7 @@ extension G7BluetoothManager {
                 }
             }
         case nil:
-            // A wake past the clearance (holdApp), or peteDelay with no reading on record and the
+            // A wake past the clearance (holdApp), or gridDelay with no reading on record and the
             // tail long over: nothing to wait for, a plain request now.
             managerQueue_lodge(peripheral, startDelay: nil, why: "\(why) · \(arm.rawValue): nothing to wait for")
         }
@@ -918,13 +872,8 @@ extension G7BluetoothManager {
         switch peripheral.state {
         case .connected:     return
         case .connecting:
-            // NOT trusted. A request this process lodged sets `lodged`, and the guard above
-            // returns before reaching here — so a `.connecting` seen with `lodged == false` is
-            // a RESTORED snapshot, and on 2026-09-16 23:27 (an install killed the old process
-            // mid-hold; the daemon resurrected its zombie session) that snapshot said
-            // "connecting" while bluetoothd held NO request: eight hours with no link. Cancel
-            // whatever the daemon thinks it holds and lodge our own; the close/fail callback
-            // re-lodges through the arm, and the timer covers a cancel that produces no callback.
+            // Not ours (ours sets `lodged`): a restored request bluetoothd no longer held cost eight hours
+            // with no link (2026-09-16). Cancel it and lodge our own; the timer covers a silent cancel.
             watchLog("restored as connecting with no request of ours — cancelling it and lodging a fresh connect")
             centralManager.cancelPeripheralConnection(peripheral)
             let id = peripheral.identifier
@@ -934,13 +883,12 @@ extension G7BluetoothManager {
                 self.managerQueue_lodge(p, startDelay: nil, why: "after cancelling a restored connect the daemon did not hold")
             }
             return
-        case .disconnecting: return   // the close callback lodges: a connect issued during a cancel was lost inside CoreBluetooth (2026-09-14 21:12)
+        case .disconnecting: return   // the close callback lodges: a connect issued during a cancel is lost inside CoreBluetooth
         default:             break
         }
         if let delegate, !delegate.bluetoothManagerCanAuthenticate(self) {
             // A link we cannot authenticate is one the sensor closes unencrypted ~10 s later — a
-            // tally count every burst for nothing. Stand down; the code's arrival re-arms
-            // (G7CGMManager.receivePairingCode → resumeScanning).
+            // tally count every burst for nothing. Stand down until a configuration brings a code.
             setWatchNeedsCodeFor(peripheral.name ?? "sensor")
             watchLog("no pairing code for \(peripheral.name ?? "sensor") — not lodging")
             return
@@ -1062,14 +1010,11 @@ extension G7BluetoothManager {
 }
 #endif
 
-/// DIRECT READ on the watch — Loop's own handshake (`G7Authenticator`, session mode `.direct`),
-/// so the watch reads glucose with no Dexcom app present. The sensor's pairing code is entered
-/// once on the phone and rides to the watch inside the context's cgmManagerState.
+/// Direct read on the watch: Loop's own handshake, no Dexcom app needed. The pairing code is entered
+/// on the phone and reaches the watch in the manager's exported configuration (`sharedState`).
 public enum G7WatchDirectRead {
-    /// The display slot the watch declares at authentication (`G7DisplayType`): a watch. An
-    /// alternating experiment (2026-09-16/17, ~45 bursts as `.medical`, ~30 as `.watch`) found
-    /// no difference in burst hit rate or link-up lateness, and the stored key survives either
-    /// slot — so the honest declaration it is.
+    /// The watch declares its own display slot: a trial against `.medical` found no difference in
+    /// hit rate or link-up lateness, and the stored key survives either.
     public static let displayType: G7DisplayType = .watch
 
     /// Before this state lived in the sensor's manager state, the adopted peripheral was kept in
@@ -1097,15 +1042,12 @@ public enum G7WatchDirectRead {
     }
 }
 
-/// The watch's ONE acquisition design (lean-out step 7, 2026-09-16): a single daemon-held request
-/// per burst, re-lodged after each close. Pure, so
-/// WatchAppTests can pin it. The G7BluetoothManager extension above is the stateful half.
+/// The watch's ONE acquisition design: a single daemon-held request per burst, re-lodged after
+/// each close. Pure, so WatchAppTests can pin it. The G7BluetoothManager extension above is the stateful half.
 public enum G7WatchAcquisition {
-    /// How the next request reaches the daemon after each reading.
-    /// `peteDelay`: a start delay aimed at the next reading — Pete's 298 − (now − bg_timestamp);
-    /// measured 1 in 4, the daemon serving a delayed connect 0.3–269 s late. `holdApp`: hold the
-    /// process 35 s after link-up, then a plain connect; 33 in 33, at 35 s of runtime per cycle.
-    public enum Relodge: String, CaseIterable { case peteDelay, holdApp }
+    /// How the next request reaches the daemon after each reading: `gridDelay` aims a start delay at
+    /// the next reading (measured 1 in 4); `holdApp` holds 35 s after link-up, then connects (33 in 33).
+    public enum Relodge: String, CaseIterable { case gridDelay, holdApp }
     public static let relodge: Relodge = .holdApp
     /// Link-up → the ~3.5-s read, the sensor's close, and its 20–24-s advertising tail all sit inside
     /// 35 s. A request that lands after this never reconnects into the tail.
@@ -1113,16 +1055,16 @@ public enum G7WatchAcquisition {
     /// The sensor's own cadence: reading timestamps sit on an exact 300.000-s grid (crystal drift
     /// ≈ 4 s/day against wall clock).
     public static let period: TimeInterval = 300
-    /// The sensor starts advertising +2.0…+3.2 s after its reading's timestamp (61 cycles,
-    /// 2026-09-12); grid point n is anchor + n·period + fireOffset.
+    /// The sensor starts advertising +2.0…+3.2 s after its reading's timestamp (measured);
+    /// grid point n is anchor + n·period + fireOffset.
     public static let fireOffset: TimeInterval = 3
-    /// Lead before the burst. Pete (2026-09-15 11:56): "target a couple seconds before the next
-    /// expected reading — delay = 298 − (now − bg_timestamp)". period + fireOffset − lead == 298.
+    /// Lead before the burst: aim a couple of seconds before the next expected reading,
+    /// delay = 298 − (now − bg_timestamp). period + fireOffset − lead == 298.
     public static let lead: TimeInterval = 5
     public static let missedBurstsBeforeBootstrap = 3
     /// One full window plus jitter: a scan pass that cannot span a burst proves nothing.
     public static let bootstrapScanCap: TimeInterval = 330
-    /// Pete's heartbeatFailureBackoffSeconds.
+    /// OmnipodKit's heartbeatFailureBackoffSeconds.
     public static let refusalBackoffSeconds: TimeInterval = 30
     /// A didFailToConnect this soon after the call is the daemon declining the request itself.
     public static let synchronousRefusalWindow: TimeInterval = 2
@@ -1134,9 +1076,9 @@ public enum G7WatchAcquisition {
         while t <= now.addingTimeInterval(margin) { n += 1; t = anchor.addingTimeInterval(n * period + fireOffset) }
         return t
     }
-    /// Pete's start delay in whole seconds (a fractional or zero NSNumber is refused with CBError 1),
+    /// The grid start delay in whole seconds (a fractional or zero NSNumber is refused with CBError 1),
     /// never below 1: with the burst already here a delay would land after it.
-    public static func peteDelay(anchor: Date, now: Date) -> Int {
+    public static func gridDelay(anchor: Date, now: Date) -> Int {
         let seconds = nextFire(anchor: anchor, now: now).timeIntervalSince(now) - lead
         return max(1, Int(seconds.rounded()))
     }
@@ -1147,15 +1089,15 @@ public enum G7WatchAcquisition {
     public enum RelodgePlan: Equatable { case startDelay(seconds: Int), holdThenConnect(wait: TimeInterval) }
     /// nil = nothing to wait for: a plain request now. `anchor` is the last reading's sensor timestamp.
     public static func relodgePlan(_ arm: Relodge = relodge, sinceLinkUp: TimeInterval, anchor: Date?, now: Date = Date()) -> RelodgePlan? {
-        if arm == .peteDelay, let anchor = anchor {
-            return .startDelay(seconds: peteDelay(anchor: anchor, now: now))
+        if arm == .gridDelay, let anchor = anchor {
+            return .startDelay(seconds: gridDelay(anchor: anchor, now: now))
         }
-        // holdApp — and peteDelay with no reading on record, which has no grid to aim at: clear the
+        // holdApp — and gridDelay with no reading on record, which has no grid to aim at: clear the
         // tail the way the hold does rather than lodge a plain connect straight into it.
         return sinceLinkUp < tailClearanceSeconds ? .holdThenConnect(wait: holdWait(sinceLinkUp: sinceLinkUp)) : nil
     }
     public enum FailureAction: Equatable { case backOff(TimeInterval), standDown, relodge }
-    /// Pete's shape: a synchronous refusal backs off; two in a row stand down until the next wake.
+    /// As in OmnipodKit: a synchronous refusal backs off; two in a row stand down until the next wake.
     /// A late failure (the request went live and could not connect) re-lodges through the arm.
     public static func onConnectFailure(refusals: Int, sinceLodge: TimeInterval) -> (FailureAction, refusals: Int) {
         if sinceLodge < synchronousRefusalWindow {

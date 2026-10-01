@@ -206,10 +206,8 @@ extension G7PeripheralManager {
 
         for (serviceUUID, characteristicUUIDs) in configuration.notifyingCharacteristics {
             guard let service = peripheral.services?.itemWithUUID(serviceUUID) else {
-                // FORK (#101): dump what discovery ACTUALLY returned before dying. An empty or
-                // partial inventory here on a link that D2W was using is the signature of the
-                // shared link dropping mid-discovery; a full-but-different inventory would mean
-                // wrong GATT. The bare error could not tell those apart (field 2026-08-08..10).
+                // Log what discovery returned: an empty or partial inventory means the link dropped
+                // mid-discovery, a full but different one means unexpected GATT.
                 log.error("unknownCharacteristic: service %{public}@ MISSING on %{public}@ — discovered: %{public}@", String(serviceUUID.uuidString.prefix(8)), peripheral.name ?? "unnamed", Self.gattInventory(peripheral))
                 throw PeripheralManagerError.unknownCharacteristic
             }
@@ -229,7 +227,7 @@ extension G7PeripheralManager {
         }
     }
 
-    /// FORK (#101): one-line GATT inventory — "svc(8chars):[char8,char8] | svc:[...]".
+    /// One-line GATT inventory — "svc(8chars):[char8,char8] | svc:[...]".
     /// nil services = discovery never completed at all.
     static func gattInventory(_ peripheral: CBPeripheral) -> String {
         guard let services = peripheral.services else { return "NO SERVICES (discovery incomplete)" }
@@ -466,19 +464,16 @@ extension G7PeripheralManager: CBPeripheralDelegate {
         commandLock.unlock()
     }
 
-    /// watchOS 9+ delivers its background-runtime budget warnings IN THE ERROR FIELD of a GATT
-    /// notification update (WWDC 2022 session 10135): CBError 18 = near the limit, 17 = exceeded
-    /// (no more background BLE runtime until the user interacts with the app or 24 h pass).
-    /// The command machinery only keeps an error a command is waiting for; an unsolicited update's
-    /// error was dropped on the floor, so the one signal Apple says to rely on was invisible.
+    /// Logs an update's error, which the command machinery otherwise drops. watchOS reports its
+    /// background-runtime budget here (WWDC22 10135): CBError 18 = near the limit, 17 = exceeded.
     private func reportGattError(_ error: Error?, during what: String, on characteristic: CBCharacteristic) {
         guard let error = error else { return }
         let ns = error as NSError
         var tag = ""
         if ns.domain == CBErrorDomain {
             switch ns.code {
-            case 18: tag = " *** NEAR the watchOS background-notification limit (CBError 18) — the next background wake may be the last before the reset ***"
-            case 17: tag = " *** EXCEEDED the watchOS background-notification limit (CBError 17) — no background BLE runtime until the user interacts with the app or 24 h pass ***"
+            case 18: tag = " — NEAR the watchOS background-notification limit (CBError 18); the next background wake may be the last before the reset"
+            case 17: tag = " — EXCEEDED the watchOS background-notification limit (CBError 17); no background BLE runtime until the user interacts with the app or 24 h pass"
             default: break
             }
         }

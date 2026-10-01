@@ -136,6 +136,7 @@
 		C19C9F4E29C91C4C00A6D3D0 /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19C9F4D29C91C4C00A6D3D0 /* LocalizedString.swift */; };
 		B2BB5E4180C00166DED29A6A /* G7JPAKE.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E50F6710E2494A0E14A6D8 /* G7JPAKE.swift */; };
 		C1D0C0DE2F0700010000CAFE /* G7CGMManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */; };
+		E100AAE92E25467782085241 /* G7DeviceHandoffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99CD78A3500BC53EA91465F1 /* G7DeviceHandoffTests.swift */; };
 		C1E71720292D84FE00DA646F /* G7ProgressBarState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E7171F292D84FE00DA646F /* G7ProgressBarState.swift */; };
 		FADE00000000000000000335 /* G7GlucoseMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F50E8291EAC6500555EB5 /* G7GlucoseMessage.swift */; };
 		FC325E86CDFE4002B0A5C260 /* G7P256Field.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F713A6F599C418A89815F3F /* G7P256Field.swift */; };
@@ -308,6 +309,7 @@
 		C17F5158291EBE7500555EB5 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C19C9F4D29C91C4C00A6D3D0 /* LocalizedString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizedString.swift; sourceTree = "<group>"; };
 		C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = G7CGMManagerTests.swift; sourceTree = "<group>"; };
+		99CD78A3500BC53EA91465F1 /* G7DeviceHandoffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "G7DeviceHandoffTests.swift"; sourceTree = "<group>"; };
 		C1E7171F292D84FE00DA646F /* G7ProgressBarState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = G7ProgressBarState.swift; sourceTree = "<group>"; };
 		D820703F56DC84E12221E63A /* G7CalibrationFlowView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7CalibrationFlowView.swift; sourceTree = "<group>"; };
 		DF238DACCD930310363D3EB5 /* G7CalibrationMessage.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7CalibrationMessage.swift; sourceTree = "<group>"; };
@@ -483,6 +485,7 @@
 				C17F50D3291EAC3800555EB5 /* G7SensorKitTests.swift */,
 				C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */,
 				C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */,
+				99CD78A3500BC53EA91465F1 /* G7DeviceHandoffTests.swift */,
 				8990966223D8FEFF85D5D535 /* G7BigUIntTests.swift */,
 				64134474341A32F8DFDA266F /* G7P256Tests.swift */,
 				94A7A4E8FF66BE03B02B2E01 /* G7AuthCryptoTests.swift */,
@@ -1001,6 +1004,7 @@
 			files = (
 				C109F14C291ED66F008EA5B6 /* G7GlucoseMessageTests.swift in Sources */,
 				C1D0C0DE2F0700010000CAFE /* G7CGMManagerTests.swift in Sources */,
+				E100AAE92E25467782085241 /* G7DeviceHandoffTests.swift in Sources */,
 				C10760812F05B41B008B2B39 /* ExtendedVersionMessageTests.swift in Sources */,
 				C17F50D4291EAC3800555EB5 /* G7SensorKitTests.swift in Sources */,
 				A3C2FD34AC1FB93C9DE1A066 /* G7BigUIntTests.swift in Sources */,
@@ -1205,7 +1209,6 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				"EXCLUDED_ARCHS[sdk=watchsimulator*]" = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1275,7 +1278,6 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				"EXCLUDED_ARCHS[sdk=watchsimulator*]" = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
