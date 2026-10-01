@@ -350,12 +350,6 @@ public class G7CGMManager: CGMManager {
         state.sessionMode
     }
 
-#if os(watchOS)
-    /// The user's "Reconnect sensor": drop the link or the lodged request and run one bootstrap
-    /// pass for the SAME sensor, keeping its identity.
-    public func reconnectG7() { sensor.reconnect() }
-#endif
-
     // MARK: - The pairing code another controller needs (entered here; travels in the export)
 
     public enum WatchPairingCodeStatus: Equatable { case noSensor, needsCode, saved }

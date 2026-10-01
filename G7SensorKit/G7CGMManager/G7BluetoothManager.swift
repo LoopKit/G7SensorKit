@@ -325,20 +325,6 @@ class G7BluetoothManager: NSObject {
 #endif
     }
 
-#if os(watchOS)
-    /// The user's "Reconnect sensor": drop the link or the lodged request and run ONE bootstrap
-    /// pass. Identity kept.
-    func reconnect() {
-        managerQueue.async { [self] in
-            watchLog("USER RECONNECT — dropping the link/request; one bootstrap pass")
-            lodged = false; lodgedAt = nil
-            lastBootstrapAt = nil
-            managerQueue_startBootstrapPass(reason: "user reconnect")     // armed FIRST so the cancel's close does not re-lodge
-            if let p = activePeripheral, p.state != .disconnected { centralManager.cancelPeripheralConnection(p) }
-        }
-    }
-#endif
-
     /// Makes `peripheralManager` the active peripheral, keeping its connection,
     /// and drops every other managed peripheral. This is the hand-off at the
     /// end of pairing: the candidate that authenticated becomes the session's
@@ -512,36 +498,24 @@ class G7BluetoothManager: NSObject {
 
     // MARK: - Accessors
 
-    // The UI reads these on the main thread, where waiting behind a handshake on this queue can
-    // deadlock with SwiftUI. The watch waits at most 50 ms, then returns the last value read.
-    private let readCacheLock = NSLock()
-    private var readCache: [String: Bool] = [:]
-
-    private func boundedRead(_ key: String, _ compute: @escaping () -> Bool) -> Bool {
-        let done = DispatchSemaphore(value: 0)
-        managerQueue.async { [weak self] in
-            guard let self = self else { done.signal(); return }
-            let value = compute()
-            self.readCacheLock.lock(); self.readCache[key] = value; self.readCacheLock.unlock()
-            done.signal()
-        }
-#if os(watchOS)
-        _ = done.wait(timeout: .now() + 0.05)   // never block the UI on this queue
-#else
-        done.wait()                             // stock semantics: a synchronous read of the queue's answer
-#endif
-        readCacheLock.lock(); defer { readCacheLock.unlock() }
-        return readCache[key] ?? false
-    }
-
     var isScanning: Bool {
         dispatchPrecondition(condition: .notOnQueue(managerQueue))
-        return boundedRead("scanning") { [unowned self] in self.centralManager.isScanning }
+
+        var isScanning = false
+        managerQueue.sync {
+            isScanning = centralManager.isScanning
+        }
+        return isScanning
     }
 
     var isConnected: Bool {
         dispatchPrecondition(condition: .notOnQueue(managerQueue))
-        return boundedRead("connected") { [unowned self] in self.activePeripheral?.state == .connected }
+
+        var isConnected = false
+        managerQueue.sync {
+            isConnected = activePeripheral?.state == .connected
+        }
+        return isConnected
     }
 
     /// The manager already attached to this peripheral, if there is one. A
@@ -902,7 +876,7 @@ extension G7BluetoothManager {
         return { gate.signal() }
     }
 
-    // MARK: bootstrap — the ONE scan pass (fresh install / sensor change / 3 misses / user reconnect)
+    // MARK: bootstrap — the ONE scan pass (fresh install / sensor change / 3 misses)
 
     fileprivate func managerQueue_startBootstrapPass(reason: String) {
         dispatchPrecondition(condition: .onQueue(managerQueue))

@@ -311,12 +311,6 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         beginSession(peripheralManager)
     }
 
-#if os(watchOS)
-    /// Re-acquire the SAME sensor without forgetting it — the user's "Reconnect sensor".
-    /// Contrast `scanForNewSensor`, which clears the credentials and rebuilds cold.
-    public func reconnect() { bluetoothManager.reconnect() }
-#endif
-
     public func scanForNewSensor() {
         // The pairing code and key belong to the sensor being replaced, not to
         // whatever comes next. Keeping them would make every candidate fail
