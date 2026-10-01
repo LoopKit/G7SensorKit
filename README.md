@@ -11,7 +11,7 @@ For a sensor already in use with the Dexcom app whose code is not available, the
 - Direct pairing and session management for G7, ONE+ and Stelo, including 15-day sensors
 - Sensor application guide and pairing flow
 - Gap backfill after any time out of range
-- Lifecycle alerts: sensor expiring, expired, session ended, sensor failed, signal loss, connection refused
+- Lifecycle alerts: sensor expiring, expired, session ended, sensor failed, connection refused
 - Calibration, with guidance on when it is appropriate
 - Sensor details in settings: model, serial number, pairing code, firmware, session length, previous sensor
 

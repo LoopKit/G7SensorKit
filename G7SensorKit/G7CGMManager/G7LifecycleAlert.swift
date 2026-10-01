@@ -25,6 +25,7 @@ enum G7LifecycleAlert: String, CaseIterable {
     /// End of the grace period; readings stop.
     case sessionEnded
     case sensorFailed
+    /// No longer raised; kept so one scheduled by an earlier build is retracted.
     case signalLoss
     /// The sensor accepted the code but refused the connection, or a stored
     /// key stopped working: something the user has to act on.
@@ -34,9 +35,6 @@ enum G7LifecycleAlert: String, CaseIterable {
     static let expiringSoonLeadTime = TimeInterval(hours: 24)
     static let expiringImminentlyLeadTime = TimeInterval(hours: 2)
 
-    /// How long without a reading before signal loss is raised. Readings are
-    /// 5 minutes apart, so this is three misses plus slack.
-    static let signalLossInterval = TimeInterval(minutes: 20)
 
     /// The alerts whose timing follows the session clock, and so are
     /// (re)scheduled together whenever the sensor or its lifetime changes.
