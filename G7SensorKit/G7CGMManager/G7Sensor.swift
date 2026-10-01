@@ -54,6 +54,14 @@ public protocol G7SensorDelegate: AnyObject {
     /// sensor. It has been discarded; if a pairing code is still held, the
     /// next connection will run a full handshake.
     func sensorDidInvalidateSharedKey(_ sensor: G7Sensor)
+
+    /// One line from the watch acquisition arm for the host's device log. Optional; only the
+    /// watch produces it.
+    func sensor(_ sensor: G7Sensor, logEvent line: String)
+}
+
+public extension G7SensorDelegate {
+    func sensor(_ sensor: G7Sensor, logEvent line: String) {}
 }
 
 public enum G7SensorError: Error {
@@ -189,6 +197,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     /// Which of the sensor's display slots this session takes: a phone by
     /// default; a watch app would take its own, alongside the phone's.
+    /// Read at each authentication; the watch's slot experiment rewrites it between connections.
     let displayType: G7DisplayType
 
     convenience init(mode: G7SessionMode, credentials: G7SensorCredentials, displayType: G7DisplayType = .phone) {
@@ -295,6 +304,16 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         beginSession(peripheralManager)
     }
 
+#if os(watchOS)
+    /// Re-acquire the SAME sensor without forgetting it — the user's "Reconnect sensor".
+    /// Contrast `scanForNewSensor`, which clears the credentials and rebuilds cold.
+    public func reconnect() { bluetoothManager.reconnect() }
+
+    /// A new sensor was adopted by identity from the phone (`reconfigure` carried its name and
+    /// code): drop the old peripheral and go find it.
+    public func reacquireForNewSensor() { bluetoothManager.reacquireForNewSensor() }
+#endif
+
     public func scanForNewSensor() {
         // The pairing code and key belong to the sensor being replaced, not to
         // whatever comes next. Keeping them would make every candidate fail
@@ -392,6 +411,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     private func handleGlucoseMessage(message: G7GlucoseMessage, peripheralManager: G7PeripheralManager) {
         activationDate = Date().addingTimeInterval(-TimeInterval(message.messageTimestamp))
+        // The reading's own timestamp: the watch arm's miss clock and grid (G7WatchAcquisition).
+        bluetoothManager.noteReading(at: Date().addingTimeInterval(-TimeInterval(message.age)))
         let credentials = lockedCredentials.value
 
         if mode == .direct, credentials.sensorID != nil, isOurSensor(peripheralManager) {
@@ -765,6 +786,17 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     func bluetoothManagerShouldAcceptRestoredPeripherals(_ manager: G7BluetoothManager) -> Bool {
         // A session wants its sensor back after a relaunch.
         return true
+    }
+
+    /// The watch acquisition arm's log line, forwarded to the host on the delegate queue.
+    func bluetoothManager(_ manager: G7BluetoothManager, logEvent line: String) {
+        delegateQueue.async { self.delegate?.sensor(self, logEvent: line) }
+    }
+
+    func bluetoothManagerCanAuthenticate(_ manager: G7BluetoothManager) -> Bool {
+        guard mode == .direct else { return true }
+        let credentials = lockedCredentials.value
+        return credentials.sharedKey != nil || credentials.pairingCode != nil
     }
 
     func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReceiveControlResponse response: Data) {

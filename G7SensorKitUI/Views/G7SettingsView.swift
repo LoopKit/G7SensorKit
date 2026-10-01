@@ -133,6 +133,23 @@ if viewModel.sessionMode == .eavesdropping {
                         G7DexcomApp.open()
                     })
                 }
+                // WATCH DIRECT READ. The one thing the phone cannot learn on its own: the sensor's
+                // 4-digit pairing code, which the watch needs to read the sensor with Loop's own
+                // handshake when the phone is away. Entered once per sensor (the code is shown in
+                // the Dexcom app); it rides to the watch inside this manager's state.
+                if viewModel.showsWatchDirectRead {
+                    Section(header: Text("Watch Direct Read"),
+                            footer: Text("The watch reads this sensor itself when your phone isn't there. Enter the sensor's 4-digit pairing code once; it is shown in the Dexcom app.")) {
+                        LabeledValueView(label: "Sensor", value: viewModel.sensorName ?? "—")
+                        LabeledValueView(label: "Pairing code", value: viewModel.watchPairingCodeStatusText)
+                        HStack {
+                            TextField("4-digit code", text: $viewModel.watchPairingCodeEntry)
+                                .keyboardType(.numberPad)
+                            Button("Save") { viewModel.saveWatchPairingCode() }
+                                .disabled(viewModel.sensorName == nil || viewModel.watchPairingCodeEntry.filter { $0.isNumber }.count != 4)
+                        }
+                    }
+                }
             }
 
             if viewModel.sessionMode == .direct {

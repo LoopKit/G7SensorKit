@@ -273,8 +273,16 @@ public class G7CGMManager: CGMManager {
     }
 
     public required convenience init?(rawState: RawStateValue) {
-        let state = G7CGMManagerState(rawValue: rawState)
-        self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials))
+        var state = G7CGMManagerState(rawValue: rawState)
+#if os(watchOS)
+        // The watch always reads directly: with no Dexcom app on the phone there is no session
+        // to eavesdrop on. Without a code the arm stands down until one arrives from the phone.
+        state.sessionMode = .direct
+        let displayType = G7WatchDirectRead.displayType
+#else
+        let displayType = G7DisplayType.phone
+#endif
+        self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, displayType: displayType))
         sensor.needsVersionInfo = state.extendedVersion == nil
     }
 
@@ -305,6 +313,66 @@ public class G7CGMManager: CGMManager {
     public var sessionMode: G7SessionMode {
         state.sessionMode
     }
+
+#if os(watchOS)
+    // MARK: - Watch direct read (the pairing code arrives from the phone)
+
+    /// The phone's cgmManagerState arrived in a context: its current sensor and that sensor's
+    /// pairing code (entered on the phone). A new sensor is adopted by identity — no scan of our
+    /// own is needed to notice a sensor change; a code for the current sensor re-arms the arm.
+    public func receivePairingCode(_ code: String?, phoneSensorID: String?) {
+        let before = state
+        if let new = phoneSensorID, new != before.sensorID, let code {
+            logDeviceCommunication("direct-read: phone reports sensor \(new) (was \(before.sensorID ?? "none")) with its code — adopting and re-acquiring", type: .connection)
+            mutateState { state in
+                state.sensorID = new
+                state.pairingCode = code
+                state.sharedKey = nil
+                state.peripheralIdentifier = nil
+                state.activatedAt = nil
+                state.extendedVersion = nil
+                state.transmitterVersion = nil
+                state.sessionMode = .direct
+            }
+            sensor.reconfigure(mode: .direct, credentials: state.sensorCredentials)
+            sensor.reacquireForNewSensor()
+        } else if let code, code != before.pairingCode, phoneSensorID == before.sensorID || before.sensorID == nil {
+            logDeviceCommunication("direct-read: pairing code for \(before.sensorID ?? "the sensor") received from the phone", type: .connection)
+            mutateState { state in
+                state.pairingCode = code
+                state.sessionMode = .direct
+            }
+            sensor.reconfigure(mode: .direct, credentials: state.sensorCredentials)
+            sensor.resumeScanning()
+        }
+    }
+
+    /// The user's "Reconnect sensor": drop the link or the lodged request and run one bootstrap
+    /// pass for the SAME sensor, keeping its identity.
+    public func reconnectG7() { sensor.reconnect() }
+#else
+    // MARK: - The watch's pairing code (entered here; rides to the watch inside cgmManagerState)
+
+    public enum WatchPairingCodeStatus: Equatable { case noSensor, needsCode, saved }
+
+    /// The current sensor's code state, for the settings row. The phone keeps its own session
+    /// mode; the code is what the watch needs to read this sensor when the phone is away.
+    public var watchPairingCodeStatus: WatchPairingCodeStatus {
+        guard state.sensorID != nil else { return .noSensor }
+        return state.pairingCode == nil ? .needsCode : .saved
+    }
+
+    /// The user entered the current sensor's 4-digit pairing code for the watch. Returns false
+    /// if it is not 4 digits.
+    @discardableResult
+    public func setWatchPairingCode(_ code: String) -> Bool {
+        let digits = String(code.filter { $0.isNumber }.prefix(4))
+        guard G7PairingService.isValidPairingCode(digits) else { return false }
+        mutateState { $0.pairingCode = digits }
+        logDeviceCommunication("direct-read: pairing code saved for the watch (\(state.sensorID ?? "sensor"))", type: .connection)
+        return true
+    }
+#endif
 
     /// Adopts the result of a pairing run, switching to direct mode.
     ///
@@ -666,10 +734,21 @@ extension G7CGMManager: G7SensorDelegate {
         logDeviceCommunication("New sensor \(name) discovered, activated at \(activatedAt)", type: .connection)
 
         let shouldSwitchToNewSensor = true
+#if !os(watchOS)
+        // While eavesdropping, a held code was for the watch, and it belonged to the sensor just
+        // replaced: it goes, and the phone asks for the new one while it is in hand.
+        let watchCodeToReplace = state.sessionMode == .eavesdropping && state.pairingCode != nil && state.sensorID != name
+#endif
 
         if shouldSwitchToNewSensor {
             sensor.cancelPendingCalibration()
             mutateState { state in
+#if !os(watchOS)
+                if watchCodeToReplace {
+                    state.pairingCode = nil
+                    state.sharedKey = nil
+                }
+#endif
                 state.sensorID = name
                 state.activatedAt = activatedAt
                 state.calibration = nil
@@ -691,6 +770,19 @@ extension G7CGMManager: G7SensorDelegate {
                 delegate?.cgmManager(self, hasNew: [event])
             }
             scheduleSessionTimedAlerts()
+#if !os(watchOS)
+            if watchCodeToReplace {
+                let content = Alert.Content(
+                    title: "New sensor \(name)",
+                    body: "Enter its pairing code in Loop ▸ Dexcom G7 so the watch can read it without your phone. The code is shown in the Dexcom app.",
+                    acknowledgeActionButtonLabel: "OK")
+                let alert = Alert(identifier: Alert.Identifier(managerIdentifier: pluginIdentifier, alertIdentifier: "directRead.codeNeeded"),
+                                  foregroundContent: content, backgroundContent: content, trigger: .immediate)
+                delegate.notify { delegate in
+                    Task { await delegate?.issueAlert(alert) }
+                }
+            }
+#endif
         }
 
         return shouldSwitchToNewSensor
@@ -890,6 +982,12 @@ extension G7CGMManager: G7SensorDelegate {
         }
     }
 
+    /// The watch acquisition arm's log line, into the host's device log (Pete's
+    /// omnipodLogDeviceEvent shape). Nothing produces it on the phone.
+    public func sensor(_ sensor: G7Sensor, logEvent line: String) {
+        logDeviceCommunication("[g7-watch] " + line, type: .connection)
+    }
+
     /// A disconnect before authentication usually means the session was stopped,
     /// but the same signature occurs on transient BLE handshake failures, where
     /// forgetting the sensor immediately causes a long re-discovery outage.
@@ -1053,6 +1151,11 @@ extension G7CGMManager: G7SensorDelegate {
         mutateState { state in
             state.latestReading = message
             state.latestReadingTimestamp = latestReadingTimestamp
+#if os(watchOS)
+            // A sensor adopted by identity (receivePairingCode) never passes through discovery,
+            // the only other place this is latched. Without it every reading is named "invalid".
+            if state.activatedAt == nil { state.activatedAt = activationDate }
+#endif
         }
 
         guard let glucose = message.glucose else {
