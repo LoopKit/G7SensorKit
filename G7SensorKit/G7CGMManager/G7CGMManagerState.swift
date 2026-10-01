@@ -115,8 +115,16 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
             sensorID: sensorID,
             pairingCode: pairingCode,
             sharedKey: sharedKey,
-            peripheralIdentifier: peripheralIdentifier
+            peripheralIdentifier: peripheralIdentifier,
+            configuredByAnotherController: configuredByAnotherController
         )
+    }
+
+    /// The display slot this manager claims: the phone's when set up through its own UI, the
+    /// secondary (watch) slot when passed its configuration, so it never takes the slot of the
+    /// controller that passed it.
+    var displayType: G7DisplayType {
+        configuredByAnotherController ? .watch : .phone
     }
 
     public init(rawValue: RawValue) {

@@ -145,6 +145,47 @@ final class G7DeviceHandoffTests: XCTestCase {
         XCTAssertNil(manager.state.pairingCode, "the code belonged to the sensor just replaced")
     }
 
+    func testTheDisplaySlotFollowsTheRole() {
+        let adopted = G7CGMManagerState.adopted(from: makeManager(state: phoneState).exportConfiguration().state)
+        XCTAssertEqual(phoneState.displayType, .phone, "set up through its own UI: the phone's slot")
+        XCTAssertEqual(adopted.displayType, .watch, "passed its configuration: the secondary slot")
+        XCTAssertEqual(G7CGMManagerState(rawValue: adopted.rawValue).displayType, .watch, "and after a restore")
+    }
+
+    func testOnlyAPassedSensorKeepsThePeripheralItFinds() {
+        let found = UUID()
+
+        let state = phoneState
+        let phone = makeManager(state: state)
+        phone.sensor.bluetoothManager(phone.sensor.bluetoothManager, didAdoptPeripheral: found)
+        XCTAssertEqual(phone.sensor.credentials.peripheralIdentifier, state.peripheralIdentifier, "keeps the one it paired with")
+        XCTAssertEqual(phone.sensor.bluetoothManager.activePeripheralIdentifier, state.peripheralIdentifier)
+
+        let passed = makeManager(state: G7CGMManagerState.adopted(from: phone.exportConfiguration().state))
+        passed.sensor.bluetoothManager(passed.sensor.bluetoothManager, didAdoptPeripheral: found)
+        XCTAssertEqual(passed.sensor.credentials.peripheralIdentifier, found, "handles are per device: it learns its own")
+        XCTAssertEqual(passed.sensor.bluetoothManager.activePeripheralIdentifier, found)
+        let saved = expectation(for: NSPredicate { _, _ in passed.state.peripheralIdentifier == found }, evaluatedWith: nil)
+        wait(for: [saved], timeout: 2)
+    }
+
+    func testReadingDirectlyWithoutACodeOrKeyConnectsToNothing() {
+        var passed = G7CGMManagerState.adopted(from: makeManager(state: phoneState).exportConfiguration().state)
+        passed.pairingCode = nil
+        passed.peripheralIdentifier = UUID()
+        XCTAssertFalse(G7Sensor.canAuthenticate(mode: .direct, credentials: passed.sensorCredentials),
+                       "not even its own peripheral: the link would close unauthenticated")
+        XCTAssertNil(makeManager(state: passed).sensor.needsCodeForSensor, "nothing reached yet")
+        XCTAssertFalse(makeManager(state: passed).sensor.bluetoothManagerCanAuthenticate(TestBluetoothManager()))
+
+        var keyOnly = passed
+        keyOnly.sharedKey = Data(repeating: 7, count: 16)
+        XCTAssertTrue(G7Sensor.canAuthenticate(mode: .direct, credentials: keyOnly.sensorCredentials))
+        XCTAssertTrue(G7Sensor.canAuthenticate(mode: .direct, credentials: phoneState.sensorCredentials))
+        XCTAssertTrue(G7Sensor.canAuthenticate(mode: .eavesdropping, credentials: passed.sensorCredentials),
+                      "eavesdropping needs neither")
+    }
+
     func testAPassedManagerNeverDropsItsCodeOnDiscovery() {
         var state = G7CGMManagerState.adopted(from: makeManager(state: phoneState).exportConfiguration().state)
         state.sessionMode = .eavesdropping

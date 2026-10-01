@@ -242,17 +242,10 @@ public class G7CGMManager: CGMManager {
         self.init(sessionMode: .eavesdropping)
     }
 
-    /// The display slot this platform takes: a watch must never take the phone's slot.
-#if os(watchOS)
-    public static let defaultDisplayType = G7WatchDirectRead.displayType
-#else
-    public static let defaultDisplayType = G7DisplayType.phone
-#endif
-
     /// A manager with no sensor yet. Created at the start of setup, so the
     /// CGM exists and its device log carries the pairing from the first line;
     /// `applyPairingResult` completes it.
-    public convenience init(sessionMode: G7SessionMode, displayType: G7DisplayType = G7CGMManager.defaultDisplayType) {
+    public convenience init(sessionMode: G7SessionMode, displayType: G7DisplayType = .phone) {
         var state = G7CGMManagerState()
         state.sessionMode = sessionMode
         self.init(state: state, sensor: G7Sensor(mode: sessionMode, credentials: state.sensorCredentials, displayType: displayType))
@@ -263,7 +256,7 @@ public class G7CGMManager: CGMManager {
     /// With a `handoff`, the session is built around the central the pairing
     /// run used and takes over its authenticated connection, so the first
     /// reading arrives now rather than on the sensor's next advertisement.
-    public convenience init(pairingCode: String, peripheralIdentifier: UUID?, sharedKey: Data?, handoff: G7PairingHandoff? = nil, displayType: G7DisplayType = G7CGMManager.defaultDisplayType) {
+    public convenience init(pairingCode: String, peripheralIdentifier: UUID?, sharedKey: Data?, handoff: G7PairingHandoff? = nil, displayType: G7DisplayType = .phone) {
         var state = G7CGMManagerState()
         state.sessionMode = .direct
         state.pairingCode = pairingCode
@@ -286,8 +279,7 @@ public class G7CGMManager: CGMManager {
 
     public required convenience init?(rawState: RawStateValue) {
         let state = G7CGMManagerState(rawValue: rawState)
-        let displayType = G7CGMManager.defaultDisplayType
-        self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, displayType: displayType))
+        self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, displayType: state.displayType))
         sensor.needsVersionInfo = state.extendedVersion == nil
 #if os(watchOS)
         if let latest = state.latestReadingTimestamp {
@@ -300,7 +292,7 @@ public class G7CGMManager: CGMManager {
     public required convenience init?(adopting configuration: SharedDeviceConfiguration) {
         let state = G7CGMManagerState.adopted(from: configuration.state)
         self.init(adopted: state, sensor: G7Sensor(mode: .direct, credentials: state.sensorCredentials,
-                                                   displayType: G7CGMManager.defaultDisplayType))
+                                                   displayType: state.displayType))
     }
 
     /// Asks the sensor for its version, as a restored manager does, so the session length is known.
@@ -309,18 +301,15 @@ public class G7CGMManager: CGMManager {
         sensor.needsVersionInfo = state.extendedVersion == nil
     }
 
-    /// Posted on the main queue when `watchNeedsCodeFor` or `watchIsSearching` changes; the object
-    /// is the manager. Only the watch posts it.
-    public static let watchStatusDidChange = Notification.Name("G7CGMManagerWatchStatusDidChange")
+    /// Posted on the main queue when `needsCodeForSensor` or `isSearchingForSensor` changes; the
+    /// object is the manager.
+    public static let statusDidChange = Notification.Name("G7CGMManagerStatusDidChange")
 
-#if os(watchOS)
+    /// The sensor a direct connection would reach without a pairing code or key; nil once one exists.
+    public var needsCodeForSensor: String? { sensor.needsCodeForSensor }
 
-    /// The sensor a watch connect reached without a pairing code; nil once one exists.
-    public var watchNeedsCodeFor: String? { sensor.watchNeedsCodeFor }
-
-    /// The watch is scanning for a sensor it has never connected to.
-    public var watchIsSearching: Bool { sensor.watchIsSearching }
-#endif
+    /// Scanning for a sensor this manager has never connected to.
+    public var isSearchingForSensor: Bool { sensor.isSearchingForSensor }
 
     /// Which of the sensor's display slots this app takes. A phone by
     /// default; a watch app takes its own, alongside the phone's.
@@ -805,9 +794,9 @@ extension G7CGMManager: G7SensorDelegate {
         }
     }
 
-    public func sensorWatchStatusDidChange(_ sensor: G7Sensor) {
+    public func sensorStatusDidChange(_ sensor: G7Sensor) {
         DispatchQueue.main.async {
-            NotificationCenter.default.post(name: G7CGMManager.watchStatusDidChange, object: self)
+            NotificationCenter.default.post(name: G7CGMManager.statusDidChange, object: self)
         }
     }
 
@@ -995,10 +984,9 @@ extension G7CGMManager: G7SensorDelegate {
         }
     }
 
-    /// The watch acquisition arm's log line, into the host's device log (OmnipodKit's
-    /// omnipodLogDeviceEvent shape). Nothing produces it on the phone.
+    /// A connection line from the bluetooth manager, into the host's device log.
     public func sensor(_ sensor: G7Sensor, logEvent line: String) {
-        logDeviceCommunication("[g7-watch] " + line, type: .connection)
+        logDeviceCommunication(line, type: .connection)
     }
 
     /// A disconnect before authentication usually means the session was stopped,

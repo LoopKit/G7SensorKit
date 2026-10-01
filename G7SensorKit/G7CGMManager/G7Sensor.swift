@@ -55,21 +55,21 @@ public protocol G7SensorDelegate: AnyObject {
     /// next connection will run a full handshake.
     func sensorDidInvalidateSharedKey(_ sensor: G7Sensor)
 
-    /// One line from the watch acquisition arm for the host's device log. Optional; only the
-    /// watch produces it.
+    /// One line for the host's device log. Optional.
     func sensor(_ sensor: G7Sensor, logEvent line: String)
 
-    /// The watch adopted a peripheral as this sensor (nil when it let go of one). Optional.
+    /// A sensor passed in by another controller found its own peripheral (nil when it let go of
+    /// one). Optional.
     func sensor(_ sensor: G7Sensor, didAdoptPeripheral identifier: UUID?)
 
-    /// `watchNeedsCodeFor` or `watchIsSearching` changed. Optional; only the watch produces it.
-    func sensorWatchStatusDidChange(_ sensor: G7Sensor)
+    /// `needsCodeForSensor` or `isSearchingForSensor` changed. Optional.
+    func sensorStatusDidChange(_ sensor: G7Sensor)
 }
 
 public extension G7SensorDelegate {
     func sensor(_ sensor: G7Sensor, logEvent line: String) {}
     func sensor(_ sensor: G7Sensor, didAdoptPeripheral identifier: UUID?) {}
-    func sensorWatchStatusDidChange(_ sensor: G7Sensor) {}
+    func sensorStatusDidChange(_ sensor: G7Sensor) {}
 }
 
 public enum G7SensorError: Error {
@@ -128,6 +128,10 @@ struct G7SensorCredentials: Equatable {
     /// The paired sensor's CoreBluetooth identifier, so a relaunch can go
     /// straight to it instead of waiting for an advertisement.
     var peripheralIdentifier: UUID?
+
+    /// Passed in by another controller, whose peripheral handle means nothing here: this session
+    /// keeps the one it finds itself.
+    var configuredByAnotherController = false
 }
 
 
@@ -207,7 +211,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     /// default; a watch app would take its own, alongside the phone's.
     let displayType: G7DisplayType
 
-    convenience init(mode: G7SessionMode, credentials: G7SensorCredentials, displayType: G7DisplayType = G7CGMManager.defaultDisplayType) {
+    convenience init(mode: G7SessionMode, credentials: G7SensorCredentials, displayType: G7DisplayType = .phone) {
         self.init(mode: mode, credentials: credentials, bluetoothManager: G7BluetoothManager(), displayType: displayType)
     }
 
@@ -749,9 +753,12 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
         let credentials = lockedCredentials.value
 
-        // Nothing to pair with yet: no code, no key. Connecting would only
-        // take a slot on whatever sensor is nearby.
-        if mode == .direct, credentials.pairingCode == nil, credentials.sharedKey == nil, credentials.peripheralIdentifier == nil {
+        // Nothing to authenticate with: no code, no key. Connecting would only take a slot on
+        // whatever sensor is nearby, or open a link to our own that closes unauthenticated.
+        if !G7Sensor.canAuthenticate(mode: mode, credentials: credentials) {
+            if let identifier = credentials.peripheralIdentifier, peripheral.identifier == identifier {
+                manager.setNeedsCodeForSensor(peripheral.name ?? name)
+            }
             return .ignore
         }
 
@@ -792,31 +799,38 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         return true
     }
 
-    /// The watch acquisition arm's log line, forwarded to the host on the delegate queue.
+    /// A device-log line from the bluetooth manager, forwarded to the host on the delegate queue.
     func bluetoothManager(_ manager: G7BluetoothManager, logEvent line: String) {
         delegateQueue.async { self.delegate?.sensor(self, logEvent: line) }
     }
 
-#if os(watchOS)
+    /// A sensor passed in by another controller keeps the peripheral it finds; one set up here
+    /// keeps the identifier it paired with.
     func bluetoothManager(_ manager: G7BluetoothManager, didAdoptPeripheral identifier: UUID?) {
+        guard lockedCredentials.value.configuredByAnotherController else { return }
+        manager.setActivePeripheralIdentifier(identifier)
         guard lockedCredentials.value.peripheralIdentifier != identifier else { return }
         mutateCredentials { $0.peripheralIdentifier = identifier }
         delegateQueue.async { self.delegate?.sensor(self, didAdoptPeripheral: identifier) }
     }
 
-    func bluetoothManagerWatchStatusDidChange(_ manager: G7BluetoothManager) {
-        delegateQueue.async { self.delegate?.sensorWatchStatusDidChange(self) }
+    func bluetoothManagerStatusDidChange(_ manager: G7BluetoothManager) {
+        delegateQueue.async { self.delegate?.sensorStatusDidChange(self) }
     }
 
-    public var watchNeedsCodeFor: String? { bluetoothManager.watchNeedsCodeFor }
+    /// The sensor a direct connection would reach without a pairing code or key; nil once one exists.
+    public var needsCodeForSensor: String? { bluetoothManager.needsCodeForSensor }
 
-    public var watchIsSearching: Bool { bluetoothManager.watchIsSearching }
-#endif
+    /// Scanning for a sensor this session has never connected to.
+    public var isSearchingForSensor: Bool { bluetoothManager.isSearchingForSensor }
 
     func bluetoothManagerCanAuthenticate(_ manager: G7BluetoothManager) -> Bool {
-        guard mode == .direct else { return true }
-        let credentials = lockedCredentials.value
-        return credentials.sharedKey != nil || credentials.pairingCode != nil
+        G7Sensor.canAuthenticate(mode: mode, credentials: lockedCredentials.value)
+    }
+
+    /// Reading directly needs a pairing code or a stored key; eavesdropping needs neither.
+    static func canAuthenticate(mode: G7SessionMode, credentials: G7SensorCredentials) -> Bool {
+        mode != .direct || credentials.sharedKey != nil || credentials.pairingCode != nil
     }
 
     func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReceiveControlResponse response: Data) {

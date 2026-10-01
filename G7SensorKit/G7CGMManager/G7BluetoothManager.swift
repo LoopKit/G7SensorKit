@@ -101,37 +101,27 @@ protocol G7BluetoothManagerDelegate: AnyObject {
     ///   - manager: The bluetooth manager
     func peripheralDidDisconnect(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, wasRemoteDisconnect: Bool)
 
-#if os(watchOS)
-    /// One line from the watch acquisition arm for the host's device log (OmnipodKit's
-    /// omnipodLogDeviceEvent shape): os_log alone never reaches the wrist's file log.
+    /// One line for the host's device log (OmnipodKit's omnipodLogDeviceEvent shape).
     func bluetoothManager(_ manager: G7BluetoothManager, logEvent line: String)
 
     /// Whether a connection could be authenticated (direct: a pairing code or stored key;
-    /// eavesdropping: always). The arm does not lodge a request it could only watch fail.
+    /// eavesdropping: always).
     func bluetoothManagerCanAuthenticate(_ manager: G7BluetoothManager) -> Bool
 
-    /// The watch adopted a peripheral as the sensor (nil when it let go of one), so the owner can
-    /// persist the identifier with the rest of the sensor's state.
+    /// A peripheral was adopted as the sensor (nil when one was let go of).
     func bluetoothManager(_ manager: G7BluetoothManager, didAdoptPeripheral identifier: UUID?)
 
-    /// `watchNeedsCodeFor` or `watchIsSearching` changed.
-    func bluetoothManagerWatchStatusDidChange(_ manager: G7BluetoothManager)
-#endif
+    /// `needsCodeForSensor` or `isSearchingForSensor` changed.
+    func bluetoothManagerStatusDidChange(_ manager: G7BluetoothManager)
 }
 
 extension G7BluetoothManagerDelegate {
     func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReadRSSI rssi: NSNumber, error: Error?) {}
-}
-
-#if os(watchOS)
-extension G7BluetoothManagerDelegate {
-    /// Optional: only the watch produces these.
     func bluetoothManager(_ manager: G7BluetoothManager, logEvent line: String) {}
     func bluetoothManagerCanAuthenticate(_ manager: G7BluetoothManager) -> Bool { true }
     func bluetoothManager(_ manager: G7BluetoothManager, didAdoptPeripheral identifier: UUID?) {}
-    func bluetoothManagerWatchStatusDidChange(_ manager: G7BluetoothManager) {}
+    func bluetoothManagerStatusDidChange(_ manager: G7BluetoothManager) {}
 }
-#endif
 
 class G7BluetoothManager: NSObject {
 
@@ -179,28 +169,28 @@ class G7BluetoothManager: NSObject {
     /// The last reading's sensor timestamp, for the 3-miss test. Seeded at launch
     /// from the manager's persisted `latestReadingTimestamp` (`noteReading`).
     private var lastReadingAt: Date?
-
-    private let lockedNeedsCodeFor = Locked<String?>(nil)
-    private let lockedIsSearching = Locked(false)
-
-    /// The sensor a connect reached without a pairing code; nil once one exists.
-    var watchNeedsCodeFor: String? { lockedNeedsCodeFor.value }
-
-    /// Scanning for a sensor this watch has never connected to.
-    var watchIsSearching: Bool { lockedIsSearching.value }
-
-    private func setWatchNeedsCodeFor(_ name: String?) {
-        guard lockedNeedsCodeFor.value != name else { return }
-        lockedNeedsCodeFor.value = name
-        delegate?.bluetoothManagerWatchStatusDidChange(self)
-    }
-
-    private func setWatchIsSearching(_ searching: Bool) {
-        guard lockedIsSearching.value != searching else { return }
-        lockedIsSearching.value = searching
-        delegate?.bluetoothManagerWatchStatusDidChange(self)
-    }
 #endif
+
+    private let lockedNeedsCodeForSensor = Locked<String?>(nil)
+    private let lockedIsSearchingForSensor = Locked(false)
+
+    /// The sensor a direct connection would reach without a pairing code or key; nil once one exists.
+    var needsCodeForSensor: String? { lockedNeedsCodeForSensor.value }
+
+    /// Scanning for a sensor this controller has never connected to.
+    var isSearchingForSensor: Bool { lockedIsSearchingForSensor.value }
+
+    func setNeedsCodeForSensor(_ name: String?) {
+        guard lockedNeedsCodeForSensor.value != name else { return }
+        lockedNeedsCodeForSensor.value = name
+        delegate?.bluetoothManagerStatusDidChange(self)
+    }
+
+    func setIsSearchingForSensor(_ searching: Bool) {
+        guard lockedIsSearchingForSensor.value != searching else { return }
+        lockedIsSearchingForSensor.value = searching
+        delegate?.bluetoothManagerStatusDidChange(self)
+    }
 
     var activePeripheralIdentifier: UUID? {
         get {
@@ -221,12 +211,10 @@ class G7BluetoothManager: NSObject {
         didSet {
             oldValue?.delegate = nil
             lockedPeripheralIdentifier.value = activePeripheralManager?.peripheral.identifier
-#if os(watchOS)
             let identifier = activePeripheralManager?.peripheral.identifier
             if identifier != oldValue?.peripheral.identifier {
                 delegate?.bluetoothManager(self, didAdoptPeripheral: identifier)
             }
-#endif
         }
     }
 
@@ -539,12 +527,9 @@ class G7BluetoothManager: NSObject {
                 log.default("Making peripheral active: %{public}@", peripheral.identifier.uuidString)
 
                 if let peripheralManager = activePeripheralManager {
-#if os(watchOS)
                     if peripheralManager.peripheral.identifier != peripheral.identifier {
-                        lockedPeripheralIdentifier.value = peripheral.identifier
                         delegate.bluetoothManager(self, didAdoptPeripheral: peripheral.identifier)
                     }
-#endif
                     peripheralManager.peripheral = peripheral
                 } else {
                     activePeripheralManager = makeOrReusePeripheralManager(peripheral)
@@ -629,10 +614,10 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         }
 
         if let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] {
-#if os(watchOS)
-            watchLog("RESTORED by the system — relaunched for Bluetooth with \(peripherals.count) peripheral(s): "
-                     + peripherals.map { "\($0.name ?? "unnamed") state=\($0.state.rawValue)" }.joined(separator: ", "))
-#endif
+            let line = "RESTORED by the system — relaunched for Bluetooth with \(peripherals.count) peripheral(s): "
+                + peripherals.map { "\($0.name ?? "unnamed") state=\($0.state.rawValue)" }.joined(separator: ", ")
+            log.default("%{public}@", line)
+            delegate?.bluetoothManager(self, logEvent: line)
             for peripheral in peripherals {
                 log.default("Restoring peripheral from state: %{public}@", peripheral.identifier.uuidString)
                 handleDiscoveredPeripheral(peripheral)
@@ -768,7 +753,7 @@ extension G7BluetoothManager {
 
     fileprivate func watchLog(_ line: String) {
         log.default("[g7-watch] %{public}@", line)
-        delegate?.bluetoothManager(self, logEvent: line)      // into the host's device log
+        delegate?.bluetoothManager(self, logEvent: "[g7-watch] " + line)      // into the host's device log
     }
 
     /// The stock scan entry on the watch (poweredOn, resumeScanning, after a forget or a bootstrap
@@ -850,11 +835,11 @@ extension G7BluetoothManager {
         if let delegate, !delegate.bluetoothManagerCanAuthenticate(self) {
             // A link we cannot authenticate is one the sensor closes unencrypted ~10 s later — a
             // tally count every burst for nothing. Stand down until a configuration brings a code.
-            setWatchNeedsCodeFor(peripheral.name ?? "sensor")
+            setNeedsCodeForSensor(peripheral.name ?? "sensor")
             watchLog("no pairing code for \(peripheral.name ?? "sensor") — not lodging")
             return
         }
-        setWatchNeedsCodeFor(nil)
+        setNeedsCodeForSensor(nil)
         lodged = true; lodgedAt = Date()
         centralManager.connect(peripheral, options: nil)
         watchLog("lodged — \(why) · the app may suspend")
@@ -895,7 +880,7 @@ extension G7BluetoothManager {
         centralManager.scanForPeripherals(withServices: [SensorServiceUUID.advertisement.cbUUID], options: nil)
         delegate?.bluetoothManagerScanningStatusDidChange(self)
         guard !untilFound else {
-            setWatchIsSearching(true)
+            setIsSearchingForSensor(true)
             return
         }
         let t = DispatchSource.makeTimerSource(queue: managerQueue)
@@ -910,7 +895,7 @@ extension G7BluetoothManager {
         bootstrapPass = false
         bootstrapTimer?.cancel(); bootstrapTimer = nil
         managerQueue_stopScanning()
-        setWatchIsSearching(false)
+        setIsSearchingForSensor(false)
         watchLog("bootstrap pass over — \(reason)")
         guard reason != "connected" else { return }
         if let p = activePeripheral, p.state == .connecting { centralManager.cancelPeripheralConnection(p); lodged = false; lodgedAt = nil }
@@ -973,10 +958,6 @@ extension G7BluetoothManager {
 /// Direct read on the watch: Loop's own handshake, no Dexcom app needed. The pairing code is entered
 /// on the phone and reaches the watch in the manager's exported configuration (`sharedState`).
 public enum G7WatchDirectRead {
-    /// The watch declares its own display slot: a trial against `.medical` found no difference in
-    /// hit rate or link-up lateness, and the stored key survives either.
-    public static let displayType: G7DisplayType = .watch
-
     /// Glance note while the watch scans for a sensor it has never connected to.
     public static func searchingNote(_ searching: Bool) -> String? {
         searching ? "Looking for your sensor — keep Loop open on your watch until it connects." : nil
