@@ -287,7 +287,7 @@ public class G7CGMManager: CGMManager {
     }
 
     /// DeviceConfigurationSharing: read the sensor another controller follows, directly.
-    public required convenience init?(adopting configuration: SharedDeviceConfiguration) {
+    public required convenience init?(adopting configuration: SharedDeviceConfiguration, localState: [String: Any]?) {
         let state = G7CGMManagerState.adopted(from: configuration.state)
         self.init(adopted: state, sensor: G7Sensor(mode: .direct, credentials: state.sensorCredentials,
                                                    displayType: state.displayType))
