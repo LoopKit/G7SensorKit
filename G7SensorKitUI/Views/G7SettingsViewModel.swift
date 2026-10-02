@@ -11,6 +11,7 @@ import G7SensorKit
 import LoopAlgorithm
 import LoopKit
 import LoopKitUI
+import WatchConnectivity
 
 public enum ColorStyle {
     case glucose, warning, critical, normal, dimmed
@@ -55,6 +56,11 @@ class G7SettingsViewModel: ObservableObject {
     @Published private(set) var shareUsername: String?
     @Published private(set) var shareServer: G7ShareServer?
     @Published private(set) var shareUploadStatus = G7ShareUploadStatus()
+
+    /// Watch direct read: the current sensor's pairing-code state, and the one field the user
+    /// ever types into — once per sensor.
+    @Published private(set) var watchPairingCodeStatus: G7CGMManager.WatchPairingCodeStatus = .noSensor
+    @Published var watchPairingCodeEntry: String = ""
     
     let displayGlucosePreference: DisplayGlucosePreference
 
@@ -137,6 +143,7 @@ class G7SettingsViewModel: ObservableObject {
         shareUsername = cgmManager.shareAccount?.username
         shareServer = cgmManager.shareAccount?.server
         shareUploadStatus = cgmManager.shareUploadStatus
+        watchPairingCodeStatus = cgmManager.watchPairingCodeStatus
     }
 
     // MARK: - Dexcom Share
@@ -153,6 +160,37 @@ class G7SettingsViewModel: ObservableObject {
 
     var shareClient: G7ShareClient? {
         cgmManager.shareClient
+    }
+
+    // MARK: - Watch direct read
+
+    /// The pairing-code section is offered only when a paired watch has the companion app
+    /// installed; a phone without the watch app sees exactly the stock screen.
+    var showsWatchDirectRead: Bool {
+        guard WCSession.isSupported() else { return false }
+        let session = WCSession.default
+        return session.activationState == .activated && session.isPaired && session.isWatchAppInstalled
+    }
+
+    var watchPairingCodeStatusText: String {
+        switch watchPairingCodeStatus {
+        case .noSensor: return "no sensor"
+        case .needsCode: return "needs code"
+        case .saved: return "saved"
+        }
+    }
+
+    /// Save the entered 4-digit pairing code for the current sensor. Returns false if there is
+    /// no sensor or the entry is not four digits.
+    @discardableResult
+    func saveWatchPairingCode() -> Bool {
+        guard cgmManager.sensorName != nil else { return false }
+        let ok = cgmManager.setWatchPairingCode(watchPairingCodeEntry)
+        if ok {
+            watchPairingCodeEntry = ""
+            updateValues()
+        }
+        return ok
     }
 
     // MARK: - Calibration

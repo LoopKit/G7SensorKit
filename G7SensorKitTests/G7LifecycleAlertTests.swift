@@ -223,6 +223,23 @@ class G7LifecycleAlertManagerTests: XCTestCase {
         }
     }
 
+    /// A manager passed its configuration schedules the same alerts, so deleting it retracts them.
+    func testDeletingAPassedConfigurationRetractsEveryAlert() {
+        var shared = G7CGMManagerState()
+        shared.sensorID = "DXCM99"
+        shared.activatedAt = Date()
+        var state = G7CGMManagerState.adopted(from: shared.rawValue)
+        state.lifecycleAlertsScheduledFor = "scheduled"
+        let manager = makeManager(state: state)
+
+        let done = expectation(description: "delete completed")
+        manager.delete { done.fulfill() }
+        wait(for: [done], timeout: 2)
+        settle()
+
+        XCTAssertEqual(Set(recorder.retracted.map(\.alertIdentifier)), Set(G7LifecycleAlert.allCases.map(\.rawValue)))
+    }
+
     func testForgettingTheSensorRetractsEverything() {
         var state = G7CGMManagerState()
         state.sensorID = "DXCM99"
