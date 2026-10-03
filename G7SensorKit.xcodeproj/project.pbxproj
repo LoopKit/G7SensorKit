@@ -15,7 +15,6 @@
 		C10760812F05B41B008B2B39 /* ExtendedVersionMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10760802F05B412008B2B39 /* ExtendedVersionMessageTests.swift */; };
 		C109F14A291ECCE2008EA5B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C109F149291ECCE2008EA5B6 /* Assets.xcassets */; };
 		C109F14C291ED66F008EA5B6 /* G7GlucoseMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */; };
-		C1D0C0DE2F0700010000CAFE /* G7CGMManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */; };
 		C139829829295D7D0047DB5F /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F514A291EB6F000555EB5 /* HKUnit.swift */; };
 		C1409A07291EC21C006BE8D0 /* OSLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5126291EAF2F00555EB5 /* OSLog.swift */; };
 		C1409A09291EC22F006BE8D0 /* OSLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1409A08291EC22F006BE8D0 /* OSLog.swift */; };
@@ -61,6 +60,7 @@
 		C17F5156291EBD8600555EB5 /* Image.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F5155291EBD8600555EB5 /* Image.swift */; };
 		C17F5157291EBD9900555EB5 /* TimeInterval.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F513F291EB27D00555EB5 /* TimeInterval.swift */; };
 		C19C9F4E29C91C4C00A6D3D0 /* LocalizedString.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19C9F4D29C91C4C00A6D3D0 /* LocalizedString.swift */; };
+		C1D0C0DE2F0700010000CAFE /* G7CGMManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */; };
 		C1E71720292D84FE00DA646F /* G7ProgressBarState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E7171F292D84FE00DA646F /* G7ProgressBarState.swift */; };
 /* End PBXBuildFile section */
 
@@ -119,7 +119,6 @@
 		C10760802F05B412008B2B39 /* ExtendedVersionMessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedVersionMessageTests.swift; sourceTree = "<group>"; };
 		C109F149291ECCE2008EA5B6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C109F14B291ED66F008EA5B6 /* G7GlucoseMessageTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = G7GlucoseMessageTests.swift; sourceTree = "<group>"; };
-		C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = G7CGMManagerTests.swift; sourceTree = "<group>"; };
 		C1409A08291EC22F006BE8D0 /* OSLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
 		C1409A0A291EC258006BE8D0 /* OSLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OSLog.swift; sourceTree = "<group>"; };
 		C17F50C6291EAC3800555EB5 /* G7SensorKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = G7SensorKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -162,6 +161,7 @@
 		C17F5155291EBD8600555EB5 /* Image.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Image.swift; sourceTree = "<group>"; };
 		C17F5158291EBE7500555EB5 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C19C9F4D29C91C4C00A6D3D0 /* LocalizedString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizedString.swift; sourceTree = "<group>"; };
+		C1D0C0DE2F0700020000CAFE /* G7CGMManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = G7CGMManagerTests.swift; sourceTree = "<group>"; };
 		C1E7171F292D84FE00DA646F /* G7ProgressBarState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = G7ProgressBarState.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
