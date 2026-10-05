@@ -139,6 +139,8 @@ protocol G7AcquisitionArm: AnyObject {
     func restored(_ peripheral: CBPeripheral)
     /// A reading's own sensor timestamp.
     func noteReading(at timestamp: Date)
+    /// Any wake: put acquisition right if a lost callback left nothing standing.
+    func recheck()
 }
 
 class G7BluetoothManager: NSObject {
@@ -269,6 +271,15 @@ class G7BluetoothManager: NSObject {
 
         managerQueue.async {
             self.managerQueue_scanForPeripheral()
+        }
+    }
+
+    /// Re-derives the watch's acquisition from the central's own state on a wake; nothing on the phone.
+    func recheckAcquisition() {
+        managerQueue.async {
+            guard self.delegate != nil, self.centralManager.state == .poweredOn,
+                  (self.activePeripheral?.state ?? .disconnected) != .connected else { return }
+            self.acquisitionArm?.recheck()
         }
     }
 

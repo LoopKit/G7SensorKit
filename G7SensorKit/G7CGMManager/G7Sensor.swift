@@ -347,6 +347,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         bluetoothManager.scanForPeripheral()
     }
 
+    func recheckAcquisition() {
+        bluetoothManager.recheckAcquisition()
+    }
+
     public func stopScanning() {
         bluetoothManager.disconnect()
     }
