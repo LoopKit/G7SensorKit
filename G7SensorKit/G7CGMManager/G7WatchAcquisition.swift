@@ -310,7 +310,7 @@ public final class G7WatchAcquisition: G7AcquisitionArm {
 public enum G7WatchDirectRead {
     /// Glance note while the watch scans for a sensor it has never connected to.
     public static func searchingNote(_ searching: Bool) -> String? {
-        searching ? "Looking for your sensor. Keep Loop open — this takes about 5 minutes. Accept the Bluetooth pairing request when it appears." : nil
+        searching ? "Looking for your sensor. Keep Loop open — this takes about 5 minutes. If your watch asks to pair with the sensor, accept." : nil
     }
 
     /// Glance note while a code is missing.
