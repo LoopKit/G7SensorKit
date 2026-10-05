@@ -206,11 +206,15 @@ extension G7PeripheralManager {
 
         for (serviceUUID, characteristicUUIDs) in configuration.notifyingCharacteristics {
             guard let service = peripheral.services?.itemWithUUID(serviceUUID) else {
+                // Log what discovery returned: an empty or partial inventory means the link dropped
+                // mid-discovery, a full but different one means unexpected GATT.
+                log.error("unknownCharacteristic: service %{public}@ MISSING on %{public}@ — discovered: %{public}@", String(serviceUUID.uuidString.prefix(8)), peripheral.name ?? "unnamed", Self.gattInventory(peripheral))
                 throw PeripheralManagerError.unknownCharacteristic
             }
 
             for characteristicUUID in characteristicUUIDs {
                 guard let characteristic = service.characteristics?.itemWithUUID(characteristicUUID) else {
+                    log.error("unknownCharacteristic: char %{public}@ MISSING in service %{public}@ on %{public}@ — discovered: %{public}@", String(characteristicUUID.uuidString.prefix(8)), String(serviceUUID.uuidString.prefix(8)), peripheral.name ?? "unnamed", Self.gattInventory(peripheral))
                     throw PeripheralManagerError.unknownCharacteristic
                 }
 
@@ -221,6 +225,17 @@ extension G7PeripheralManager {
                 try setNotifyValue(true, for: characteristic, timeout: discoveryTimeout)
             }
         }
+    }
+
+    /// One-line GATT inventory — "svc(8chars):[char8,char8] | svc:[...]".
+    /// nil services = discovery never completed at all.
+    static func gattInventory(_ peripheral: CBPeripheral) -> String {
+        guard let services = peripheral.services else { return "NO SERVICES (discovery incomplete)" }
+        if services.isEmpty { return "0 services" }
+        return services.map { svc in
+            let chars = svc.characteristics?.map { String($0.uuid.uuidString.prefix(8)) }.joined(separator: ",") ?? "none-discovered"
+            return "\(svc.uuid.uuidString.prefix(8)):[\(chars)]"
+        }.joined(separator: " | ")
     }
 }
 
@@ -449,7 +464,24 @@ extension G7PeripheralManager: CBPeripheralDelegate {
         commandLock.unlock()
     }
 
+    /// Logs an update's error, which the command machinery otherwise drops. watchOS reports its
+    /// background-runtime budget here (WWDC22 10135): CBError 18 = near the limit, 17 = exceeded.
+    private func reportGattError(_ error: Error?, during what: String, on characteristic: CBCharacteristic) {
+        guard let error = error else { return }
+        let ns = error as NSError
+        var tag = ""
+        if ns.domain == CBErrorDomain {
+            switch ns.code {
+            case 18: tag = " — NEAR the watchOS background-notification limit (CBError 18); the next background wake may be the last before the reset"
+            case 17: tag = " — EXCEEDED the watchOS background-notification limit (CBError 17); no background BLE runtime until the user interacts with the app or 24 h pass"
+            default: break
+            }
+        }
+        log.error("[gatt] %{public}@ error on %{public}@ — %{public}@ (%{public}@#%d)%{public}@", what, characteristic.uuid.uuidString, error.localizedDescription, ns.domain, ns.code, tag)
+    }
+
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+        reportGattError(error, during: "notification-state update", on: characteristic)
         commandLock.lock()
 
         // On an error the state does not change, so match the characteristic
@@ -494,6 +526,7 @@ extension G7PeripheralManager: CBPeripheralDelegate {
     }
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        reportGattError(error, during: "value update", on: characteristic)
         commandLock.lock()
 
         var notifyDelegate = false
