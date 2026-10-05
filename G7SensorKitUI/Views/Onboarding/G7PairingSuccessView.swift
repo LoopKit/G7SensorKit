@@ -42,7 +42,7 @@ struct G7PairingSuccessView: View {
                         }
                     }
 
-                    Text(String(format: LocalizedString("%1$@ is now connected to the sensor directly. Readings arrive every 5 minutes; a new sensor needs about 30 minutes to warm up first.", comment: "Body of the pairing success screen (1: appName)"), appName))
+                    Text(String(format: LocalizedString("%1$@ is now connected to the sensor directly. Readings arrive every 5 minutes; a new sensor needs to warm up first: about 30 minutes for a 10-day sensor, 60 for a 15-day.", comment: "Body of the pairing success screen (1: appName)"), appName))
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
 
