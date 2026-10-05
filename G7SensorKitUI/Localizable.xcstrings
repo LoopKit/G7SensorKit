@@ -433,8 +433,11 @@
     "%1$@ connects to your G7, ONE+ or Stelo sensor directly. Pair it with the 4-digit code printed on the sensor applicator, and the Dexcom app is not needed." : {
       "comment" : "Descriptive text on G7StartupView (1: appName)"
     },
-    "%1$@ is now connected to the sensor directly. Readings arrive every 5 minutes; a new sensor needs about 30 minutes to warm up first." : {
-      "comment" : "Body of the pairing success screen (1: appName)"
+    "%1$@ is now connected to the sensor directly. Readings arrive every 5 minutes after a %2$@ warm-up." : {
+      "comment" : "Body of the pairing success screen (1: appName, 2: warm-up duration, e.g. 27 minutes)"
+    },
+    "%1$@ is now connected to the sensor directly. Readings arrive every 5 minutes once the sensor has warmed up." : {
+      "comment" : "Body of the pairing success screen before the sensor reports its warm-up time (1: appName)"
     },
     "%1$@ will read glucose from the Dexcom app's session until you pair a sensor. The Dexcom app must stay installed for this to work." : {
       "comment" : "Explanation of eavesdropping mode on G7StartupView (1: appName)"
