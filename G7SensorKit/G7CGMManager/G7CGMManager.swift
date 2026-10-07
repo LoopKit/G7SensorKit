@@ -480,6 +480,17 @@ extension G7CGMManager: G7SensorDelegate {
             state.latestReadingTimestamp = latestReadingTimestamp
         }
 
+        if let event = CgmSensorStateReporter.event(for: message.algorithmState.sensorObservation,
+                                                    namespace: "G7CGMManager",
+                                                    sensorSessionStart: activationDate,
+                                                    deviceIdentifier: state.sensorID ?? "Dexcom G7",
+                                                    date: latestReadingTimestamp)
+        {
+            delegate.notify { delegate in
+                delegate?.cgmManager(self, hasNew: [event])
+            }
+        }
+
         guard let glucose = message.glucose else {
             updateDelegate(with: .noData)
             return
@@ -610,5 +621,14 @@ extension G7GlucoseMessage: GlucoseDisplayable {
         } else {
             return nil
         }
+    }
+}
+
+// MARK: - Sensor state reporting
+
+extension AlgorithmState {
+    /// The kit's own name for the state is what gets reported.
+    var sensorObservation: CgmSensorObservation {
+        hasReliableGlucose ? .reliable : .unreliable(state: description)
     }
 }
