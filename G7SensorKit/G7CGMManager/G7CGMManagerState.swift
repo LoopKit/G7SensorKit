@@ -70,6 +70,10 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     /// session is closed in Loop's history exactly once.
     public var sensorEndRecordedFor: String?
 
+    /// The sensor whose `sensorStart` waits for its serial number, and since when.
+    public var sensorStartPendingFor: String?
+    public var sensorStartPendingSince: Date?
+
     /// When this app paired with, or began following, the current sensor.
     public var pairedAt: Date?
 
@@ -138,6 +142,8 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.lifecycleAlertsScheduledFor = rawValue["lifecycleAlertsScheduledFor"] as? String
         self.sensorFailedAlertIssuedFor = rawValue["sensorFailedAlertIssuedFor"] as? String
         self.sensorEndRecordedFor = rawValue["sensorEndRecordedFor"] as? String
+        self.sensorStartPendingFor = rawValue["sensorStartPendingFor"] as? String
+        self.sensorStartPendingSince = rawValue["sensorStartPendingSince"] as? Date
         self.pairedAt = rawValue["pairedAt"] as? Date
         self.sensorFailureMessage = rawValue["sensorFailureMessage"] as? String
         self.sensorFailedAt = rawValue["sensorFailedAt"] as? Date
@@ -172,6 +178,8 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["lifecycleAlertsScheduledFor"] = lifecycleAlertsScheduledFor
         rawValue["sensorFailedAlertIssuedFor"] = sensorFailedAlertIssuedFor
         rawValue["sensorEndRecordedFor"] = sensorEndRecordedFor
+        rawValue["sensorStartPendingFor"] = sensorStartPendingFor
+        rawValue["sensorStartPendingSince"] = sensorStartPendingSince
         rawValue["pairedAt"] = pairedAt
         rawValue["sensorFailureMessage"] = sensorFailureMessage
         rawValue["sensorFailedAt"] = sensorFailedAt
