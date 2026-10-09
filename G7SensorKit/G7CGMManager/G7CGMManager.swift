@@ -275,7 +275,7 @@ public class G7CGMManager: CGMManager {
     public required convenience init?(rawState: RawStateValue) {
         let state = G7CGMManagerState(rawValue: rawState)
         self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials))
-        sensor.needsVersionInfo = state.extendedVersion == nil
+        sensor.needsVersionInfo = state.extendedVersion == nil || state.transmitterVersion == nil
     }
 
     /// Which of the sensor's display slots this app takes. A phone by
