@@ -560,6 +560,39 @@ extension G7CGMManager {
         }
     }
 
+    /// How long a sensor start waits for the serial number before it is recorded without one.
+    static let sensorStartSerialWait = TimeInterval(minutes: 10)
+
+    /// Records the current sensor's `sensorStart` once its serial number is known, or without
+    /// it once `sensorStartSerialWait` has passed, or right away when `force` is set.
+    private func recordPendingSensorStart(force: Bool = false) {
+        guard let sensorID = state.sensorID,
+              state.sensorStartPendingFor == sensorID,
+              let activatedAt = state.activatedAt
+        else {
+            return
+        }
+        let serialNumber = state.transmitterVersion?.serialNumberString
+        if !force, serialNumber == nil, let since = state.sensorStartPendingSince, Date().timeIntervalSince(since) < Self.sensorStartSerialWait {
+            return
+        }
+        let event = PersistedCgmEvent(
+            date: activatedAt,
+            type: .sensorStart,
+            deviceIdentifier: sensorID,
+            expectedLifetime: lifetime + G7Sensor.gracePeriod,
+            warmupPeriod: warmupDuration,
+            serialNumber: serialNumber
+        )
+        delegate.notify { delegate in
+            delegate?.cgmManager(self, hasNew: [event])
+        }
+        mutateState { state in
+            state.sensorStartPendingFor = nil
+            state.sensorStartPendingSince = nil
+        }
+    }
+
     /// Closes the current sensor's session in Loop's CGM event history, once.
     /// Paired with the `sensorStart` recorded at discovery, so the history
     /// brackets each session; Loop tolerates a missing end, which is why this
@@ -568,6 +601,7 @@ extension G7CGMManager {
         guard let sensorID = state.sensorID, state.sensorEndRecordedFor != sensorID else {
             return
         }
+        recordPendingSensorStart(force: true)
         let event = PersistedCgmEvent(
             date: Date(),
             type: .sensorEnd,
@@ -679,17 +713,10 @@ extension G7CGMManager: G7SensorDelegate {
                 if state.pairedAt == nil {
                     state.pairedAt = Date()
                 }
+                state.sensorStartPendingFor = name
+                state.sensorStartPendingSince = Date()
             }
-            let event = PersistedCgmEvent(
-                date: activatedAt,
-                type: .sensorStart,
-                deviceIdentifier: name,
-                expectedLifetime: lifetime + G7Sensor.gracePeriod,
-                warmupPeriod: warmupDuration
-            )
-            delegate.notify { delegate in
-                delegate?.cgmManager(self, hasNew: [event])
-            }
+            recordPendingSensorStart()
             scheduleSessionTimedAlerts()
         }
 
@@ -717,6 +744,7 @@ extension G7CGMManager: G7SensorDelegate {
         mutateState { state in
             state.transmitterVersion = transmitterVersion
         }
+        recordPendingSensorStart()
         shareUploader?.serial = transmitterVersion.serialNumberString
         shareUploader?.uploadNow()
     }
@@ -1020,6 +1048,7 @@ extension G7CGMManager: G7SensorDelegate {
             retractLifecycleAlert(.signalLoss)
         }
         raiseSensorFailedAlertIfNeeded(for: message)
+        recordPendingSensorStart()
 
         // Receiving any glucose message proves the session is still active.
         cancelSuspectedSessionEndScan()

@@ -47,7 +47,10 @@ private final class RecordingDelegate: CGMManagerDelegate {
     nonisolated func cgmManager(_ manager: CGMManager, didUpdate status: CGMManagerStatus) {}
     nonisolated func startDateToFilterNewData(for manager: CGMManager) -> Date? { nil }
     nonisolated func cgmManager(_ manager: CGMManager, hasNew readingResult: CGMReadingResult) {}
-    nonisolated func cgmManager(_ manager: CGMManager, hasNew events: [PersistedCgmEvent]) {}
+    nonisolated(unsafe) var cgmEvents: [PersistedCgmEvent] = []
+    nonisolated func cgmManager(_ manager: CGMManager, hasNew events: [PersistedCgmEvent]) {
+        cgmEvents.append(contentsOf: events)
+    }
     nonisolated func cgmManagerDidUpdateState(_ manager: CGMManager) {}
     nonisolated func credentialStoragePrefix(for manager: CGMManager) -> String { "test" }
 }
@@ -238,5 +241,61 @@ class G7LifecycleAlertManagerTests: XCTestCase {
             Set(G7LifecycleAlert.allCases.map(\.rawValue))
         )
         XCTAssertNil(manager.state.lifecycleAlertsScheduledFor)
+    }
+
+    private var transmitterVersion: TransmitterVersionMessage {
+        TransmitterVersionMessage(data: Data(hexadecimalString: "4a002cc069489c37000031474141c03e55bcb300")!)!
+    }
+
+    func testSensorStartWaitsForTheSerialNumber() {
+        let manager = makeManager()
+        let activatedAt = Date().addingTimeInterval(-.hours(1))
+        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: activatedAt)
+        settle()
+        XCTAssertTrue(recorder.cgmEvents.isEmpty)
+
+        manager.sensor(manager.sensor, didReceive: transmitterVersion)
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.count, 1)
+        let start = recorder.cgmEvents.first
+        XCTAssertEqual(start?.type, .sensorStart)
+        XCTAssertEqual(start?.deviceIdentifier, "DXCM99")
+        XCTAssertEqual(start?.date, activatedAt)
+        XCTAssertEqual(start?.serialNumber, transmitterVersion.serialNumberString)
+
+        manager.sensor(manager.sensor, didReceive: transmitterVersion)
+        settle()
+        XCTAssertEqual(recorder.cgmEvents.count, 1)
+    }
+
+    func testSensorStartIsRecordedWithoutASerialAfterWaiting() {
+        var state = G7CGMManagerState()
+        state.sensorID = "DXCM99"
+        state.activatedAt = Date().addingTimeInterval(-.hours(1))
+        state.sensorStartPendingFor = "DXCM99"
+        state.sensorStartPendingSince = Date().addingTimeInterval(-G7CGMManager.sensorStartSerialWait - 1)
+        let manager = makeManager(state: state)
+
+        manager.sensor(manager.sensor, didRead: okReading)
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.map(\.type), [.sensorStart])
+        XCTAssertNil(recorder.cgmEvents.first?.serialNumber)
+        XCTAssertNil(manager.state.sensorStartPendingFor)
+    }
+
+    func testPendingSensorStartIsRecordedBeforeTheSensorEnds() {
+        var state = G7CGMManagerState()
+        state.sensorID = "DXCM99"
+        state.activatedAt = Date().addingTimeInterval(-.hours(1))
+        state.sensorStartPendingFor = "DXCM99"
+        state.sensorStartPendingSince = Date()
+        let manager = makeManager(state: state)
+
+        manager.scanForNewSensor()
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.map(\.type), [.sensorStart, .sensorEnd])
     }
 }
