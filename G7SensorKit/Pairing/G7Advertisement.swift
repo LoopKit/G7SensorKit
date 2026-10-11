@@ -29,8 +29,7 @@ import Foundation
 struct G7Advertisement: Equatable {
 
     /// The name the sensor advertises before it is paired: "DXCMxx" (G7),
-    /// "DX02xx" (ONE+) or "DX01xx" (Stelo). The full "Dexcomxx" name only
-    /// appears once connected.
+    /// "DX02xx" (ONE+) or "DX01xx" (Stelo).
     let name: String
 
     /// CRC16-XMODEM of the serial's ASCII digits, when the manufacturer data

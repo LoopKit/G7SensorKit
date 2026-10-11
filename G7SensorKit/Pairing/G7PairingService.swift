@@ -335,7 +335,7 @@ public final class G7PairingService {
                 self.setState(.succeeded(
                     peripheralIdentifier: UUID(),
                     sharedKey: G7JPAKE.secureRandomBytes(16),
-                    deviceName: "Dexcom" + self.pairingCode.suffix(2)
+                    deviceName: "DXCM" + self.pairingCode.suffix(2)
                 ))
             }
             self.scanWatchdog = succeed
