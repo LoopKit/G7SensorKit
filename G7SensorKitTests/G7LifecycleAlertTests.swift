@@ -260,9 +260,8 @@ class G7LifecycleAlertManagerTests: XCTestCase {
         XCTAssertEqual(recorder.cgmEvents.count, 1)
         let start = recorder.cgmEvents.first
         XCTAssertEqual(start?.type, .sensorStart)
-        XCTAssertEqual(start?.deviceIdentifier, "DXCM99")
+        XCTAssertEqual(start?.deviceIdentifier, transmitterVersion.serialNumberString)
         XCTAssertEqual(start?.date, activatedAt)
-        XCTAssertEqual(start?.serialNumber, transmitterVersion.serialNumberString)
 
         manager.sensor(manager.sensor, didReceive: transmitterVersion)
         settle()
@@ -281,7 +280,7 @@ class G7LifecycleAlertManagerTests: XCTestCase {
         settle()
 
         XCTAssertEqual(recorder.cgmEvents.map(\.type), [.sensorStart])
-        XCTAssertNil(recorder.cgmEvents.first?.serialNumber)
+        XCTAssertEqual(recorder.cgmEvents.first?.deviceIdentifier, "DXCM99")
         XCTAssertNil(manager.state.sensorStartPendingFor)
     }
 

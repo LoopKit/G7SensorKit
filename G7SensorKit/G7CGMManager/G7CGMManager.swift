@@ -560,6 +560,11 @@ extension G7CGMManager {
         }
     }
 
+    /// The serial number is unique to the sensor; the advertised name (DXCMxx) is only a fallback.
+    private func eventDeviceIdentifier(sensorID: String) -> String {
+        state.transmitterVersion?.serialNumberString ?? sensorID
+    }
+
     /// How long a sensor start waits for the serial number before it is recorded without one.
     static let sensorStartSerialWait = TimeInterval(minutes: 10)
 
@@ -579,10 +584,9 @@ extension G7CGMManager {
         let event = PersistedCgmEvent(
             date: activatedAt,
             type: .sensorStart,
-            deviceIdentifier: sensorID,
+            deviceIdentifier: eventDeviceIdentifier(sensorID: sensorID),
             expectedLifetime: lifetime + G7Sensor.gracePeriod,
-            warmupPeriod: warmupDuration,
-            serialNumber: serialNumber
+            warmupPeriod: warmupDuration
         )
         delegate.notify { delegate in
             delegate?.cgmManager(self, hasNew: [event])
@@ -605,7 +609,7 @@ extension G7CGMManager {
         let event = PersistedCgmEvent(
             date: Date(),
             type: .sensorEnd,
-            deviceIdentifier: sensorID,
+            deviceIdentifier: eventDeviceIdentifier(sensorID: sensorID),
             failureMessage: failureMessage
         )
         delegate.notify { delegate in
