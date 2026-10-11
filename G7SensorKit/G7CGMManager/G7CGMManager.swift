@@ -324,7 +324,7 @@ public class G7CGMManager: CGMManager {
     /// keeps its identity, readings and alerts and only the mode changes.
     /// Otherwise the current sensor is closed out and kept as the previous
     /// one, and the new sensor's identity is learned from its first reading.
-    public func applyPairingResult(pairingCode: String, peripheralIdentifier: UUID?, sharedKey: Data?, handoff: G7PairingHandoff? = nil, sensorName: String? = nil) {
+    public func applyPairingResult(pairingCode: String, peripheralIdentifier: UUID?, sharedKey: Data?, authenticity: G7SensorAuthenticity = .unverified, handoff: G7PairingHandoff? = nil, sensorName: String? = nil) {
         let pairedName = sensorName ?? handoff?.peripheralManager.peripheral.name
         let isSameSensor: Bool
         if let pairedName = pairedName, let currentID = state.sensorID, G7Sensor.isSensorName(pairedName) {
@@ -352,6 +352,8 @@ public class G7CGMManager: CGMManager {
             state.pairingCode = pairingCode
             state.peripheralIdentifier = peripheralIdentifier
             state.sharedKey = sharedKey
+            state.sensorAuthenticity = authenticity
+            state.simulatedSensorWarningSuppressed = false
             state.lastAuthenticationFailure = nil
             state.lastAuthenticationFailureDate = nil
             if !isSameSensor {
@@ -488,16 +490,27 @@ public class G7CGMManager: CGMManager {
     }
 
     private var device: HKDevice? {
+        // A simulated sensor must be unmistakable wherever a reading lands —
+        // HealthKit and anything syncing from it, like Nightscout — so the
+        // emulator is never taken for a real Dexcom. We mark the manufacturer
+        // and model, and drop Dexcom's real UDI rather than claim it.
+        let simulated = state.sensorAuthenticity == .simulated
         return HKDevice(
             name: state.sensorID ?? "Unknown",
-            manufacturer: "Dexcom",
-            model: sensorModel.displayName,
+            manufacturer: simulated ? "g7sim (Simulator)" : "Dexcom",
+            model: simulated ? "\(sensorModel.displayName) Simulator" : sensorModel.displayName,
             hardwareVersion: nil,
             firmwareVersion: state.transmitterVersion?.firmwareVersion,
             softwareVersion: "CGMBLEKit" + String(G7SensorKitVersionNumber),
             localIdentifier: nil,
-            udiDeviceIdentifier: "00386270001863"
+            udiDeviceIdentifier: simulated ? nil : "00386270001863"
         )
+    }
+
+    /// Hide the simulated-sensor settings warning. For development
+    /// screenshots; the per-reading HealthKit metadata stays marked.
+    public func suppressSimulatedSensorWarning() {
+        mutateState { $0.simulatedSensorWarningSuppressed = true }
     }
 
     public func logDeviceCommunication(_ message: String, type: DeviceLogEntryType = .send) {
@@ -696,10 +709,11 @@ extension G7CGMManager: G7SensorDelegate {
         return shouldSwitchToNewSensor
     }
 
-    public func sensor(_ sensor: G7Sensor, didAuthenticateWith sharedKey: Data, deviceName: String?) {
-        logDeviceCommunication("Authenticated with the sensor directly.", type: .connection)
+    public func sensor(_ sensor: G7Sensor, didAuthenticateWith sharedKey: Data, deviceName: String?, authenticity: G7SensorAuthenticity) {
+        logDeviceCommunication("Authenticated with the sensor directly (authenticity: \(authenticity.rawValue)).", type: .connection)
         mutateState { state in
             state.sharedKey = sharedKey
+            state.sensorAuthenticity = authenticity
             state.peripheralIdentifier = sensor.credentials.peripheralIdentifier
             state.lastAuthenticationFailure = nil
             state.lastAuthenticationFailureDate = nil

@@ -43,6 +43,8 @@ class G7SettingsViewModel: ObservableObject {
     @Published private(set) var siliconVersion: String?
     @Published private(set) var hardwareVersion: String?
     @Published private(set) var algorithmVersion: String?
+    @Published private(set) var sensorAuthenticity: G7SensorAuthenticity = .unverified
+    @Published private(set) var simulatedSensorWarningSuppressed: Bool = false
     /// Whether the sensor has reported its lifetime; until then the defaults
     /// are in use and not worth presenting as the sensor's own.
     @Published private(set) var hasReportedLifetime: Bool = false
@@ -122,6 +124,8 @@ class G7SettingsViewModel: ObservableObject {
         sensorModelName = cgmManager.sensorModel.displayName(sessionLength: cgmManager.state.extendedVersion?.sessionLength)
         pairingCode = cgmManager.state.pairingCode
         serialNumber = cgmManager.state.transmitterVersion?.serialNumberString
+        sensorAuthenticity = cgmManager.state.sensorAuthenticity
+        simulatedSensorWarningSuppressed = cgmManager.state.simulatedSensorWarningSuppressed
         firmwareVersion = cgmManager.state.transmitterVersion?.firmwareVersion
         softwareNumber = cgmManager.state.transmitterVersion.map { String($0.softwareNumber) }
         siliconVersion = cgmManager.state.transmitterVersion.map { String($0.siliconVersion) }
@@ -311,6 +315,11 @@ class G7SettingsViewModel: ObservableObject {
 
     func scanForNewSensor() {
         cgmManager.scanForNewSensor()
+    }
+
+    func hideSimulatedSensorWarning() {
+        cgmManager.suppressSimulatedSensorWarning()
+        updateValues()
     }
 
     /// Whether the last reading carries a glucose value worth showing.
