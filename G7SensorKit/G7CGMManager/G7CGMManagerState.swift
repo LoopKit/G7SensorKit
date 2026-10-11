@@ -85,6 +85,10 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     public var sensorStartPendingFor: String?
     public var sensorStartPendingSince: Date?
 
+    /// The state last recorded as a `sensorIssue`, and for which sensor; nil once glucose is reliable.
+    public var sensorIssueReportedFor: String?
+    public var reportedSensorIssue: String?
+
     /// When this app paired with, or began following, the current sensor.
     public var pairedAt: Date?
 
@@ -157,6 +161,8 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.sensorEndRecordedFor = rawValue["sensorEndRecordedFor"] as? String
         self.sensorStartPendingFor = rawValue["sensorStartPendingFor"] as? String
         self.sensorStartPendingSince = rawValue["sensorStartPendingSince"] as? Date
+        self.sensorIssueReportedFor = rawValue["sensorIssueReportedFor"] as? String
+        self.reportedSensorIssue = rawValue["reportedSensorIssue"] as? String
         self.pairedAt = rawValue["pairedAt"] as? Date
         self.sensorFailureMessage = rawValue["sensorFailureMessage"] as? String
         self.sensorFailedAt = rawValue["sensorFailedAt"] as? Date
@@ -195,6 +201,8 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["sensorEndRecordedFor"] = sensorEndRecordedFor
         rawValue["sensorStartPendingFor"] = sensorStartPendingFor
         rawValue["sensorStartPendingSince"] = sensorStartPendingSince
+        rawValue["sensorIssueReportedFor"] = sensorIssueReportedFor
+        rawValue["reportedSensorIssue"] = reportedSensorIssue
         rawValue["pairedAt"] = pairedAt
         rawValue["sensorFailureMessage"] = sensorFailureMessage
         rawValue["sensorFailedAt"] = sensorFailedAt

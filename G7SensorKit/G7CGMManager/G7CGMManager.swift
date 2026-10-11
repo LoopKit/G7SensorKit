@@ -610,6 +610,37 @@ extension G7CGMManager {
         }
     }
 
+    /// Records a `sensorIssue` when the reading's state lacks reliable glucose and differs from
+    /// the last one recorded for this sensor. A reliable reading clears it, so a state that
+    /// returns after recovery is recorded again.
+    private func recordSensorIssueIfChanged(_ message: G7GlucoseMessage) {
+        guard let sensorID = state.sensorID else {
+            return
+        }
+        let issue = message.algorithmState.hasReliableGlucose ? nil : message.algorithmState.description
+        let reported = state.sensorIssueReportedFor == sensorID ? state.reportedSensorIssue : nil
+        guard issue != reported else {
+            return
+        }
+        mutateState { state in
+            state.sensorIssueReportedFor = sensorID
+            state.reportedSensorIssue = issue
+        }
+        guard let issue else {
+            return
+        }
+        let activationDate = sensor.activationDate ?? state.activatedAt
+        let event = PersistedCgmEvent(
+            date: activationDate?.addingTimeInterval(TimeInterval(message.glucoseTimestamp)) ?? Date(),
+            type: .sensorIssue,
+            deviceIdentifier: eventDeviceIdentifier(sensorID: sensorID),
+            error: CgmEventError(code: issue, isFatal: message.algorithmState.sensorFailed)
+        )
+        delegate.notify { delegate in
+            delegate?.cgmManager(self, hasNew: [event])
+        }
+    }
+
     /// Closes the current sensor's session in Loop's CGM event history, once.
     /// Paired with the `sensorStart` recorded at discovery, so the history
     /// brackets each session; Loop tolerates a missing end, which is why this
@@ -1065,6 +1096,7 @@ extension G7CGMManager: G7SensorDelegate {
             didRetractLegacySignalLoss = true
             retractLifecycleAlert(.signalLoss)
         }
+        recordSensorIssueIfChanged(message)
         raiseSensorFailedAlertIfNeeded(for: message)
         recordPendingSensorStart()
 
