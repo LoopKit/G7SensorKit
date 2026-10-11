@@ -787,10 +787,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 log.default("Received %{public}@", String(describing: extendedVersionMessage))
                 delegateQueue.async {
                     self.delegate?.sensor(self, didReceive: extendedVersionMessage)
-                    self.needsVersionInfo = false
                 }
                 // The serial and firmware come from a second query, asked
-                // once here so a session learns them alongside its lifetime.
+                // here so a session learns them alongside its lifetime. The
+                // version info isn't done until that answer arrives.
                 peripheralManager.perform { peripheral in
                     let request = Data([G7Opcode.transmitterVersion.rawValue])
                     self.logSend(request, on: .control)
@@ -806,6 +806,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 log.default("Received %{public}@", String(describing: transmitterVersionMessage))
                 delegateQueue.async {
                     self.delegate?.sensor(self, didReceive: transmitterVersionMessage)
+                    self.needsVersionInfo = false
                 }
             }
         case .calibrate:
