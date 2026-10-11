@@ -48,7 +48,7 @@ public protocol G7SensorDelegate: AnyObject {
 
     /// Direct mode only: a handshake produced a new shared key, which the
     /// caller must persist so later reconnects can skip the key exchange.
-    func sensor(_ sensor: G7Sensor, didAuthenticateWith sharedKey: Data, deviceName: String?)
+    func sensor(_ sensor: G7Sensor, didAuthenticateWith sharedKey: Data, deviceName: String?, authenticity: G7SensorAuthenticity)
 
     /// Direct mode only: the stored shared key is no longer accepted by the
     /// sensor. It has been discarded; if a pairing code is still held, the
@@ -510,7 +510,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                         self.delegate?.sensor(
                             self,
                             didAuthenticateWith: authResult.sharedKey,
-                            deviceName: authResult.deviceName
+                            deviceName: authResult.deviceName,
+                            authenticity: authResult.authenticity
                         )
                     }
                 }
