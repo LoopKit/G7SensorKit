@@ -211,10 +211,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     /// Whether a peripheral is the sensor these credentials describe.
     ///
     /// By identifier once one is known. Otherwise by the last two characters
-    /// of the name, because the name itself changes: a sensor advertises as
-    /// "DXCMxx" but reports "Dexcomxx" over GAP once connected, and a
-    /// peripheral retrieved for a reconnect carries the latter. Comparing
-    /// whole names silently stopped every reconnect after the first.
+    /// of the name, so a match does not depend on which prefix the
+    /// peripheral reports.
     static func isSensor(identifier: UUID, name: String?, describedBy credentials: G7SensorCredentials) -> Bool {
         if let known = credentials.peripheralIdentifier {
             return identifier == known
@@ -226,7 +224,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     }
 
     /// Names a G7-family sensor uses: the model prefixes ("DXCMxx",
-    /// "DX02xx", "DX01xx") in advertisements, "Dexcomxx" once connected.
+    /// "DX02xx", "DX01xx"), or "Dexcomxx".
     static func isSensorName(_ name: String) -> Bool {
         G7SensorModel.isFamilyName(name)
     }
@@ -732,11 +730,9 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         }
 
         // Once paired, only ever the sensor we paired with, and by identifier,
-        // never by name: a peripheral retrieved for a reconnect carries the
-        // post-connection "Dexcomxx" name, not the advertised "DXCMxx". A
-        // sensor admits one display at a time, so connecting to a stranger's
-        // sensor would take its slot, and our key would not authenticate
-        // there anyway.
+        // never by name. A sensor admits one display at a time, so connecting
+        // to a stranger's sensor would take its slot, and our key would not
+        // authenticate there anyway.
         if mode == .direct, let identifier = credentials.peripheralIdentifier {
             guard peripheral.identifier == identifier else {
                 return .ignore
