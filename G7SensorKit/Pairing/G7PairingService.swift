@@ -20,7 +20,7 @@ public enum G7PairingState: Equatable {
     case authenticating(candidate: String, attempt: Int)
     /// Paired. `sharedKey` must be persisted: it is what lets reconnects skip
     /// the key exchange.
-    case succeeded(peripheralIdentifier: UUID, sharedKey: Data, deviceName: String?)
+    case succeeded(peripheralIdentifier: UUID, sharedKey: Data, deviceName: String?, authenticity: G7SensorAuthenticity)
     case failed(reason: String)
 
     public var isFinished: Bool {
@@ -335,7 +335,8 @@ public final class G7PairingService {
                 self.setState(.succeeded(
                     peripheralIdentifier: UUID(),
                     sharedKey: G7JPAKE.secureRandomBytes(16),
-                    deviceName: "DXCM" + self.pairingCode.suffix(2)
+                    deviceName: "DXCM" + self.pairingCode.suffix(2),
+                    authenticity: .unverified
                 ))
             }
             self.scanWatchdog = succeed
@@ -447,7 +448,8 @@ public final class G7PairingService {
                     self.setState(.succeeded(
                         peripheralIdentifier: candidate.id,
                         sharedKey: authResult.sharedKey,
-                        deviceName: authResult.deviceName
+                        deviceName: authResult.deviceName,
+                        authenticity: authResult.authenticity
                     ))
                     self.bluetoothManager?.adoptAsActive(peripheralManager)
                 case .failure(let error):

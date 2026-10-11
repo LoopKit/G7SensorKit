@@ -47,6 +47,17 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     /// that sensor's own readings.
     public var sharedKey: Data?
 
+    /// Whether the paired sensor proved itself genuine Dexcom, the g7sim
+    /// emulator, or could not be verified — determined at pairing from its
+    /// identity certificate and retained across reconnects.
+    public var sensorAuthenticity: G7SensorAuthenticity = .unverified
+
+    /// Whether the user has hidden the simulated-sensor settings warning.
+    /// Reset when a new sensor is paired so a freshly paired emulator always
+    /// warns once; hiding it afterwards is for development screenshots. The
+    /// per-reading HealthKit metadata still marks the data simulated.
+    public var simulatedSensorWarningSuppressed: Bool = false
+
     /// The paired sensor's CoreBluetooth identifier, so a relaunch can
     /// retrieve it directly instead of waiting for its next advertisement.
     public var peripheralIdentifier: UUID?
@@ -132,6 +143,8 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.sessionMode = (rawValue["sessionMode"] as? String).flatMap(G7SessionMode.init(rawValue:)) ?? .eavesdropping
         self.pairingCode = rawValue["pairingCode"] as? String
         self.sharedKey = rawValue["sharedKey"] as? Data
+        self.sensorAuthenticity = (rawValue["sensorAuthenticity"] as? String).flatMap(G7SensorAuthenticity.init(rawValue:)) ?? .unverified
+        self.simulatedSensorWarningSuppressed = rawValue["simulatedSensorWarningSuppressed"] as? Bool ?? false
         self.peripheralIdentifier = (rawValue["peripheralIdentifier"] as? String).flatMap(UUID.init(uuidString:))
         self.lastAuthenticationFailure = rawValue["lastAuthenticationFailure"] as? String
         self.lastAuthenticationFailureDate = rawValue["lastAuthenticationFailureDate"] as? Date
@@ -166,6 +179,8 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["sessionMode"] = sessionMode.rawValue
         rawValue["pairingCode"] = pairingCode
         rawValue["sharedKey"] = sharedKey
+        rawValue["sensorAuthenticity"] = sensorAuthenticity.rawValue
+        rawValue["simulatedSensorWarningSuppressed"] = simulatedSensorWarningSuppressed
         rawValue["peripheralIdentifier"] = peripheralIdentifier?.uuidString
         rawValue["lastAuthenticationFailure"] = lastAuthenticationFailure
         rawValue["lastAuthenticationFailureDate"] = lastAuthenticationFailureDate
