@@ -226,8 +226,11 @@ public final class G7PairingService {
         planner = G7PairingPlanner(keepScanningWhenExhausted: serial == nil)
 
         #if targetEnvironment(simulator)
-        startSimulatedRun()
-        #else
+        guard G7PairingService.simulatorHasBluetooth else {
+            startSimulatedRun()
+            return
+        }
+        #endif
         let manager = borrowedBluetoothManager ?? G7BluetoothManager()
         if manager === borrowedBluetoothManager {
             previousDelegate = manager.delegate
@@ -266,7 +269,6 @@ public final class G7PairingService {
         }
         scanWatchdog = watchdog
         DispatchQueue.main.asyncAfter(deadline: .now() + G7PairingService.scanTimeout, execute: watchdog)
-        #endif
     }
 
     public func cancel() {
@@ -318,6 +320,10 @@ public final class G7PairingService {
     // MARK: - Simulator
 
     #if targetEnvironment(simulator)
+    /// A CoreBluetooth bridge injected into the simulator (ImpossiBLE, serving
+    /// g7sim) gives the real path a sensor to talk to.
+    static let simulatorHasBluetooth = NSClassFromString("CBSPeripheral") != nil
+
     /// CoreBluetooth reports `.unsupported` in the simulator. Walk the same
     /// states with a stand-in sensor so onboarding can be exercised.
     private func startSimulatedRun() {
