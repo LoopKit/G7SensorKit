@@ -572,6 +572,7 @@ if viewModel.sessionMode == .eavesdropping {
                     Spacer()
                     remainingTime
                 }
+                .accessibilityElement(children: .combine)
                 G7LifecycleBar(
                     progress: viewModel.progressBarProgress,
                     color: sessionIsOver ? Color(.systemGray3) : color(for: viewModel.progressBarColorStyle)
@@ -587,6 +588,7 @@ if viewModel.sessionMode == .eavesdropping {
                     Spacer()
                     lastReadingAge
                 }
+                .accessibilityElement(children: .combine)
             }
         }
         .padding(.vertical, 4)
@@ -643,6 +645,8 @@ if viewModel.sessionMode == .eavesdropping {
                             .foregroundColor(.secondary)
                     }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(sessionLengthFormatter.string(from: remaining) ?? "")
             }
         case .unpaired, .searching, .connecting, .gracePeriod, .expired, .failed:
             EmptyView()
@@ -706,6 +710,7 @@ if viewModel.sessionMode == .eavesdropping {
             HStack(spacing: 8) {
                 if let trend = viewModel.lastGlucoseTrend {
                     badge(text: trend.symbol, color: glucoseTintColor)
+                        .accessibilityLabel(trend.localizedDescription)
                 } else {
                     badge(systemName: "minus", color: glucoseTintColor)
                 }
@@ -748,6 +753,8 @@ if viewModel.sessionMode == .eavesdropping {
                             : LocalizedString("hr", comment: "Unit after the hours-since-last-reading number"))
                             .foregroundColor(.secondary)
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(sessionLengthFormatter.string(from: TimeInterval(minutes * 60)) ?? "")
                 }
             }
         }
@@ -759,6 +766,7 @@ if viewModel.sessionMode == .eavesdropping {
             .foregroundColor(.white)
             .frame(width: 28, height: 28)
             .background(Circle().fill(color))
+            .accessibilityHidden(true)
     }
 
     /// A hollow variant, for states that are pending rather than alarming.
@@ -768,6 +776,7 @@ if viewModel.sessionMode == .eavesdropping {
             .foregroundColor(color)
             .frame(width: 28, height: 28)
             .overlay(Circle().stroke(color, lineWidth: 2))
+            .accessibilityHidden(true)
     }
 
     private func badge(text: String, color: Color) -> some View {
