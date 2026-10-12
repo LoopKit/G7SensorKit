@@ -294,6 +294,7 @@ class G7BluetoothManager: NSObject {
         // not start scanning again in that window: the sensor it just paired
         // admits one display, and the session manager is claiming it.
         guard delegate != nil else {
+            log.default("Not scanning: no delegate")
             return
         }
 
@@ -306,6 +307,7 @@ class G7BluetoothManager: NSObject {
 
         let currentState = activePeripheral?.state ?? .disconnected
         guard currentState != .connected else {
+            log.default("Not scanning: active peripheral is connected")
             return
         }
 
@@ -313,6 +315,9 @@ class G7BluetoothManager: NSObject {
             log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
             handleDiscoveredPeripheral(peripheral)
         } else {
+            if let peripheralID = activePeripheralIdentifier {
+                log.default("Could not retrieve peripheral %{public}@; active peripheral %{public}@", peripheralID.uuidString, activePeripheral?.identifier.uuidString ?? "none")
+            }
             for peripheral in centralManager.retrieveConnectedPeripherals(withServices: [
                 SensorServiceUUID.advertisement.cbUUID,
                 SensorServiceUUID.cgmService.cbUUID
