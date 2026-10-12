@@ -131,6 +131,60 @@ class G7LifecycleAlertManagerTests: XCTestCase {
         G7GlucoseMessage(data: Data(hexadecimalString: "4e00c35501002601000106008a00060187000f")!)!
     }
 
+    /// `okReading` with another algorithm state, at `minutes` past its time so it isn't a duplicate.
+    private func reading(state: UInt8, minutes: UInt32) -> G7GlucoseMessage {
+        var data = okReading.data
+        data.replaceSubrange(2..<6, with: withUnsafeBytes(of: (0x0155c3 + minutes * 60).littleEndian, Array.init))
+        data[14] = state
+        return G7GlucoseMessage(data: data)!
+    }
+
+    private func sensorIssueManager() -> G7CGMManager {
+        var state = G7CGMManagerState()
+        state.sensorID = "DXCM99"
+        state.activatedAt = Date(timeIntervalSinceNow: -3600)
+        return makeManager(state: state)
+    }
+
+    func testSensorIssueIsRecordedOncePerState() {
+        let manager = sensorIssueManager()
+        for (minutes, state) in [(1, 2), (6, 2), (11, 6), (16, 18), (21, 18), (26, 2)] as [(UInt32, UInt8)] {
+            manager.sensor(manager.sensor, didRead: reading(state: state, minutes: minutes))
+        }
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.map(\.type), [.sensorIssue, .sensorIssue, .sensorIssue])
+        XCTAssertEqual(recorder.cgmEvents.map(\.error?.code), ["warmup", "temporarySensorIssue", "warmup"])
+        XCTAssertEqual(recorder.cgmEvents.map(\.deviceIdentifier), ["DXCM99", "DXCM99", "DXCM99"])
+        XCTAssertFalse(recorder.cgmEvents.contains { $0.error?.isFatal == true })
+        XCTAssertEqual(manager.state.reportedSensorIssue, "warmup")
+    }
+
+    func testFailedSensorIssueIsFatalAndPrecedesTheSensorEnd() {
+        let manager = sensorIssueManager()
+        manager.sensor(manager.sensor, didRead: reading(state: 25, minutes: 1))
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.first?.type, .sensorIssue)
+        XCTAssertEqual(recorder.cgmEvents.first?.error, CgmEventError(code: "sensorFailed", isFatal: true))
+        XCTAssertTrue(recorder.cgmEvents.dropFirst().contains { $0.type == .sensorEnd })
+    }
+
+    func testSensorIssueStartsOverForANewSensor() {
+        var state = G7CGMManagerState()
+        state.sensorID = "DXCM99"
+        state.activatedAt = Date(timeIntervalSinceNow: -3600)
+        state.sensorIssueReportedFor = "DXCM98"
+        state.reportedSensorIssue = "warmup"
+        let manager = makeManager(state: state)
+
+        manager.sensor(manager.sensor, didRead: reading(state: 2, minutes: 1))
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.map(\.error?.code), ["warmup"])
+        XCTAssertEqual(manager.state.sensorIssueReportedFor, "DXCM99")
+    }
+
     func testDiscoveringASensorSchedulesTheSessionTimedAlerts() {
         let manager = makeManager()
         _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: Date())
