@@ -6,6 +6,7 @@
 //
 
 import G7SensorKit
+import LoopKitUI
 import SwiftUI
 
 extension G7SensorModel {

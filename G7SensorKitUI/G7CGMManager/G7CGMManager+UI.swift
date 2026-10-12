@@ -22,7 +22,7 @@ public struct G7DeviceStatusHighlight: DeviceStatusHighlight, Equatable {
     }
 }
 
-extension G7CGMManager: CGMManagerUI {
+extension G7CGMManager: @retroactive CGMManagerUI {
 
     public static var onboardingImage: UIImage? {
         return nil

@@ -5,6 +5,7 @@
 //  Copyright © 2026 LoopKit Authors. All rights reserved.
 //
 
+import LoopKitUI
 import SwiftUI
 import UserNotifications
 

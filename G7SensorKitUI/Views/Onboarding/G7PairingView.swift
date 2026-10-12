@@ -6,6 +6,7 @@
 //
 
 import G7SensorKit
+import LoopKitUI
 import SwiftUI
 
 /// Reports the pairing run: that it is working, how long it has been going,
