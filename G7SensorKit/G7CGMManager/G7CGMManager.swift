@@ -1224,7 +1224,8 @@ extension G7CGMManager: G7SensorDelegate {
                 isDisplayOnly: entry.glucoseIsDisplayOnly,
                 wasUserEntered: entry.glucoseIsDisplayOnly,
                 syncIdentifier: generateSyncIdentifier(timestamp: entry.timestamp),
-                device: device
+                device: device,
+                isBackfill: true
             )
         }
 
