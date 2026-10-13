@@ -8,9 +8,8 @@
 import Foundation
 
 /// The G7-family sensors, which share the protocol and differ in what they
-/// call themselves over the air. A sensor advertises as `<prefix>xx` and
-/// reports "Dexcomxx" once connected, so the model is only knowable from the
-/// advertised name, which is what a session keeps as its sensor ID.
+/// call themselves over the air: a sensor advertises as `<prefix>xx`, and
+/// that name is what a session keeps as its sensor ID.
 public enum G7SensorModel: String, CaseIterable {
     case g7
     case onePlus
@@ -61,7 +60,9 @@ public enum G7SensorModel: String, CaseIterable {
         self = model
     }
 
-    /// Whether `name` is one of ours, in either of its forms.
+    /// Whether `name` is one of ours. "Dexcomxx" is still accepted: earlier
+    /// notes describe it as the connected name, though a G7 on current
+    /// hardware keeps "DXCMxx".
     static func isFamilyName(_ name: String) -> Bool {
         G7SensorModel(advertisedName: name) != nil || name.hasPrefix("Dexcom")
     }

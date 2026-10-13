@@ -127,6 +127,21 @@ final class G7GlucoseMessageTests: XCTestCase {
         XCTAssertEqual(907385, message.glucoseTimestamp)
     }
 
+    func testFailedSensorStatusStillReportsAlgorithmState() {
+        // A failed sensor keeps answering with status 0x80 and its last reading, 103 mg/dL from 2.7 h earlier.
+        let data = Data(hexadecimalString: "4e80856f0a00f6010001f32567001b02670000")!
+        let message = G7GlucoseMessage(data: data)!
+        XCTAssertEqual(0x80, message.status)
+        XCTAssertEqual(.known(.transmitterFailed), message.algorithmState)
+        XCTAssertTrue(message.algorithmState.sensorFailed)
+        XCTAssertNil(message.glucose)
+        XCTAssertNil(message.predicted)
+        XCTAssertNil(message.trend)
+        XCTAssertEqual(683909, message.messageTimestamp)
+        XCTAssertEqual(9715, message.age)
+        XCTAssertEqual(502, message.sequence)
+    }
+
     func testBackfill() {
         let data = Data(hexadecimalString: "cf5802008f00060f10")!
         let message = G7BackfillMessage(data: data)!

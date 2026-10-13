@@ -23,7 +23,7 @@ final class G7PairingViewModel: ObservableObject {
     private let excludedPeripheral: UUID?
 
     private let service: G7PairingService
-    private let onSuccess: (_ peripheralIdentifier: UUID, _ sharedKey: Data, _ deviceName: String?, _ handoff: G7PairingHandoff?) -> Void
+    private let onSuccess: (_ peripheralIdentifier: UUID, _ sharedKey: Data, _ deviceName: String?, _ authenticity: G7SensorAuthenticity, _ handoff: G7PairingHandoff?) -> Void
     private let onLog: ((String) -> Void)?
 
     /// - Parameter cgmManager: the manager being re-paired, if any. Its
@@ -33,7 +33,7 @@ final class G7PairingViewModel: ObservableObject {
         serial: String?,
         cgmManager: G7CGMManager?,
         onLog: ((String) -> Void)? = nil,
-        onSuccess: @escaping (_ peripheralIdentifier: UUID, _ sharedKey: Data, _ deviceName: String?, _ handoff: G7PairingHandoff?) -> Void
+        onSuccess: @escaping (_ peripheralIdentifier: UUID, _ sharedKey: Data, _ deviceName: String?, _ authenticity: G7SensorAuthenticity, _ handoff: G7PairingHandoff?) -> Void
     ) {
         self.pairingCode = pairingCode
         // The sensor a session already holds is not the one being replaced;
@@ -54,8 +54,8 @@ final class G7PairingViewModel: ObservableObject {
         service.onStateChange = { [weak self] state in
             guard let self = self else { return }
             self.state = state
-            if case .succeeded(let peripheralIdentifier, let sharedKey, let deviceName) = state {
-                self.onSuccess(peripheralIdentifier, sharedKey, deviceName, self.service.handOff())
+            if case .succeeded(let peripheralIdentifier, let sharedKey, let deviceName, let authenticity) = state {
+                self.onSuccess(peripheralIdentifier, sharedKey, deviceName, authenticity, self.service.handOff())
             }
         }
     }
@@ -85,7 +85,7 @@ final class G7PairingViewModel: ObservableObject {
             return G7SensorModel(advertisedName: candidate) ?? .g7
         case .scanning(let candidates):
             return candidates.last.flatMap(G7SensorModel.init(advertisedName:)) ?? .g7
-        case .succeeded(_, _, let deviceName):
+        case .succeeded(_, _, let deviceName, _):
             return deviceName.flatMap(G7SensorModel.init(advertisedName:)) ?? .g7
         case .idle, .failed:
             return .g7
@@ -182,7 +182,7 @@ final class G7PairingViewModel: ObservableObject {
                 "Checking the sensors in range. This can take a few minutes.",
                 comment: "Pairing guidance while working through the sensors that have been found"
             )
-        case .succeeded(_, _, let deviceName):
+        case .succeeded(_, _, let deviceName, _):
             return deviceName
         case .failed(let reason):
             return reason

@@ -22,10 +22,14 @@ public struct G7DeviceStatusHighlight: DeviceStatusHighlight, Equatable {
     }
 }
 
-extension G7CGMManager: CGMManagerUI {
+extension G7CGMManager: @retroactive CGMManagerUI {
 
     public static var onboardingImage: UIImage? {
         return nil
+    }
+
+    public static var pickerImage: UIImage? {
+        return UIImage(named: "g7", in: Bundle(for: G7SettingsViewModel.self), compatibleWith: nil)
     }
 
     public static func setupViewController(bluetoothProvider: LoopKit.BluetoothProvider, displayGlucosePreference: DisplayGlucosePreference, colorPalette: LoopKitUI.LoopUIColorPalette, allowDebugFeatures: Bool, prefersToSkipUserInteraction: Bool) -> LoopKitUI.SetupUIResult<LoopKitUI.CGMManagerViewController, LoopKitUI.CGMManagerUI>

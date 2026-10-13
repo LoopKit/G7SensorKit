@@ -48,7 +48,7 @@ public protocol G7SensorDelegate: AnyObject {
 
     /// Direct mode only: a handshake produced a new shared key, which the
     /// caller must persist so later reconnects can skip the key exchange.
-    func sensor(_ sensor: G7Sensor, didAuthenticateWith sharedKey: Data, deviceName: String?)
+    func sensor(_ sensor: G7Sensor, didAuthenticateWith sharedKey: Data, deviceName: String?, authenticity: G7SensorAuthenticity)
 
     /// Direct mode only: the stored shared key is no longer accepted by the
     /// sensor. It has been discarded; if a pairing code is still held, the
@@ -231,10 +231,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     /// Whether a peripheral is the sensor these credentials describe.
     ///
     /// By identifier once one is known. Otherwise by the last two characters
-    /// of the name, because the name itself changes: a sensor advertises as
-    /// "DXCMxx" but reports "Dexcomxx" over GAP once connected, and a
-    /// peripheral retrieved for a reconnect carries the latter. Comparing
-    /// whole names silently stopped every reconnect after the first.
+    /// of the name, so a match does not depend on which prefix the
+    /// peripheral reports.
     static func isSensor(identifier: UUID, name: String?, describedBy credentials: G7SensorCredentials) -> Bool {
         if let known = credentials.peripheralIdentifier {
             return identifier == known
@@ -246,7 +244,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     }
 
     /// Names a G7-family sensor uses: the model prefixes ("DXCMxx",
-    /// "DX02xx", "DX01xx") in advertisements, "Dexcomxx" once connected.
+    /// "DX02xx", "DX01xx"), or "Dexcomxx".
     static func isSensorName(_ name: String) -> Bool {
         G7SensorModel.isFamilyName(name)
     }
@@ -541,7 +539,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                         self.delegate?.sensor(
                             self,
                             didAuthenticateWith: authResult.sharedKey,
-                            deviceName: authResult.deviceName
+                            deviceName: authResult.deviceName,
+                            authenticity: authResult.authenticity
                         )
                     }
                 }
@@ -765,11 +764,9 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         }
 
         // Once paired, only ever the sensor we paired with, and by identifier,
-        // never by name: a peripheral retrieved for a reconnect carries the
-        // post-connection "Dexcomxx" name, not the advertised "DXCMxx". A
-        // sensor admits one display at a time, so connecting to a stranger's
-        // sensor would take its slot, and our key would not authenticate
-        // there anyway.
+        // never by name. A sensor admits one display at a time, so connecting
+        // to a stranger's sensor would take its slot, and our key would not
+        // authenticate there anyway.
         if mode == .direct, let identifier = credentials.peripheralIdentifier {
             guard peripheral.identifier == identifier else {
                 return .ignore
@@ -858,10 +855,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 log.default("Received %{public}@", String(describing: extendedVersionMessage))
                 delegateQueue.async {
                     self.delegate?.sensor(self, didReceive: extendedVersionMessage)
-                    self.needsVersionInfo = false
                 }
                 // The serial and firmware come from a second query, asked
-                // once here so a session learns them alongside its lifetime.
+                // here so a session learns them alongside its lifetime. The
+                // version info isn't done until that answer arrives.
                 peripheralManager.perform { peripheral in
                     let request = Data([G7Opcode.transmitterVersion.rawValue])
                     self.logSend(request, on: .control)
@@ -877,6 +874,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 log.default("Received %{public}@", String(describing: transmitterVersionMessage))
                 delegateQueue.async {
                     self.delegate?.sensor(self, didReceive: transmitterVersionMessage)
+                    self.needsVersionInfo = false
                 }
             }
         case .calibrate:

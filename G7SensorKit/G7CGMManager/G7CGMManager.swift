@@ -280,7 +280,7 @@ public class G7CGMManager: CGMManager {
     public required convenience init?(rawState: RawStateValue) {
         let state = G7CGMManagerState(rawValue: rawState)
         self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, displayType: state.displayType))
-        sensor.needsVersionInfo = state.extendedVersion == nil
+        sensor.needsVersionInfo = state.extendedVersion == nil || state.transmitterVersion == nil
         if let latest = state.latestReadingTimestamp {
             sensor.noteLatestReading(at: latest)
         }
@@ -296,7 +296,7 @@ public class G7CGMManager: CGMManager {
     /// Asks the sensor for its version, as a restored manager does, so the session length is known.
     convenience init(adopted state: G7CGMManagerState, sensor: G7Sensor) {
         self.init(state: state, sensor: sensor)
-        sensor.needsVersionInfo = state.extendedVersion == nil
+        sensor.needsVersionInfo = state.extendedVersion == nil || state.transmitterVersion == nil
     }
 
     /// Posted on the main queue when `needsCodeForSensor` or `isSearchingForSensor` changes; the
@@ -377,7 +377,7 @@ public class G7CGMManager: CGMManager {
     /// keeps its identity, readings and alerts and only the mode changes.
     /// Otherwise the current sensor is closed out and kept as the previous
     /// one, and the new sensor's identity is learned from its first reading.
-    public func applyPairingResult(pairingCode: String, peripheralIdentifier: UUID?, sharedKey: Data?, handoff: G7PairingHandoff? = nil, sensorName: String? = nil) {
+    public func applyPairingResult(pairingCode: String, peripheralIdentifier: UUID?, sharedKey: Data?, authenticity: G7SensorAuthenticity = .unverified, handoff: G7PairingHandoff? = nil, sensorName: String? = nil) {
         let pairedName = sensorName ?? handoff?.peripheralManager.peripheral.name
         let isSameSensor: Bool
         if let pairedName = pairedName, let currentID = state.sensorID, G7Sensor.isSensorName(pairedName) {
@@ -405,6 +405,8 @@ public class G7CGMManager: CGMManager {
             state.pairingCode = pairingCode
             state.peripheralIdentifier = peripheralIdentifier
             state.sharedKey = sharedKey
+            state.sensorAuthenticity = authenticity
+            state.simulatedSensorWarningSuppressed = false
             state.lastAuthenticationFailure = nil
             state.lastAuthenticationFailureDate = nil
             if !isSameSensor {
@@ -547,16 +549,27 @@ public class G7CGMManager: CGMManager {
     }
 
     private var device: HKDevice? {
+        // A simulated sensor must be unmistakable wherever a reading lands —
+        // HealthKit and anything syncing from it, like Nightscout — so the
+        // emulator is never taken for a real Dexcom. We mark the manufacturer
+        // and model, and drop Dexcom's real UDI rather than claim it.
+        let simulated = state.sensorAuthenticity == .simulated
         return HKDevice(
             name: state.sensorID ?? "Unknown",
-            manufacturer: "Dexcom",
-            model: sensorModel.displayName,
+            manufacturer: simulated ? "g7sim (Simulator)" : "Dexcom",
+            model: simulated ? "\(sensorModel.displayName) Simulator" : sensorModel.displayName,
             hardwareVersion: nil,
             firmwareVersion: state.transmitterVersion?.firmwareVersion,
             softwareVersion: "CGMBLEKit" + String(G7SensorKitVersionNumber),
             localIdentifier: nil,
-            udiDeviceIdentifier: "00386270001863"
+            udiDeviceIdentifier: simulated ? nil : "00386270001863"
         )
+    }
+
+    /// Hide the simulated-sensor settings warning. For development
+    /// screenshots; the per-reading HealthKit metadata stays marked.
+    public func suppressSimulatedSensorWarning() {
+        mutateState { $0.simulatedSensorWarningSuppressed = true }
     }
 
     public func logDeviceCommunication(_ message: String, type: DeviceLogEntryType = .send) {
@@ -627,6 +640,74 @@ extension G7CGMManager {
         }
     }
 
+    /// The serial number is unique to the sensor; the advertised name (DXCMxx) is only a fallback.
+    private func eventDeviceIdentifier(sensorID: String) -> String {
+        state.transmitterVersion?.serialNumberString ?? sensorID
+    }
+
+    /// How long a sensor start waits for the serial number before it is recorded without one.
+    static let sensorStartSerialWait = TimeInterval(minutes: 10)
+
+    /// Records the current sensor's `sensorStart` once its serial number is known, or without
+    /// it once `sensorStartSerialWait` has passed, or right away when `force` is set.
+    private func recordPendingSensorStart(force: Bool = false) {
+        guard let sensorID = state.sensorID,
+              state.sensorStartPendingFor == sensorID,
+              let activatedAt = state.activatedAt
+        else {
+            return
+        }
+        let serialNumber = state.transmitterVersion?.serialNumberString
+        if !force, serialNumber == nil, let since = state.sensorStartPendingSince, Date().timeIntervalSince(since) < Self.sensorStartSerialWait {
+            return
+        }
+        let event = PersistedCgmEvent(
+            date: activatedAt,
+            type: .sensorStart,
+            deviceIdentifier: eventDeviceIdentifier(sensorID: sensorID),
+            expectedLifetime: lifetime + G7Sensor.gracePeriod,
+            warmupPeriod: warmupDuration
+        )
+        delegate.notify { delegate in
+            delegate?.cgmManager(self, hasNew: [event])
+        }
+        mutateState { state in
+            state.sensorStartPendingFor = nil
+            state.sensorStartPendingSince = nil
+        }
+    }
+
+    /// Records a `sensorIssue` when the reading's state lacks reliable glucose and differs from
+    /// the last one recorded for this sensor. A reliable reading clears it, so a state that
+    /// returns after recovery is recorded again.
+    private func recordSensorIssueIfChanged(_ message: G7GlucoseMessage) {
+        guard let sensorID = state.sensorID else {
+            return
+        }
+        let issue = message.algorithmState.hasReliableGlucose ? nil : message.algorithmState.description
+        let reported = state.sensorIssueReportedFor == sensorID ? state.reportedSensorIssue : nil
+        guard issue != reported else {
+            return
+        }
+        mutateState { state in
+            state.sensorIssueReportedFor = sensorID
+            state.reportedSensorIssue = issue
+        }
+        guard let issue else {
+            return
+        }
+        let activationDate = sensor.activationDate ?? state.activatedAt
+        let event = PersistedCgmEvent(
+            date: activationDate?.addingTimeInterval(TimeInterval(message.glucoseTimestamp)) ?? Date(),
+            type: .sensorIssue,
+            deviceIdentifier: eventDeviceIdentifier(sensorID: sensorID),
+            error: CgmEventError(code: issue, isFatal: message.algorithmState.sensorFailed)
+        )
+        delegate.notify { delegate in
+            delegate?.cgmManager(self, hasNew: [event])
+        }
+    }
+
     /// Closes the current sensor's session in Loop's CGM event history, once.
     /// Paired with the `sensorStart` recorded at discovery, so the history
     /// brackets each session; Loop tolerates a missing end, which is why this
@@ -635,10 +716,11 @@ extension G7CGMManager {
         guard let sensorID = state.sensorID, state.sensorEndRecordedFor != sensorID else {
             return
         }
+        recordPendingSensorStart(force: true)
         let event = PersistedCgmEvent(
             date: Date(),
             type: .sensorEnd,
-            deviceIdentifier: sensorID,
+            deviceIdentifier: eventDeviceIdentifier(sensorID: sensorID),
             failureMessage: failureMessage
         )
         delegate.notify { delegate in
@@ -754,17 +836,10 @@ extension G7CGMManager: G7SensorDelegate {
                 if state.pairedAt == nil {
                     state.pairedAt = Date()
                 }
+                state.sensorStartPendingFor = name
+                state.sensorStartPendingSince = Date()
             }
-            let event = PersistedCgmEvent(
-                date: activatedAt,
-                type: .sensorStart,
-                deviceIdentifier: name,
-                expectedLifetime: lifetime + G7Sensor.gracePeriod,
-                warmupPeriod: warmupDuration
-            )
-            delegate.notify { delegate in
-                delegate?.cgmManager(self, hasNew: [event])
-            }
+            recordPendingSensorStart()
             scheduleSessionTimedAlerts()
             if watchCodeToReplace {
                 let content = Alert.Content(
@@ -782,10 +857,11 @@ extension G7CGMManager: G7SensorDelegate {
         return shouldSwitchToNewSensor
     }
 
-    public func sensor(_ sensor: G7Sensor, didAuthenticateWith sharedKey: Data, deviceName: String?) {
-        logDeviceCommunication("Authenticated with the sensor directly.", type: .connection)
+    public func sensor(_ sensor: G7Sensor, didAuthenticateWith sharedKey: Data, deviceName: String?, authenticity: G7SensorAuthenticity) {
+        logDeviceCommunication("Authenticated with the sensor directly (authenticity: \(authenticity.rawValue)).", type: .connection)
         mutateState { state in
             state.sharedKey = sharedKey
+            state.sensorAuthenticity = authenticity
             state.peripheralIdentifier = sensor.credentials.peripheralIdentifier
             state.lastAuthenticationFailure = nil
             state.lastAuthenticationFailureDate = nil
@@ -815,6 +891,7 @@ extension G7CGMManager: G7SensorDelegate {
         mutateState { state in
             state.transmitterVersion = transmitterVersion
         }
+        recordPendingSensorStart()
         shareUploader?.serial = transmitterVersion.serialNumberString
         shareUploader?.uploadNow()
     }
@@ -1132,7 +1209,9 @@ extension G7CGMManager: G7SensorDelegate {
             didRetractLegacySignalLoss = true
             retractLifecycleAlert(.signalLoss)
         }
+        recordSensorIssueIfChanged(message)
         raiseSensorFailedAlertIfNeeded(for: message)
+        recordPendingSensorStart()
 
         // Receiving any glucose message proves the session is still active.
         cancelSuspectedSessionEndScan()

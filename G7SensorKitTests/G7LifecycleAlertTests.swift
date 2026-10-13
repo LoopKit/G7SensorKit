@@ -47,7 +47,10 @@ private final class RecordingDelegate: CGMManagerDelegate {
     nonisolated func cgmManager(_ manager: CGMManager, didUpdate status: CGMManagerStatus) {}
     nonisolated func startDateToFilterNewData(for manager: CGMManager) -> Date? { nil }
     nonisolated func cgmManager(_ manager: CGMManager, hasNew readingResult: CGMReadingResult) {}
-    nonisolated func cgmManager(_ manager: CGMManager, hasNew events: [PersistedCgmEvent]) {}
+    nonisolated(unsafe) var cgmEvents: [PersistedCgmEvent] = []
+    nonisolated func cgmManager(_ manager: CGMManager, hasNew events: [PersistedCgmEvent]) {
+        cgmEvents.append(contentsOf: events)
+    }
     nonisolated func cgmManagerDidUpdateState(_ manager: CGMManager) {}
     nonisolated func credentialStoragePrefix(for manager: CGMManager) -> String { "test" }
 }
@@ -126,6 +129,60 @@ class G7LifecycleAlertManagerTests: XCTestCase {
 
     private var okReading: G7GlucoseMessage {
         G7GlucoseMessage(data: Data(hexadecimalString: "4e00c35501002601000106008a00060187000f")!)!
+    }
+
+    /// `okReading` with another algorithm state, at `minutes` past its time so it isn't a duplicate.
+    private func reading(state: UInt8, minutes: UInt32) -> G7GlucoseMessage {
+        var data = okReading.data
+        data.replaceSubrange(2..<6, with: withUnsafeBytes(of: (0x0155c3 + minutes * 60).littleEndian, Array.init))
+        data[14] = state
+        return G7GlucoseMessage(data: data)!
+    }
+
+    private func sensorIssueManager() -> G7CGMManager {
+        var state = G7CGMManagerState()
+        state.sensorID = "DXCM99"
+        state.activatedAt = Date(timeIntervalSinceNow: -3600)
+        return makeManager(state: state)
+    }
+
+    func testSensorIssueIsRecordedOncePerState() {
+        let manager = sensorIssueManager()
+        for (minutes, state) in [(1, 2), (6, 2), (11, 6), (16, 18), (21, 18), (26, 2)] as [(UInt32, UInt8)] {
+            manager.sensor(manager.sensor, didRead: reading(state: state, minutes: minutes))
+        }
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.map(\.type), [.sensorIssue, .sensorIssue, .sensorIssue])
+        XCTAssertEqual(recorder.cgmEvents.map(\.error?.code), ["warmup", "temporarySensorIssue", "warmup"])
+        XCTAssertEqual(recorder.cgmEvents.map(\.deviceIdentifier), ["DXCM99", "DXCM99", "DXCM99"])
+        XCTAssertFalse(recorder.cgmEvents.contains { $0.error?.isFatal == true })
+        XCTAssertEqual(manager.state.reportedSensorIssue, "warmup")
+    }
+
+    func testFailedSensorIssueIsFatalAndPrecedesTheSensorEnd() {
+        let manager = sensorIssueManager()
+        manager.sensor(manager.sensor, didRead: reading(state: 25, minutes: 1))
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.first?.type, .sensorIssue)
+        XCTAssertEqual(recorder.cgmEvents.first?.error, CgmEventError(code: "sensorFailed", isFatal: true))
+        XCTAssertTrue(recorder.cgmEvents.dropFirst().contains { $0.type == .sensorEnd })
+    }
+
+    func testSensorIssueStartsOverForANewSensor() {
+        var state = G7CGMManagerState()
+        state.sensorID = "DXCM99"
+        state.activatedAt = Date(timeIntervalSinceNow: -3600)
+        state.sensorIssueReportedFor = "DXCM98"
+        state.reportedSensorIssue = "warmup"
+        let manager = makeManager(state: state)
+
+        manager.sensor(manager.sensor, didRead: reading(state: 2, minutes: 1))
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.map(\.error?.code), ["warmup"])
+        XCTAssertEqual(manager.state.sensorIssueReportedFor, "DXCM99")
     }
 
     func testDiscoveringASensorSchedulesTheSessionTimedAlerts() {
@@ -255,5 +312,60 @@ class G7LifecycleAlertManagerTests: XCTestCase {
             Set(G7LifecycleAlert.allCases.map(\.rawValue))
         )
         XCTAssertNil(manager.state.lifecycleAlertsScheduledFor)
+    }
+
+    private var transmitterVersion: TransmitterVersionMessage {
+        TransmitterVersionMessage(data: Data(hexadecimalString: "4a002cc069489c37000031474141c03e55bcb300")!)!
+    }
+
+    func testSensorStartWaitsForTheSerialNumber() {
+        let manager = makeManager()
+        let activatedAt = Date().addingTimeInterval(-.hours(1))
+        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: activatedAt)
+        settle()
+        XCTAssertTrue(recorder.cgmEvents.isEmpty)
+
+        manager.sensor(manager.sensor, didReceive: transmitterVersion)
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.count, 1)
+        let start = recorder.cgmEvents.first
+        XCTAssertEqual(start?.type, .sensorStart)
+        XCTAssertEqual(start?.deviceIdentifier, transmitterVersion.serialNumberString)
+        XCTAssertEqual(start?.date, activatedAt)
+
+        manager.sensor(manager.sensor, didReceive: transmitterVersion)
+        settle()
+        XCTAssertEqual(recorder.cgmEvents.count, 1)
+    }
+
+    func testSensorStartIsRecordedWithoutASerialAfterWaiting() {
+        var state = G7CGMManagerState()
+        state.sensorID = "DXCM99"
+        state.activatedAt = Date().addingTimeInterval(-.hours(1))
+        state.sensorStartPendingFor = "DXCM99"
+        state.sensorStartPendingSince = Date().addingTimeInterval(-G7CGMManager.sensorStartSerialWait - 1)
+        let manager = makeManager(state: state)
+
+        manager.sensor(manager.sensor, didRead: okReading)
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.map(\.type), [.sensorStart])
+        XCTAssertEqual(recorder.cgmEvents.first?.deviceIdentifier, "DXCM99")
+        XCTAssertNil(manager.state.sensorStartPendingFor)
+    }
+
+    func testPendingSensorStartIsRecordedBeforeTheSensorEnds() {
+        var state = G7CGMManagerState()
+        state.sensorID = "DXCM99"
+        state.activatedAt = Date().addingTimeInterval(-.hours(1))
+        state.sensorStartPendingFor = "DXCM99"
+        state.sensorStartPendingSince = Date()
+        let manager = makeManager(state: state)
+
+        manager.scanForNewSensor()
+        settle()
+
+        XCTAssertEqual(recorder.cgmEvents.map(\.type), [.sensorStart, .sensorEnd])
     }
 }

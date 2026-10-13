@@ -47,6 +47,17 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     /// that sensor's own readings.
     public var sharedKey: Data?
 
+    /// Whether the paired sensor proved itself genuine Dexcom, the g7sim
+    /// emulator, or could not be verified — determined at pairing from its
+    /// identity certificate and retained across reconnects.
+    public var sensorAuthenticity: G7SensorAuthenticity = .unverified
+
+    /// Whether the user has hidden the simulated-sensor settings warning.
+    /// Reset when a new sensor is paired so a freshly paired emulator always
+    /// warns once; hiding it afterwards is for development screenshots. The
+    /// per-reading HealthKit metadata still marks the data simulated.
+    public var simulatedSensorWarningSuppressed: Bool = false
+
     /// The paired sensor's CoreBluetooth identifier, so a relaunch can
     /// retrieve it directly instead of waiting for its next advertisement.
     public var peripheralIdentifier: UUID?
@@ -69,6 +80,14 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     /// The sensor a `sensorEnd` event has already been recorded for, so the
     /// session is closed in Loop's history exactly once.
     public var sensorEndRecordedFor: String?
+
+    /// The sensor whose `sensorStart` waits for its serial number, and since when.
+    public var sensorStartPendingFor: String?
+    public var sensorStartPendingSince: Date?
+
+    /// The state last recorded as a `sensorIssue`, and for which sensor; nil once glucose is reliable.
+    public var sensorIssueReportedFor: String?
+    public var reportedSensorIssue: String?
 
     /// When this app paired with, or began following, the current sensor.
     public var pairedAt: Date?
@@ -144,12 +163,18 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.sessionMode = (rawValue["sessionMode"] as? String).flatMap(G7SessionMode.init(rawValue:)) ?? .eavesdropping
         self.pairingCode = rawValue["pairingCode"] as? String
         self.sharedKey = rawValue["sharedKey"] as? Data
+        self.sensorAuthenticity = (rawValue["sensorAuthenticity"] as? String).flatMap(G7SensorAuthenticity.init(rawValue:)) ?? .unverified
+        self.simulatedSensorWarningSuppressed = rawValue["simulatedSensorWarningSuppressed"] as? Bool ?? false
         self.peripheralIdentifier = (rawValue["peripheralIdentifier"] as? String).flatMap(UUID.init(uuidString:))
         self.lastAuthenticationFailure = rawValue["lastAuthenticationFailure"] as? String
         self.lastAuthenticationFailureDate = rawValue["lastAuthenticationFailureDate"] as? Date
         self.lifecycleAlertsScheduledFor = rawValue["lifecycleAlertsScheduledFor"] as? String
         self.sensorFailedAlertIssuedFor = rawValue["sensorFailedAlertIssuedFor"] as? String
         self.sensorEndRecordedFor = rawValue["sensorEndRecordedFor"] as? String
+        self.sensorStartPendingFor = rawValue["sensorStartPendingFor"] as? String
+        self.sensorStartPendingSince = rawValue["sensorStartPendingSince"] as? Date
+        self.sensorIssueReportedFor = rawValue["sensorIssueReportedFor"] as? String
+        self.reportedSensorIssue = rawValue["reportedSensorIssue"] as? String
         self.pairedAt = rawValue["pairedAt"] as? Date
         self.sensorFailureMessage = rawValue["sensorFailureMessage"] as? String
         self.sensorFailedAt = rawValue["sensorFailedAt"] as? Date
@@ -184,12 +209,18 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["sessionMode"] = sessionMode.rawValue
         rawValue["pairingCode"] = pairingCode
         rawValue["sharedKey"] = sharedKey
+        rawValue["sensorAuthenticity"] = sensorAuthenticity.rawValue
+        rawValue["simulatedSensorWarningSuppressed"] = simulatedSensorWarningSuppressed
         rawValue["peripheralIdentifier"] = peripheralIdentifier?.uuidString
         rawValue["lastAuthenticationFailure"] = lastAuthenticationFailure
         rawValue["lastAuthenticationFailureDate"] = lastAuthenticationFailureDate
         rawValue["lifecycleAlertsScheduledFor"] = lifecycleAlertsScheduledFor
         rawValue["sensorFailedAlertIssuedFor"] = sensorFailedAlertIssuedFor
         rawValue["sensorEndRecordedFor"] = sensorEndRecordedFor
+        rawValue["sensorStartPendingFor"] = sensorStartPendingFor
+        rawValue["sensorStartPendingSince"] = sensorStartPendingSince
+        rawValue["sensorIssueReportedFor"] = sensorIssueReportedFor
+        rawValue["reportedSensorIssue"] = reportedSensorIssue
         rawValue["pairedAt"] = pairedAt
         rawValue["sensorFailureMessage"] = sensorFailureMessage
         rawValue["sensorFailedAt"] = sensorFailedAt

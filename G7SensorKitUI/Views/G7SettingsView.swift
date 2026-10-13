@@ -41,6 +41,7 @@ struct G7SettingsView: View {
     @State private var showingShareSignIn = false
     @State private var showingDexcomAppModeConfirmation = false
     @State private var showingDexcomAppModeInstructions = false
+    @State private var showingHideSimulatedWarningSheet = false
 
     init(didFinish: @escaping () -> Void, deleteCGM: @escaping () -> Void, pairNewSensor: @escaping () -> Void, pairCurrentSensor: @escaping () -> Void, viewModel: G7SettingsViewModel) {
         self.didFinish = didFinish
@@ -221,6 +222,27 @@ if viewModel.sessionMode == .eavesdropping {
     /// and the pairing actions live here too.
     private var sensorSection: some View {
         Section(header: Text(LocalizedString("Sensor", comment: "Section header for sensor details"))) {
+            if viewModel.sensorAuthenticity == .simulated && !viewModel.simulatedSensorWarningSuppressed {
+                warning(
+                    title: LocalizedString("Simulated Sensor", comment: "Settings warning title when connected to the g7sim emulator"),
+                    message: LocalizedString("This is the g7sim development emulator, not a genuine Dexcom sensor. Its readings are simulated and must not be used for therapy.", comment: "Settings warning body when connected to the g7sim emulator"),
+                    style: .critical
+                )
+                .contentShape(Rectangle())
+                .onTapGesture { showingHideSimulatedWarningSheet = true }
+                .actionSheet(isPresented: $showingHideSimulatedWarningSheet) {
+                    ActionSheet(
+                        title: Text(LocalizedString("Simulated Sensor", comment: "Title of the sheet to hide the simulated-sensor warning")),
+                        message: Text(LocalizedString("Hide this warning? Readings uploaded from this sensor stay marked as simulated. Hiding it is for development screenshots only.", comment: "Message of the sheet to hide the simulated-sensor warning")),
+                        buttons: [
+                            .destructive(Text(LocalizedString("Hide Warning", comment: "Button to hide the simulated-sensor warning"))) {
+                                viewModel.hideSimulatedSensorWarning()
+                            },
+                            .cancel(),
+                        ]
+                    )
+                }
+            }
             // Eavesdropping sessions lead with the way out of them.
             if viewModel.sessionMode == .eavesdropping {
             if viewModel.isDexcomAppInstalled {
@@ -565,6 +587,7 @@ if viewModel.sessionMode == .eavesdropping {
                     Spacer()
                     remainingTime
                 }
+                .accessibilityElement(children: .combine)
                 G7LifecycleBar(
                     progress: viewModel.progressBarProgress,
                     color: sessionIsOver ? Color(.systemGray3) : color(for: viewModel.progressBarColorStyle)
@@ -580,6 +603,7 @@ if viewModel.sessionMode == .eavesdropping {
                     Spacer()
                     lastReadingAge
                 }
+                .accessibilityElement(children: .combine)
             }
         }
         .padding(.vertical, 4)
@@ -636,6 +660,8 @@ if viewModel.sessionMode == .eavesdropping {
                             .foregroundColor(.secondary)
                     }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(sessionLengthFormatter.string(from: remaining) ?? "")
             }
         case .unpaired, .searching, .connecting, .gracePeriod, .expired, .failed:
             EmptyView()
@@ -699,6 +725,7 @@ if viewModel.sessionMode == .eavesdropping {
             HStack(spacing: 8) {
                 if let trend = viewModel.lastGlucoseTrend {
                     badge(text: trend.symbol, color: glucoseTintColor)
+                        .accessibilityLabel(trend.localizedDescription)
                 } else {
                     badge(systemName: "minus", color: glucoseTintColor)
                 }
@@ -741,6 +768,8 @@ if viewModel.sessionMode == .eavesdropping {
                             : LocalizedString("hr", comment: "Unit after the hours-since-last-reading number"))
                             .foregroundColor(.secondary)
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(sessionLengthFormatter.string(from: TimeInterval(minutes * 60)) ?? "")
                 }
             }
         }
@@ -752,6 +781,7 @@ if viewModel.sessionMode == .eavesdropping {
             .foregroundColor(.white)
             .frame(width: 28, height: 28)
             .background(Circle().fill(color))
+            .accessibilityHidden(true)
     }
 
     /// A hollow variant, for states that are pending rather than alarming.
@@ -761,6 +791,7 @@ if viewModel.sessionMode == .eavesdropping {
             .foregroundColor(color)
             .frame(width: 28, height: 28)
             .overlay(Circle().stroke(color, lineWidth: 2))
+            .accessibilityHidden(true)
     }
 
     private func badge(text: String, color: Color) -> some View {
