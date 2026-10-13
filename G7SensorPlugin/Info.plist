@@ -26,5 +26,7 @@
 	<string>Dexcom G7 / ONE+</string>
 	<key>com.loopkit.Loop.CGMManagerIdentifier</key>
 	<string>G7CGMManager</string>
+	<key>com.loopkit.Loop.DeviceManufacturer</key>
+	<string>Dexcom</string>
 </dict>
 </plist>
