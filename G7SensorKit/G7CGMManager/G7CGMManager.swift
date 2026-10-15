@@ -105,8 +105,9 @@ public class G7CGMManager: CGMManager {
 
     public var providesBLEHeartbeat: Bool = true
 
+    // Only the Dexcom app writes to HealthKit while we eavesdrop on its session
     public var managedDataInterval: TimeInterval? {
-        return .hours(3)
+        return state.sessionMode == .eavesdropping ? .hours(3) : nil
     }
 
     public var shouldSyncToRemoteService: Bool {
