@@ -198,4 +198,9 @@ final class G7CGMManagerTests: XCTestCase {
 
         XCTAssertEqual(Self.sensorID, manager.state.sensorID)
     }
+
+    /// Only the watchOS target compiles an acquisition arm; here the stock steps run.
+    func testThisPlatformUsesTheStockAcquisition() {
+        XCTAssertNil(TestBluetoothManager().acquisitionArm)
+    }
 }
