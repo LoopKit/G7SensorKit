@@ -816,17 +816,6 @@ extension G7CGMManager: G7SensorDelegate {
         )
     }
 
-    /// A client for the signed-in account, for managing followers.
-    public var shareClient: G7ShareClient? {
-        G7ShareCredentialStore().load().map { credentials in
-            let client = G7ShareClient(credentials: credentials)
-            client.logHandler = { [weak self] message in
-                self?.logDeviceCommunication("Dexcom Share: " + message, type: .connection)
-            }
-            return client
-        }
-    }
-
     /// Verifies the credentials with the service, keeps them, and starts
     /// uploading. Throws the service's refusal if they are wrong.
     public func signInToShare(_ credentials: G7ShareCredentials) async throws {

@@ -155,10 +155,6 @@ class G7SettingsViewModel: ObservableObject {
         updateValues()
     }
 
-    var shareClient: G7ShareClient? {
-        cgmManager.shareClient
-    }
-
     // MARK: - Calibration
 
     /// The last reliable reading in mg/dL, for the calibration entry to
