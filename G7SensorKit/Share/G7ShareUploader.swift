@@ -23,11 +23,10 @@ public struct G7ShareUploadStatus: Equatable {
     }
 }
 
-/// Sends readings to Dexcom Share as they arrive. The service wants a
-/// signed-in session with the sensor registered as the account's device and
-/// a monitoring session started; all of that is done lazily and redone when
-/// the service says it has lapsed. Readings that could not be sent wait for
-/// the next attempt, up to a day's worth.
+/// Sends readings to Dexcom Share as they arrive. It posts first and only
+/// signs in, starts a monitoring session or registers the sensor as the
+/// account's device when the service refuses for that reason. Readings
+/// that could not be sent wait for the next attempt, up to a day's worth.
 final class G7ShareUploader {
     private let log = OSLog(category: "G7ShareUploader")
     private let queue = DispatchQueue(label: "org.loopkit.G7SensorKit.share")
@@ -35,8 +34,9 @@ final class G7ShareUploader {
     private let client: G7ShareClient
     private var pending: [G7ShareReading] = []
     private var uploadedThrough: Date?
-    private var receiverReady = false
-    private var monitoringReady = false
+    /// The serial last registered as the account's device, so a refusal for
+    /// it is not answered by registering it again.
+    private var assignedSerial: String?
     private var task: Task<Void, Never>?
     private(set) var status = G7ShareUploadStatus()
 
@@ -115,47 +115,65 @@ final class G7ShareUploader {
         }
     }
 
+    private enum Recovery {
+        case signIn
+        case startMonitoring
+        case assignReceiver
+    }
+
     private func upload(_ batch: [G7ShareReading], serial: String) async -> Result<Void, Error> {
-        do {
-            try await uploadOnce(batch, serial: serial)
-            return .success(())
-        } catch let error as G7ShareError where error.isSessionExpired || error.serviceCode == G7ShareError.monitoringSessionNotActive {
-            // A lapsed session or monitoring window: start over once.
-            client.forgetSession()
-            receiverReady = false
-            monitoringReady = false
+        var attempted: Set<Recovery> = []
+        while true {
             do {
-                try await uploadOnce(batch, serial: serial)
+                try await post(batch, serial: serial)
                 return .success(())
+            } catch let error as G7ShareError {
+                guard let recovery = recovery(for: error, serial: serial), attempted.insert(recovery).inserted else {
+                    return .failure(error)
+                }
+                do {
+                    try await perform(recovery, serial: serial)
+                } catch {
+                    return .failure(error)
+                }
             } catch {
                 return .failure(error)
             }
-        } catch {
-            return .failure(error)
         }
     }
 
-    private func uploadOnce(_ batch: [G7ShareReading], serial: String) async throws {
-        if !receiverReady {
-            let assignment = try await client.receiverAssignment(serial: serial)
-            if assignment != "AssignedToYou" {
-                onLog?("Registering sensor \(serial) as the Dexcom Share device (was \(assignment))")
-                try await client.assignReceiver(serial: serial)
-            }
-            receiverReady = true
+    private func recovery(for error: G7ShareError, serial: String) -> Recovery? {
+        if error.isSessionExpired {
+            return .signIn
         }
-        if !monitoringReady {
-            if try await client.isRemoteMonitoringSessionActive() {
-                onLog?("Dexcom Share monitoring session is already active")
-            } else {
-                do {
-                    try await client.startRemoteMonitoringSession(serial: serial)
-                } catch let error as G7ShareError where error.isMonitoringSessionAlreadyActive {
-                    // Started by someone else in the meantime; fine.
-                }
-            }
-            monitoringReady = true
+        if error.serviceCode == G7ShareError.monitoringSessionNotActive {
+            return .startMonitoring
         }
+        if error.isReceiverRefused, assignedSerial != serial {
+            return .assignReceiver
+        }
+        return nil
+    }
+
+    private func perform(_ recovery: Recovery, serial: String) async throws {
+        switch recovery {
+        case .signIn:
+            client.forgetSession()
+            try await client.signIn()
+        case .startMonitoring:
+            do {
+                try await client.startRemoteMonitoringSession(serial: serial)
+            } catch let error as G7ShareError where error.isMonitoringSessionAlreadyActive {
+                // Started by someone else in the meantime; fine.
+            }
+        case .assignReceiver:
+            onLog?("Registering sensor \(serial) as the Dexcom Share device")
+            try await client.assignReceiver(serial: serial)
+            assignedSerial = serial
+        }
+    }
+
+    private func post(_ batch: [G7ShareReading], serial: String) async throws {
         do {
             try await client.postReadings(batch, serial: serial)
         } catch let error as G7ShareError where error.serviceCode == G7ShareError.duplicateEgvPosted {
