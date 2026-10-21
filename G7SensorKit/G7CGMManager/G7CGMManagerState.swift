@@ -123,7 +123,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
 
     /// Built from another controller's export (DeviceConfigurationSharing): the sensor and its code
     /// were passed in, so setup, pairing and the sensor's lifecycle belong to that controller.
-    public var configuredByAnotherController: Bool = false
+    var configuredByAnotherController: Bool = false
 
     init() {
     }

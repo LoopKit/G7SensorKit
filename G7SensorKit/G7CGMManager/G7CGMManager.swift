@@ -152,11 +152,6 @@ public class G7CGMManager: CGMManager {
         return activatedAt.addingTimeInterval(lifetime)
     }
 
-    /// Whether `sensorEndsAt` comes from the sensor's own reported session length rather than the default.
-    public var sensorSessionLengthIsKnown: Bool {
-        state.extendedVersion?.sessionLength != nil
-    }
-
     public var sensorEndsAt: Date? {
         guard let activatedAt = sensorActivatedAt else {
             return nil
@@ -1413,7 +1408,4 @@ extension G7CGMManager: DeviceConfigurationSharing {
         SharedDeviceConfiguration(managerIdentifier: pluginIdentifier, asOf: Date(), state: state.sharedState)
     }
 
-    public var isConfiguredByAnotherController: Bool {
-        state.configuredByAnotherController
-    }
 }

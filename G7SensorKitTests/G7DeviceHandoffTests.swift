@@ -78,8 +78,8 @@ final class G7DeviceHandoffTests: XCTestCase {
         XCTAssertEqual(adopted.sensorCredentials.pairingCode, "1234")
         XCTAssertNil(adopted.sensorCredentials.sharedKey)
         XCTAssertEqual(adopted.activatedAt, activatedAt, "passed in, so readings are named from the first")
-        XCTAssertTrue(makeManager(state: adopted).isConfiguredByAnotherController)
-        XCTAssertFalse(makeManager(state: phoneState).isConfiguredByAnotherController)
+        XCTAssertTrue(makeManager(state: adopted).state.configuredByAnotherController)
+        XCTAssertFalse(makeManager(state: phoneState).state.configuredByAnotherController)
     }
 
     func testAnAdoptedManagerAsksTheSensorForItsVersion() {
@@ -93,7 +93,7 @@ final class G7DeviceHandoffTests: XCTestCase {
         var adopted = G7CGMManagerState.adopted(from: makeManager(state: phoneState).exportConfiguration().state)
         adopted.sessionMode = .eavesdropping   // whatever was saved, a passed configuration reads directly
         let restored = makeManager(state: G7CGMManagerState(rawValue: adopted.rawValue))
-        XCTAssertTrue(restored.isConfiguredByAnotherController)
+        XCTAssertTrue(restored.state.configuredByAnotherController)
         XCTAssertEqual(restored.sessionMode, .direct)
     }
 

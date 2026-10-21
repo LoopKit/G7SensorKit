@@ -17,36 +17,36 @@ import os.log
 /// The watch's one acquisition design: a single daemon-held request per burst, re-lodged after each
 /// close by holding the process 35 s past link-up, then a plain connect (measured 33 in 33). State
 /// restoration relaunches the app for each link. Runs on the bluetooth manager's queue.
-public final class G7WatchAcquisition: G7AcquisitionArm {
+final class G7WatchAcquisition: G7AcquisitionArm {
     /// Link-up → the ~3.5-s read, the sensor's close, and its 20–24-s advertising tail all sit inside
     /// 35 s. A request that lands after this never reconnects into the tail.
-    public static let tailClearanceSeconds: TimeInterval = 35
+    static let tailClearanceSeconds: TimeInterval = 35
     /// The sensor's own cadence: one reading every 300 s.
-    public static let period: TimeInterval = 300
-    public static let missedBurstsBeforeBootstrap = 3
+    static let period: TimeInterval = 300
+    static let missedBurstsBeforeBootstrap = 3
     /// One full window plus jitter: a scan pass that cannot span a burst proves nothing.
-    public static let bootstrapScanCap: TimeInterval = 330
+    static let bootstrapScanCap: TimeInterval = 330
     /// OmnipodKit's heartbeatFailureBackoffSeconds.
-    public static let refusalBackoffSeconds: TimeInterval = 30
+    static let refusalBackoffSeconds: TimeInterval = 30
     /// A didFailToConnect this soon after the call is the daemon declining the request itself.
-    public static let synchronousRefusalWindow: TimeInterval = 2
+    static let synchronousRefusalWindow: TimeInterval = 2
 
     /// How long the hold keeps the process, counted from link-up; never below half a second.
-    public static func holdWait(sinceLinkUp: TimeInterval) -> TimeInterval {
+    static func holdWait(sinceLinkUp: TimeInterval) -> TimeInterval {
         max(0.5, tailClearanceSeconds - sinceLinkUp)
     }
     /// The hold before the next plain connect; nil = past the clearance, nothing to wait for.
-    public static func relodgeHold(sinceLinkUp: TimeInterval) -> TimeInterval? {
+    static func relodgeHold(sinceLinkUp: TimeInterval) -> TimeInterval? {
         sinceLinkUp < tailClearanceSeconds ? holdWait(sinceLinkUp: sinceLinkUp) : nil
     }
-    public enum FailureAction: Equatable { case backOff(TimeInterval), relodge }
+    enum FailureAction: Equatable { case backOff(TimeInterval), relodge }
     /// A synchronous refusal waits before asking again. A late failure (the request went live and
     /// could not connect) re-lodges through the arm.
-    public static func onConnectFailure(sinceLodge: TimeInterval) -> FailureAction {
+    static func onConnectFailure(sinceLodge: TimeInterval) -> FailureAction {
         sinceLodge < synchronousRefusalWindow ? .backOff(refusalBackoffSeconds) : .relodge
     }
     /// Whole bursts elapsed since `reference` (the last reading, or the last bootstrap pass).
-    public static func missedBursts(since reference: Date?, now: Date = Date()) -> Int {
+    static func missedBursts(since reference: Date?, now: Date = Date()) -> Int {
         reference.map { max(0, Int(now.timeIntervalSince($0) / period)) } ?? 0
     }
 

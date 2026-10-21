@@ -818,10 +818,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     }
 
     /// The sensor a direct connection would reach without a pairing code or key; nil once one exists.
-    public var needsCodeForSensor: String? { bluetoothManager.needsCodeForSensor }
+    var needsCodeForSensor: String? { bluetoothManager.needsCodeForSensor }
 
     /// Scanning for a sensor this session has never connected to.
-    public var isSearchingForSensor: Bool { bluetoothManager.isSearchingForSensor }
+    var isSearchingForSensor: Bool { bluetoothManager.isSearchingForSensor }
 
     func bluetoothManagerCanAuthenticate(_ manager: G7BluetoothManager) -> Bool {
         G7Sensor.canAuthenticate(mode: mode, credentials: lockedCredentials.value)
