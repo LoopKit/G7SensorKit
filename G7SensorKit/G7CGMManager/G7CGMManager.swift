@@ -745,7 +745,7 @@ extension G7CGMManager {
 }
 
 extension G7CGMManager: G7SensorDelegate {
-    public func sensor(_ sensor: G7Sensor, didDiscoverNewSensor name: String, activatedAt: Date) -> Bool {
+    public func sensor(_ sensor: G7Sensor, didDiscoverNewSensor name: String, activatedAt: Date, peripheralIdentifier: UUID) -> Bool {
         logDeviceCommunication("New sensor \(name) discovered, activated at \(activatedAt)", type: .connection)
 
         let shouldSwitchToNewSensor = true
@@ -758,7 +758,7 @@ extension G7CGMManager: G7SensorDelegate {
                 state.calibration = nil
                 state.calibrationBounds = nil
                 state.calibrationBoundsDate = nil
-                state.peripheralIdentifier = sensor.credentials.peripheralIdentifier
+                state.peripheralIdentifier = peripheralIdentifier
                 if state.pairedAt == nil {
                     state.pairedAt = Date()
                 }

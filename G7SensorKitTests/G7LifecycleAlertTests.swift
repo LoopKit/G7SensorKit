@@ -187,7 +187,7 @@ class G7LifecycleAlertManagerTests: XCTestCase {
 
     func testDiscoveringASensorSchedulesTheSessionTimedAlerts() {
         let manager = makeManager()
-        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: Date())
+        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: Date(), peripheralIdentifier: UUID())
         settle()
 
         let scheduled = recorder.issued.filter { alert in
@@ -203,13 +203,13 @@ class G7LifecycleAlertManagerTests: XCTestCase {
 
     func testReschedulingIsIdempotentPerSensorAndLifetime() {
         let manager = makeManager()
-        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: Date())
+        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: Date(), peripheralIdentifier: UUID())
         settle()
         let issuedOnce = recorder.issued.count
 
         // Same sensor, same lifetime: a relaunch-style repeat must not
         // duplicate notifications Loop already holds.
-        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: manager.state.activatedAt!)
+        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: manager.state.activatedAt!, peripheralIdentifier: UUID())
         settle()
         XCTAssertEqual(recorder.issued.count, issuedOnce)
 
@@ -304,7 +304,7 @@ class G7LifecycleAlertManagerTests: XCTestCase {
     func testSensorStartWaitsForTheSerialNumber() {
         let manager = makeManager()
         let activatedAt = Date().addingTimeInterval(-.hours(1))
-        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: activatedAt)
+        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: activatedAt, peripheralIdentifier: UUID())
         settle()
         XCTAssertTrue(recorder.cgmEvents.isEmpty)
 
