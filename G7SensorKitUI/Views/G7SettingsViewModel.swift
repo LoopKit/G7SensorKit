@@ -322,6 +322,12 @@ class G7SettingsViewModel: ObservableObject {
         updateValues()
     }
 
+    /// Whether the last reading reports a temporary sensor issue, the same
+    /// check behind the "Sensor Issue" status highlight.
+    var hasSensorIssue: Bool {
+        lastReading?.algorithmState.hasTemporaryError == true
+    }
+
     /// Whether the last reading carries a glucose value worth showing.
     var hasLastGlucose: Bool {
         guard let lastReading = lastReading, lastReading.hasReliableGlucose else {

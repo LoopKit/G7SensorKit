@@ -228,6 +228,13 @@ if viewModel.sessionMode == .eavesdropping {
                     )
                 }
             }
+            if viewModel.hasSensorIssue && !sessionIsOver {
+                warning(
+                    title: LocalizedString("Sensor Issue", comment: "Settings warning title while the sensor reports a temporary issue"),
+                    message: LocalizedString("The sensor is reporting a temporary problem and is not sending glucose readings. They usually come back on their own, which can take up to 3 hours; you do not need to remove the sensor. Use a meter for treatment decisions until they do.", comment: "Settings warning body while the sensor reports a temporary issue"),
+                    style: .informational
+                )
+            }
             // Eavesdropping sessions lead with the way out of them.
             if viewModel.sessionMode == .eavesdropping {
             if viewModel.isDexcomAppInstalled {
@@ -720,6 +727,13 @@ if viewModel.sessionMode == .eavesdropping {
                     Text(viewModel.displayGlucosePreference.unit.shortLocalizedUnitString())
                         .foregroundColor(.secondary)
                 }
+            }
+        } else if viewModel.hasSensorIssue {
+            HStack(spacing: 8) {
+                badge(systemName: "exclamationmark", color: guidanceColors.warning)
+                Text(LocalizedString("Sensor Issue", comment: "Last reading row text while the sensor reports a temporary issue"))
+                    .font(.headline)
+                    .lineLimit(2)
             }
         } else if viewModel.lifecycleState == .warmup {
             HStack(spacing: 8) {
