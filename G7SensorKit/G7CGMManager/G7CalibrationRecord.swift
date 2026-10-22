@@ -18,6 +18,8 @@ public struct G7CalibrationRecord: RawRepresentable, Equatable {
         case pending
         case accepted(at: Date)
         case rejected(status: UInt16, at: Date)
+        /// Dropped unsent: the sensor did not connect within `G7Sensor.calibrationMaxAge`.
+        case expired(at: Date)
     }
 
     /// The meter value, mg/dL.
@@ -50,6 +52,9 @@ public struct G7CalibrationRecord: RawRepresentable, Equatable {
         case "rejected":
             guard let at = rawValue["outcomeAt"] as? Date, let status = rawValue["status"] as? Int else { return nil }
             outcome = .rejected(status: UInt16(truncatingIfNeeded: status), at: at)
+        case "expired":
+            guard let at = rawValue["outcomeAt"] as? Date else { return nil }
+            outcome = .expired(at: at)
         default:
             outcome = .pending
         }
@@ -71,6 +76,9 @@ public struct G7CalibrationRecord: RawRepresentable, Equatable {
             raw["outcome"] = "rejected"
             raw["outcomeAt"] = at
             raw["status"] = Int(status)
+        case .expired(let at):
+            raw["outcome"] = "expired"
+            raw["outcomeAt"] = at
         }
         raw["processingStatus"] = processingStatus.map { Int($0.rawValue) }
         return raw
