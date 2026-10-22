@@ -30,8 +30,10 @@ public protocol G7SensorDelegate: AnyObject {
 
     func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage])
 
-    // If this returns true, then start following this sensor
-    func sensor(_ sensor: G7Sensor, didDiscoverNewSensor name: String, activatedAt: Date) -> Bool
+    // If this returns true, then start following this sensor. The identifier is
+    // the peripheral the sensor was found under. It is passed explicitly because
+    // the sensor's own credentials are only updated after this returns.
+    func sensor(_ sensor: G7Sensor, didDiscoverNewSensor name: String, activatedAt: Date, peripheralIdentifier: UUID) -> Bool
 
     func sensor(_ sensor: G7Sensor, didReceive extendedVersion: ExtendedVersionMessage)
 
@@ -323,7 +325,12 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     }
 
     public func resumeScanning() {
-        bluetoothManager.setActivePeripheralIdentifier(lockedCredentials.value.peripheralIdentifier)
+        // Deliberately leaves the active peripheral identifier alone. Every
+        // write to the credentials already reaches the bluetooth manager, and
+        // a session relaunched by state restoration knows its peripheral only
+        // through the manager: overwriting that with a nil persisted
+        // identifier left the rescan after the next disconnect with nothing
+        // to retrieve and, with the peripheral still active, nothing to scan for.
         bluetoothManager.scanForPeripheral()
     }
 
@@ -449,7 +456,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                     return
                 }
 
-                if delegate.sensor(self, didDiscoverNewSensor: name, activatedAt: activationDate) {
+                if delegate.sensor(self, didDiscoverNewSensor: name, activatedAt: activationDate, peripheralIdentifier: peripheralManager.peripheral.identifier) {
                     self.mutateCredentials { credentials in
                         credentials.sensorID = name
                         credentials.peripheralIdentifier = peripheralManager.peripheral.identifier

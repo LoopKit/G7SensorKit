@@ -518,7 +518,7 @@ private final class BackfillRecordingDelegate: G7SensorDelegate {
         self.backfill = backfill
         backfillArrived.fulfill()
     }
-    func sensor(_ sensor: G7Sensor, didDiscoverNewSensor name: String, activatedAt: Date) -> Bool { false }
+    func sensor(_ sensor: G7Sensor, didDiscoverNewSensor name: String, activatedAt: Date, peripheralIdentifier: UUID) -> Bool { false }
     func sensor(_ sensor: G7Sensor, didReceive extendedVersion: ExtendedVersionMessage) {}
     func sensor(_ sensor: G7Sensor, didReceive transmitterVersion: TransmitterVersionMessage) {}
     func sensor(_ sensor: G7Sensor, didReceiveCalibrationResponse response: G7CalibrateRxMessage) {}
