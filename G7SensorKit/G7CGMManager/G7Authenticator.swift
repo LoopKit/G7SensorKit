@@ -30,6 +30,10 @@ public enum G7AuthenticatorError: Error {
     /// belongs to a different sensor, or a stored key has gone stale.
     case challengeMismatch
 
+    /// A stored-key reconnect the sensor did not answer as authenticated and
+    /// bonded (e.g. `05 01 02` after the bond was forgotten in iOS settings).
+    case storedKeyNotBonded(authStatus: UInt8, bondStatus: UInt8)
+
     /// Neither a stored key nor a pairing code was available.
     case noCredentials
 
@@ -71,6 +75,11 @@ extension G7AuthenticatorError: CustomStringConvertible {
             return LocalizedString(
                 "This sensor does not match the pairing code entered.",
                 comment: "Error description when a G7 sensor's challenge response does not match the pairing code"
+            )
+        case .storedKeyNotBonded:
+            return LocalizedString(
+                "The sensor no longer recognizes this phone. Pair it again with its code.",
+                comment: "Error description when a G7 sensor no longer honors the saved key and no pairing code is available"
             )
         case .noCredentials:
             return LocalizedString(
@@ -244,10 +253,7 @@ final class G7Authenticator {
             // A reconnect that got this far without being authenticated has a
             // key the sensor no longer honours. Re-pairing is the only fix,
             // and the caller decides whether it can do that unattended.
-            throw G7AuthenticatorError.unexpectedResponse(
-                step: "reconnect",
-                response: Data([0x05, status.authStatus, status.bondStatus])
-            )
+            throw G7AuthenticatorError.storedKeyNotBonded(authStatus: status.authStatus, bondStatus: status.bondStatus)
         }
 
         report("Running the certificate exchange (auth=\(status.authStatus) bond=\(status.bondStatus))")

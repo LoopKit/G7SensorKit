@@ -203,4 +203,59 @@ final class G7CGMManagerTests: XCTestCase {
     func testThisPlatformUsesTheStockAcquisition() {
         XCTAssertNil(TestBluetoothManager().acquisitionArm)
     }
+
+    // MARK: - Discovery
+
+    /// The identifier a new sensor was found under must reach the persisted
+    /// state, so a relaunch can retrieve the peripheral instead of waiting to
+    /// hear from it. The manager used to read it back from the sensor's
+    /// credentials, which the sensor only updates after this callback returns,
+    /// so every sensor adopted while eavesdropping was persisted with nil.
+    func testDiscoveringSensorPersistsItsPeripheralIdentifier() {
+        let state = G7CGMManagerState()
+        let sensor = G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, bluetoothManager: TestBluetoothManager())
+        let manager = G7CGMManager(state: state, sensor: sensor)
+        let identifier = UUID()
+
+        XCTAssertTrue(manager.sensor(sensor, didDiscoverNewSensor: Self.sensorID, activatedAt: Date(), peripheralIdentifier: identifier))
+
+        XCTAssertEqual(identifier, manager.state.peripheralIdentifier)
+    }
+
+    // MARK: - Resuming
+
+    /// A session relaunched by Bluetooth state restoration knows its peripheral
+    /// only through the bluetooth manager, which records it when the restored
+    /// peripheral is made active. Credentials saved before the identifier was
+    /// persisted have nil there; resuming must keep the live one, or the rescan
+    /// after the next disconnect has nothing to retrieve and, with the
+    /// peripheral still active, nothing to scan for.
+    func testResumeScanningKeepsLiveIdentifierWhenNonePersisted() {
+        let bluetoothManager = TestBluetoothManager()
+        let credentials = G7SensorCredentials(sensorID: Self.sensorID, pairingCode: nil, sharedKey: nil, peripheralIdentifier: nil)
+        let sensor = G7Sensor(mode: .eavesdropping, credentials: credentials, bluetoothManager: bluetoothManager)
+        let restored = UUID()
+        bluetoothManager.setActivePeripheralIdentifier(restored)
+
+        sensor.resumeScanning()
+
+        XCTAssertEqual(restored, bluetoothManager.activePeripheralIdentifier)
+    }
+
+    /// With `resumeScanning` no longer touching the identifier, a directly
+    /// paired session relies on construction and `reconfigure` to target the
+    /// peripheral its credentials name.
+    func testSessionTargetsPersistedIdentifierFromCredentials() {
+        let bluetoothManager = TestBluetoothManager()
+        let persisted = UUID()
+        let credentials = G7SensorCredentials(sensorID: Self.sensorID, pairingCode: "0420", sharedKey: nil, peripheralIdentifier: persisted)
+        let sensor = G7Sensor(mode: .direct, credentials: credentials, bluetoothManager: bluetoothManager)
+
+        XCTAssertEqual(persisted, bluetoothManager.activePeripheralIdentifier)
+
+        let repaired = UUID()
+        sensor.reconfigure(mode: .direct, credentials: G7SensorCredentials(sensorID: Self.sensorID, pairingCode: "0420", sharedKey: nil, peripheralIdentifier: repaired))
+
+        XCTAssertEqual(repaired, bluetoothManager.activePeripheralIdentifier)
+    }
 }

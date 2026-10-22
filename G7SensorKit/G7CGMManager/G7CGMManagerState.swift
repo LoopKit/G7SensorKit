@@ -32,6 +32,9 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     /// this to `.direct`.
     public var sessionMode: G7SessionMode = .eavesdropping
 
+    /// Which of the sensor's display slots this manager takes.
+    public var displayType: G7DisplayType = .phone
+
     /// The 4-digit code printed on the sensor applicator. Direct mode only.
     /// Kept so a stale shared key can be recovered from without asking the
     /// user again, and cleared whenever the sensor is forgotten: it is only
@@ -139,13 +142,6 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         )
     }
 
-    /// The display slot this manager claims: the phone's when set up through its own UI, the
-    /// secondary (watch) slot when passed its configuration, so it never takes the slot of the
-    /// controller that passed it.
-    var displayType: G7DisplayType {
-        configuredByAnotherController ? .watch : .phone
-    }
-
     public init(rawValue: RawValue) {
         self.sensorID = rawValue["sensorID"] as? String
         self.activatedAt = rawValue["activatedAt"] as? Date
@@ -161,6 +157,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.latestReadingTimestamp = rawValue["latestReadingTimestamp"] as? Date
         self.latestConnect = rawValue["latestConnect"] as? Date
         self.sessionMode = (rawValue["sessionMode"] as? String).flatMap(G7SessionMode.init(rawValue:)) ?? .eavesdropping
+        self.displayType = (rawValue["displayType"] as? Int).flatMap { G7DisplayType(rawValue: UInt8(truncatingIfNeeded: $0)) } ?? .phone
         self.pairingCode = rawValue["pairingCode"] as? String
         self.sharedKey = rawValue["sharedKey"] as? Data
         self.sensorAuthenticity = (rawValue["sensorAuthenticity"] as? String).flatMap(G7SensorAuthenticity.init(rawValue:)) ?? .unverified
@@ -207,6 +204,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["latestReadingTimestamp"] = latestReadingTimestamp
         rawValue["latestConnect"] = latestConnect
         rawValue["sessionMode"] = sessionMode.rawValue
+        rawValue["displayType"] = Int(displayType.rawValue)
         rawValue["pairingCode"] = pairingCode
         rawValue["sharedKey"] = sharedKey
         rawValue["sensorAuthenticity"] = sensorAuthenticity.rawValue
@@ -263,6 +261,8 @@ extension G7CGMManagerState {
         state.sessionMode = .direct
         state.pairedAt = Date()
         state.configuredByAnotherController = true
+        // The secondary (watch) slot, so it never takes the slot of the controller that passed it.
+        state.displayType = .watch
         return state
     }
 }
