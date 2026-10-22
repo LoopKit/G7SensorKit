@@ -23,10 +23,26 @@ final class G7CalibrationTests: XCTestCase {
     }
 
     func testCalibrateReplyStatus() {
-        XCTAssertEqual(G7CalibrateRxMessage(data: Data(hexadecimalString: "34000100")!)?.accepted, true)
-        let refused = G7CalibrateRxMessage(data: Data(hexadecimalString: "34000500")!)
-        XCTAssertEqual(refused?.accepted, false)
-        XCTAssertEqual(refused?.status, 5)
+        // Observed on a sensor 2026-09-15 for an accepted 145 mg/dL.
+        let acceptedLow = G7CalibrateRxMessage(data: Data(hexadecimalString: "34000100")!)!
+        XCTAssertTrue(acceptedLow.accepted)
+        XCTAssertNil(G7CalibrationRefusal(status: acceptedLow.status))
+        XCTAssertEqual(G7CalibrateRxMessage(data: Data(hexadecimalString: "34000000")!)?.accepted, true)
+
+        let acceptanceError = G7CalibrateRxMessage(data: Data(hexadecimalString: "34000101")!)!
+        XCTAssertFalse(acceptanceError.accepted)
+        XCTAssertEqual(G7CalibrationRefusal(status: acceptanceError.status), .acceptanceError(1))
+
+        let outlier = G7CalibrateRxMessage(data: Data(hexadecimalString: "3400020a")!)!
+        XCTAssertFalse(outlier.accepted)
+        XCTAssertEqual(outlier.result, 2)
+        XCTAssertEqual(outlier.detail, 10)
+        XCTAssertEqual(G7CalibrationRefusal(status: outlier.status), .extremeOutlier)
+        XCTAssertEqual(G7CalibrationRefusal(status: G7CalibrateRxMessage(data: Data(hexadecimalString: "34000208")!)!.status), .notPermitted)
+        XCTAssertEqual(G7CalibrationRefusal(status: G7CalibrateRxMessage(data: Data(hexadecimalString: "3400020c")!)!.status), .unknown(result: 2, detail: 12))
+        XCTAssertEqual(G7CalibrationRefusal(status: G7CalibrateRxMessage(data: Data(hexadecimalString: "34000300")!)!.status), .factoryCalibrated)
+        XCTAssertEqual(G7CalibrationRefusal(status: G7CalibrateRxMessage(data: Data(hexadecimalString: "34000500")!)!.status), .unknown(result: 5, detail: 0))
+
         XCTAssertNil(G7CalibrateRxMessage(data: Data(hexadecimalString: "3400")!))
         XCTAssertNil(G7CalibrateRxMessage(data: Data(hexadecimalString: "4e000100")!))
     }
@@ -61,6 +77,8 @@ final class G7CalibrationTests: XCTestCase {
         XCTAssertEqual(G7CalibrationRecord(rawValue: rejected.rawValue), rejected)
         let pending = G7CalibrationRecord(glucose: 118, enteredAt: Date())
         XCTAssertEqual(G7CalibrationRecord(rawValue: pending.rawValue), pending)
+        let expired = G7CalibrationRecord(glucose: 118, enteredAt: Date(), outcome: .expired(at: Date()))
+        XCTAssertEqual(G7CalibrationRecord(rawValue: expired.rawValue), expired)
         XCTAssertTrue(NSDictionary(dictionary: accepted.rawValue).isEqual(to: G7CalibrationRecord(rawValue: accepted.rawValue)!.rawValue))
     }
 
@@ -106,6 +124,30 @@ final class G7CalibrationTests: XCTestCase {
 
         manager.cancelPendingCalibration()
         XCTAssertNotNil(manager.calibration, "an answered calibration is not a pending one; cancelling leaves it")
+    }
+
+    func testManagerMarksAStaleCalibrationExpired() {
+        var state = G7CGMManagerState()
+        state.sessionMode = .direct
+        let sensor = G7Sensor(mode: .direct, credentials: state.sensorCredentials, bluetoothManager: TestBluetoothManager())
+        let manager = G7CGMManager(state: state, sensor: sensor)
+        let enteredAt = Date().addingTimeInterval(-G7Sensor.calibrationMaxAge - 60)
+        manager.calibrate(glucose: 105, at: enteredAt)
+
+        manager.sensor(sensor, didDiscardStaleCalibrationEnteredAt: enteredAt.addingTimeInterval(-1))
+        XCTAssertEqual(manager.calibration?.outcome, .pending, "only the calibration that was dropped is expired")
+
+        manager.sensor(sensor, didDiscardStaleCalibrationEnteredAt: enteredAt)
+        guard case .expired? = manager.calibration?.outcome else {
+            return XCTFail("expected the calibration to be expired")
+        }
+    }
+
+    func testDisplayTypeSurvivesARelaunch() {
+        var state = G7CGMManagerState()
+        state.displayType = .watch
+        XCTAssertEqual(G7CGMManagerState(rawValue: state.rawValue).displayType, .watch)
+        XCTAssertEqual(G7CGMManagerState(rawValue: [:]).displayType, .phone, "state saved before this field defaults to the phone slot")
     }
 
     func testCalibrationIsForgottenWithTheSensor() {

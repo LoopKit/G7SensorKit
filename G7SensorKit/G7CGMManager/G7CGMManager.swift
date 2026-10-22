@@ -244,6 +244,7 @@ public class G7CGMManager: CGMManager {
     public convenience init(sessionMode: G7SessionMode, displayType: G7DisplayType = .phone) {
         var state = G7CGMManagerState()
         state.sessionMode = sessionMode
+        state.displayType = displayType
         self.init(state: state, sensor: G7Sensor(mode: sessionMode, credentials: state.sensorCredentials, displayType: displayType))
     }
 
@@ -259,6 +260,7 @@ public class G7CGMManager: CGMManager {
         state.peripheralIdentifier = peripheralIdentifier
         state.sharedKey = sharedKey
         state.pairedAt = Date()
+        state.displayType = displayType
 
         let sensor: G7Sensor
         if let handoff = handoff {
@@ -275,7 +277,7 @@ public class G7CGMManager: CGMManager {
 
     public required convenience init?(rawState: RawStateValue) {
         let state = G7CGMManagerState(rawValue: rawState)
-        self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials))
+        self.init(state: state, sensor: G7Sensor(mode: state.sessionMode, credentials: state.sensorCredentials, displayType: state.displayType))
         sensor.needsVersionInfo = state.extendedVersion == nil || state.transmitterVersion == nil
     }
 
@@ -931,6 +933,14 @@ extension G7CGMManager: G7SensorDelegate {
         }
     }
 
+    public func sensor(_ sensor: G7Sensor, didDiscardStaleCalibrationEnteredAt date: Date) {
+        mutateState { state in
+            if state.calibration?.outcome == .pending, state.calibration?.enteredAt == date {
+                state.calibration?.outcome = .expired(at: Date())
+            }
+        }
+    }
+
     public func sensor(_ sensor: G7Sensor, didReadCalibrationBounds bounds: G7CalibrationBoundsMessage) {
         mutateState { state in
             state.calibrationBounds = bounds
@@ -1064,7 +1074,7 @@ extension G7CGMManager: G7SensorDelegate {
         case G7AuthenticatorError.rejected(_, .noAppKey):
             // Recovered unattended by the session; nothing for the user to do.
             return nil
-        case G7AuthenticatorError.rejected, G7AuthenticatorError.challengeMismatch, G7AuthenticatorError.unexpectedResponse:
+        case G7AuthenticatorError.rejected, G7AuthenticatorError.challengeMismatch, G7AuthenticatorError.unexpectedResponse, G7AuthenticatorError.storedKeyNotBonded:
             return String(describing: error)
         default:
             return nil
