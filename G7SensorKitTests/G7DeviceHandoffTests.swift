@@ -59,6 +59,17 @@ final class G7DeviceHandoffTests: XCTestCase {
         XCTAssertNil(configuration.deliveredUnits)
     }
 
+    func testSharingFollowsTheReadOnAppleWatchSetting() {
+        let manager = makeManager(state: phoneState)
+        XCTAssertFalse(manager.isConfigurationSharingEnabled, "off until the user turns it on")
+        manager.setWatchDirectReadEnabled(true)
+        XCTAssertTrue(manager.isConfigurationSharingEnabled)
+
+        XCTAssertTrue(makeManager(state: G7CGMManagerState(rawValue: manager.rawState)).isWatchDirectReadEnabled)
+        XCTAssertFalse(G7CGMManagerState(rawValue: manager.exportConfiguration().state).watchDirectReadEnabled,
+                       "the setting is this controller's own")
+    }
+
     func testTheExportIsStableWhileTheSensorIsUnchanged() {
         var state = phoneState
         let first = makeManager(state: state).exportConfiguration()

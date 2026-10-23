@@ -69,12 +69,17 @@ public protocol G7SensorDelegate: AnyObject {
 
     /// `needsCodeForSensor` or `isSearchingForSensor` changed. Optional.
     func sensorStatusDidChange(_ sensor: G7Sensor)
+
+    /// The key from a pairing whose Bluetooth bond was never confirmed was refused: the pairing did not
+    /// finish. The key has been discarded and the next connection pairs again. Optional.
+    func sensorPairingDidNotFinish(_ sensor: G7Sensor)
 }
 
 public extension G7SensorDelegate {
     func sensor(_ sensor: G7Sensor, logEvent line: String) {}
     func sensor(_ sensor: G7Sensor, didAdoptPeripheral identifier: UUID?) {}
     func sensorStatusDidChange(_ sensor: G7Sensor) {}
+    func sensorPairingDidNotFinish(_ sensor: G7Sensor) {}
 }
 
 public enum G7SensorError: Error {
@@ -170,6 +175,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     /// Used to detect connections that do not authenticate, signalling possible sensor switchover
     private var pendingAuth: Bool = false
+    /// The last fresh pairing ended without the sensor confirming its Bluetooth bond.
+    private var lastPairingBondUnconfirmed = false
 
     /// The backfill data buffer
     private var backfillBuffer: [G7BackfillMessage] = []
@@ -554,6 +561,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             case .success(let authResult):
                 self.pendingAuth = false
                 if authResult.didExchangeKeys {
+                    self.lastPairingBondUnconfirmed = authResult.bondUnconfirmed
                     self.mutateCredentials { $0.sharedKey = authResult.sharedKey }
                     self.delegateQueue.async {
                         self.delegate?.sensor(
@@ -676,9 +684,12 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
            lockedCredentials.value.pairingCode != nil
         {
             log.default("Discarding the stored shared key; the next connection will re-run the key exchange")
+            let pairingUnfinished = lastPairingBondUnconfirmed
+            lastPairingBondUnconfirmed = false
             mutateCredentials { $0.sharedKey = nil }
             delegateQueue.async {
                 self.delegate?.sensorDidInvalidateSharedKey(self)
+                if pairingUnfinished { self.delegate?.sensorPairingDidNotFinish(self) }
             }
             return
         }

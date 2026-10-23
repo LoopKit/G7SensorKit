@@ -63,6 +63,7 @@ class G7SettingsViewModel: ObservableObject {
     /// ever types into — once per sensor.
     @Published private(set) var watchPairingCodeStatus: G7CGMManager.WatchPairingCodeStatus = .noSensor
     @Published var watchPairingCodeEntry: String = ""
+    @Published private(set) var watchDirectReadEnabled = false
     
     let displayGlucosePreference: DisplayGlucosePreference
 
@@ -148,6 +149,7 @@ class G7SettingsViewModel: ObservableObject {
         shareServer = cgmManager.shareAccount?.server
         shareUploadStatus = cgmManager.shareUploadStatus
         watchPairingCodeStatus = cgmManager.watchPairingCodeStatus
+        watchDirectReadEnabled = cgmManager.isWatchDirectReadEnabled
     }
 
     // MARK: - Dexcom Share
@@ -168,19 +170,25 @@ class G7SettingsViewModel: ObservableObject {
 
     // MARK: - Watch direct read
 
-    /// The pairing-code section is offered only when a paired watch has the companion app
-    /// installed; a phone without the watch app sees exactly the stock screen.
+    /// Offered when a paired watch has the app installed, or while it is on; otherwise the screen is
+    /// unchanged.
     var showsWatchDirectRead: Bool {
+        if watchDirectReadEnabled { return true }
         guard WCSession.isSupported() else { return false }
         let session = WCSession.default
         return session.activationState == .activated && session.isPaired && session.isWatchAppInstalled
     }
 
+    func setWatchDirectReadEnabled(_ enabled: Bool) {
+        cgmManager.setWatchDirectReadEnabled(enabled)
+        updateValues()
+    }
+
     var watchPairingCodeStatusText: String {
         switch watchPairingCodeStatus {
-        case .noSensor: return "no sensor"
-        case .needsCode: return "needs code"
-        case .saved: return "saved"
+        case .noSensor: return LocalizedString("No sensor", comment: "Watch direct read pairing code status when there is no sensor")
+        case .needsCode: return LocalizedString("Needed", comment: "Watch direct read pairing code status when the code has not been entered")
+        case .saved: return LocalizedString("Saved", comment: "Watch direct read pairing code status when the code has been entered")
         }
     }
 

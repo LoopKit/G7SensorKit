@@ -77,6 +77,8 @@ public class G7CGMManager: CGMManager {
     /// build may have left scheduled. Done on the first reading, when the
     /// delegate is known to be set.
     private var didRetractLegacySignalLoss = false
+    /// The unfinished-pairing alert is up; retracted at the next reading.
+    private var pairingUnfinishedAlertPending = false
 
     /// Sends readings to Dexcom Share while an account is signed in.
     private var shareUploader: G7ShareUploader?
@@ -338,6 +340,15 @@ public class G7CGMManager: CGMManager {
     // MARK: - The pairing code another controller needs (entered here; travels in the export)
 
     public enum WatchPairingCodeStatus: Equatable { case noSensor, needsCode, saved }
+
+    /// The Read on Apple Watch setting: the host passes this sensor to its watch only while it is on.
+    public var isWatchDirectReadEnabled: Bool { state.watchDirectReadEnabled }
+
+    public func setWatchDirectReadEnabled(_ enabled: Bool) {
+        guard enabled != state.watchDirectReadEnabled else { return }
+        mutateState { $0.watchDirectReadEnabled = enabled }
+        logDeviceCommunication("direct-read: Read on Apple Watch turned \(enabled ? "on" : "off")", type: .connection)
+    }
 
     /// The current sensor's code state, for the settings row. The phone keeps its own session
     /// mode; the code is what the watch needs to read this sensor when the phone is away.
@@ -841,9 +852,9 @@ extension G7CGMManager: G7SensorDelegate {
             scheduleSessionTimedAlerts()
             if watchCodeToReplace {
                 let content = Alert.Content(
-                    title: "New sensor \(name)",
-                    body: "Enter its pairing code in Loop ▸ Dexcom G7 so the watch can read it without your phone. The code is shown in the Dexcom app.",
-                    acknowledgeActionButtonLabel: "OK")
+                    title: String(format: LocalizedString("New Sensor %1$@", comment: "Alert title asking for a new G7's pairing code for the watch (1: sensor name)"), name),
+                    body: LocalizedString("Enter its pairing code in the Dexcom G7 settings so the watch can read it without your phone. The code is shown in the Dexcom app.", comment: "Alert body asking for a new G7's pairing code for the watch"),
+                    acknowledgeActionButtonLabel: LocalizedString("OK", comment: "Alert acknowledgment button label"))
                 let alert = Alert(identifier: Alert.Identifier(managerIdentifier: pluginIdentifier, alertIdentifier: "directRead.codeNeeded"),
                                   foregroundContent: content, backgroundContent: content, trigger: .immediate)
                 delegate.notify { delegate in
@@ -883,6 +894,12 @@ extension G7CGMManager: G7SensorDelegate {
         mutateState { state in
             state.sharedKey = nil
         }
+    }
+
+    public func sensorPairingDidNotFinish(_ sensor: G7Sensor) {
+        logDeviceCommunication("The last pairing did not finish (its Bluetooth bond was never confirmed); the next connection pairs again, with the app open", type: .connection)
+        pairingUnfinishedAlertPending = true
+        issueLifecycleAlert(.pairingUnfinished)
     }
 
     public func sensor(_ sensor: G7Sensor, didReceive transmitterVersion: TransmitterVersionMessage) {
@@ -1211,6 +1228,10 @@ extension G7CGMManager: G7SensorDelegate {
             }
             retractLifecycleAlert(.connectionRefused)
         }
+        if pairingUnfinishedAlertPending {
+            pairingUnfinishedAlertPending = false
+            retractLifecycleAlert(.pairingUnfinished)
+        }
         if !didRetractLegacySignalLoss {
             didRetractLegacySignalLoss = true
             retractLifecycleAlert(.signalLoss)
@@ -1419,5 +1440,8 @@ extension G7CGMManager: DeviceConfigurationSharing {
     public func exportConfiguration() -> SharedDeviceConfiguration {
         SharedDeviceConfiguration(managerIdentifier: pluginIdentifier, asOf: Date(), state: state.sharedState)
     }
+
+    /// The user's Read on Apple Watch setting.
+    public var isConfigurationSharingEnabled: Bool { isWatchDirectReadEnabled }
 
 }
