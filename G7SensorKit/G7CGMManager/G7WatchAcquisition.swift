@@ -19,7 +19,10 @@ import os.log
 /// restoration relaunches the app for each link. Runs on the bluetooth manager's queue.
 final class G7WatchAcquisition: G7AcquisitionArm {
     /// Link-up → the ~3.5-s read, the sensor's close, and its 20–24-s advertising tail all sit inside
-    /// 35 s. A request that lands after this never reconnects into the tail.
+    /// 35 s. A request that lands after this never reconnects into the tail. Don't shorten it or connect
+    /// sooner: the sensor drops a link made while it advertises for another display, watchOS counts that as
+    /// a poor connection, and after enough of them connects only at very high signal strength. The
+    /// CoreBluetooth start-delay option doesn't help: it doesn't seem to work on the watch.
     static let tailClearanceSeconds: TimeInterval = 35
     /// The sensor's own cadence: one reading every 300 s.
     static let period: TimeInterval = 300
@@ -68,6 +71,12 @@ final class G7WatchAcquisition: G7AcquisitionArm {
     /// The last reading's sensor timestamp, for the 3-miss test. Seeded at launch from the
     /// manager's persisted `latestReadingTimestamp`.
     private var lastReadingAt: Date?
+    /// Misses count from here at the earliest: a request this manager never lodged can't have missed a
+    /// burst. A fresh manager otherwise counted from a long-stale saved reading and scanned at once.
+    private let startedAt = Date()
+    /// A restored connect or close is being cancelled; its follow-up lodges.
+    private var settlingRestoredPeripheral = false
+    private var settlingRestoredClose = false
 
     init(manager: G7BluetoothManager) {
         self.manager = manager
@@ -96,7 +105,7 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         adopt(peripheral)
         // Three bursts missed with a request standing: presume the identifier stale and scan once.
         // A pass restarts the count, so an absent sensor is scanned for once per three bursts.
-        let reference = [lastReadingAt, lastBootstrapAt].compactMap { $0 }.max()
+        let reference = [lastReadingAt, lastBootstrapAt, startedAt].compactMap { $0 }.max()
         let missed = G7WatchAcquisition.missedBursts(since: reference)
         if !bootstrapPass, peripheral.state != .connected, missed >= G7WatchAcquisition.missedBurstsBeforeBootstrap {
             if peripheral.state == .connecting { central.cancelPeripheralConnection(peripheral) }
@@ -112,6 +121,13 @@ final class G7WatchAcquisition: G7AcquisitionArm {
     /// that never comes (2026-10-05: a cancelled restored connect went unanswered for an hour) leaves
     /// nothing lodged and nothing scheduled to notice. A pass in progress already owns acquisition.
     func recheck() {
+        // The pass's timer runs only while the app does: a pass the app was suspended in outlives its cap
+        // and turns every wake away. The first wake past the cap ends it, which lodges again.
+        if bootstrapPass, let started = lastBootstrapAt,
+           Date().timeIntervalSince(started) > G7WatchAcquisition.bootstrapScanCap {
+            endBootstrapPass(reason: "cap passed while the app was asleep")
+            return
+        }
         guard !bootstrapPass else { return }
         scan()
     }
@@ -133,6 +149,12 @@ final class G7WatchAcquisition: G7AcquisitionArm {
     /// Returns true when the arm owns what happens next (the adopted sensor closed the link).
     func disconnected(_ peripheral: CBPeripheral, error: Error?) -> Bool {
         guard peripheral.identifier == manager.activePeripheralIdentifier else { return false }
+        // Our cancel of a restored connect: there was no link, so no tail to wait out. The settle's
+        // look lodges at once.
+        if linkUpAt == nil, settlingRestoredPeripheral, !settlingRestoredClose {
+            lodged = false; lodgedAt = nil
+            return true
+        }
         let sinceLinkUp = linkUpAt.map { Date().timeIntervalSince($0) } ?? 0
         linkUpAt = nil; lodged = false; lodgedAt = nil
         guard !bootstrapPass else { return false }
@@ -220,17 +242,15 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         case .connected:     return
         case .connecting:
             // Not ours (ours sets `lodged`): a restored request bluetoothd no longer held cost eight hours
-            // with no link (2026-09-16). Cancel it and lodge our own; the timer covers a silent cancel.
-            watchLog("restored as connecting with no request of ours — cancelling it and lodging a fresh connect")
-            central.cancelPeripheralConnection(peripheral)
-            let id = peripheral.identifier
-            queue.asyncAfter(deadline: .now() + 2) { [weak self] in
-                guard let self, !self.lodged,
-                      let p = self.central.retrievePeripherals(withIdentifiers: [id]).first, p.state == .disconnected else { return }
-                self.lodge(p, why: "after cancelling a restored connect the daemon did not hold")
-            }
+            // with no link (2026-09-16). Cancel it and lodge our own.
+            settleRestoredPeripheral(peripheral)
             return
-        case .disconnecting: return   // the close callback lodges: a connect issued during a cancel is lost inside CoreBluetooth
+        case .disconnecting:
+            // Ours: the close callback lodges, as a connect issued during a cancel is lost inside CoreBluetooth.
+            // Restored as disconnecting, the close is one this process never hears of (2026-10-18: no reading
+            // for 55 min until the app was opened).
+            if linkUpAt == nil { settleRestoredPeripheral(peripheral) }
+            return
         default:             break
         }
         if let delegate = manager.delegate, !delegate.bluetoothManagerCanAuthenticate(manager) {
@@ -244,6 +264,50 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         lodged = true; lodgedAt = Date()
         central.connect(peripheral, options: nil)
         watchLog("lodged — \(why) · the app may suspend")
+    }
+
+    /// A peripheral restored as connecting or disconnecting, with no request or close of ours: cancel it, look
+    /// again after 2 s and 7 s, then lodge our own. A restored close ends a link, so the sensor may still be
+    /// advertising for another display: that lodge waits out the tail like any other close. The process is
+    /// held for the looks, or watchOS can suspend it with nothing lodged.
+    private func settleRestoredPeripheral(_ peripheral: CBPeripheral) {
+        dispatchPrecondition(condition: .onQueue(queue))
+        guard !settlingRestoredPeripheral else { return }
+        settlingRestoredPeripheral = true
+        let wasClosing = peripheral.state == .disconnecting
+        settlingRestoredClose = wasClosing
+        let restored = wasClosing ? "disconnecting" : "connecting"
+        watchLog("restored as \(restored) with no request of ours — cancelling it")
+        central.cancelPeripheralConnection(peripheral)
+        let id = peripheral.identifier
+        let release = holdProcess(reason: "G7 settling a restored connection", upTo: 10)
+        func look(after delay: TimeInterval, last: Bool) {
+            queue.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self else { return release() }
+                let finish = { self.settlingRestoredPeripheral = false; self.settlingRestoredClose = false; release() }
+                // a callback or a request of our own came first
+                guard !self.lodged, !self.holdPending,
+                      let p = self.central.retrievePeripherals(withIdentifiers: [id]).first, p.state != .connected
+                else { return finish() }
+                if !last, p.state != .disconnected {
+                    self.central.cancelPeripheralConnection(p)
+                    look(after: 5, last: true)
+                    return
+                }
+                finish()
+                if wasClosing {
+                    self.relodge(p, sinceLinkUp: 0, why: "after cancelling a restored close")
+                } else if p.state == .disconnected {
+                    self.lodge(p, why: "after cancelling a restored connect")
+                } else {
+                    // A connect on a connecting peripheral stands a request of ours either way.
+                    self.lodged = true; self.lodgedAt = Date()
+                    self.central.connect(p, options: nil)
+                    self.watchLog("restored connect still pending after the cancel — lodged our own over it")
+                }
+            }
+        }
+        look(after: 2, last: false)
     }
 
     /// performExpiringActivity, once-only: `onEnd` runs when `wait` elapses, when the system ends the
@@ -310,11 +374,11 @@ final class G7WatchAcquisition: G7AcquisitionArm {
 public enum G7WatchDirectRead {
     /// Glance note while the watch scans for a sensor it has never connected to.
     public static func searchingNote(_ searching: Bool) -> String? {
-        searching ? "Looking for your sensor. Keep Loop open — this takes about 5 minutes. If your watch asks to pair with the sensor, accept." : nil
+        searching ? LocalizedString("Looking for your sensor. Keep the app open; this takes about 5 minutes. If your watch asks to pair with the sensor, accept.", comment: "Watch note while it searches for a G7 it has never connected to") : nil
     }
 
     /// Glance note while a code is missing.
     public static func needsCodeNote(for sensor: String?) -> String? {
-        sensor.map { "Sensor code needed for \($0) — enter it in Loop ▸ Dexcom G7 on the phone (it is shown in the Dexcom app)." }
+        sensor.map { String(format: LocalizedString("Sensor code needed for %1$@. Enter it in the Dexcom G7 settings on your phone; it is shown in the Dexcom app.", comment: "Watch note when the watch has no pairing code for the G7 (1: sensor name)"), $0) }
     }
 }
