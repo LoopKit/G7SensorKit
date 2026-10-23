@@ -39,21 +39,11 @@ public enum G7ShareError: Error, Equatable {
     public static let receiverSerialMismatch = "MonitoredReceiverSerialNumberDoesNotMatch"
     public static let monitoringSessionNotActive = "MonitoringSessionNotActive"
     public static let duplicateEgvPosted = "DuplicateEgvPosted"
-    public static let contactNameTaken = "ContactNameAlreadyExists"
 
-    /// CreateSubscriptionInvitation's refusal while a new contact has not
-    /// reached it yet ("Failed to read Contact by id").
-    public var isContactNotFound: Bool {
-        serviceCode?.localizedCaseInsensitiveContains("ContactIdNotFound") == true
-    }
-
-    /// CreateContact's refusal when the account already has a contact of
-    /// that name ("The contact name already exists for this account").
-    public var isContactNameTaken: Bool {
-        guard case .service(let code, let message) = self else { return false }
-        return code.localizedCaseInsensitiveContains("ContactNameAlreadyExists")
-            || code.localizedCaseInsensitiveContains("ContactAlreadyExists")
-            || (message ?? "").localizedCaseInsensitiveContains("contact name already exists")
+    /// The account's monitored device is not this serial, e.g. after a
+    /// sensor change.
+    public var isReceiverRefused: Bool {
+        serviceCode == G7ShareError.receiverNotAssigned || serviceCode == G7ShareError.receiverSerialMismatch
     }
 
     /// Starting a monitoring session when one is already running is refused
@@ -139,41 +129,6 @@ public struct G7ShareReading: Equatable {
     }
 }
 
-/// A follower, as the service lists it.
-public struct G7ShareFollower: Equatable, Identifiable {
-    public let contactId: String
-    public let subscriptionId: String?
-    public let contactName: String
-    public let displayName: String?
-    public let state: String?
-    public let permissions: Int?
-
-    public var id: String { contactId }
-}
-
-/// The alert settings a follower starts with; the follower can change them
-/// in the Follow app. Values are mg/dL and ISO 8601 durations.
-public struct G7ShareFollowerAlerts: Equatable {
-    public var highEnabled = false
-    public var highThreshold = 200
-    public var lowEnabled = false
-    public var lowThreshold = 70
-    public var urgentLowEnabled = true
-    public var urgentLowThreshold = 55
-    public var noDataEnabled = false
-
-    public init() {}
-
-    var json: [String: Any] {
-        [
-            "HighAlert": ["MinValue": highThreshold, "MaxValue": 401, "AlarmDelay": "PT1H", "RealarmDelay": "PT2H", "AlertType": 1, "IsEnabled": highEnabled, "Sound": "High.wav"],
-            "LowAlert": ["MinValue": 39, "MaxValue": lowThreshold, "AlarmDelay": "PT30M", "RealarmDelay": "PT2H", "AlertType": 2, "IsEnabled": lowEnabled, "Sound": "Low.wav"],
-            "FixedLowAlert": ["MinValue": 39, "MaxValue": urgentLowThreshold, "AlarmDelay": "PT0M", "RealarmDelay": "PT30M", "AlertType": 3, "IsEnabled": urgentLowEnabled, "Sound": "UrgentLow.wav"],
-            "NoDataAlert": ["MinValue": 39, "MaxValue": 401, "AlarmDelay": "PT1H", "RealarmDelay": "PT0M", "AlertType": 4, "IsEnabled": noDataEnabled, "Sound": "NoData.wav"],
-        ]
-    }
-}
-
 /// Talks to the Share service for one account. Signs in on demand and
 /// keeps the session id; `sessionId` is nil until the first call.
 public final class G7ShareClient {
@@ -231,21 +186,11 @@ public final class G7ShareClient {
 
     // MARK: - Uploading
 
-    /// Whether the service has this serial as the account's monitored
-    /// device: "AssignedToYou", "NotAssigned", or assigned elsewhere.
-    public func receiverAssignment(serial: String) async throws -> String {
-        let sessionId = try await requireSession()
-        return try await post("Publisher/CheckMonitoredReceiverAssignmentStatus", query: ["sessionId": sessionId, "serialNumber": serial])
-    }
-
+    /// Makes this serial the account's monitored device, replacing whatever
+    /// was registered before.
     public func assignReceiver(serial: String) async throws {
         let sessionId = try await requireSession()
         try await postExpectingNothing("Publisher/ReplacePublisherAccountMonitoredReceiver", query: ["sessionId": sessionId, "serialNumber": serial])
-    }
-
-    public func isRemoteMonitoringSessionActive() async throws -> Bool {
-        let sessionId = try await requireSession()
-        return try await post("Publisher/IsRemoteMonitoringSessionActive", query: ["sessionId": sessionId])
     }
 
     public func startRemoteMonitoringSession(serial: String) async throws {
@@ -262,94 +207,6 @@ public final class G7ShareClient {
     /// use it for anything.
     static func readingsPayload(_ readings: [G7ShareReading], serial: String) -> [String: Any] {
         ["SN": serial, "Egvs": readings.map(\.json), "TA": -5]
-    }
-
-    // MARK: - Followers
-
-    public func listFollowers() async throws -> [G7ShareFollower] {
-        let sessionId = try await requireSession()
-        let entries: [[String: Any]] = try await post("Publisher/ListPublisherAccountSubscriptions", query: ["sessionId": sessionId])
-        return entries.compactMap { entry in
-            guard let contactId = entry["ContactId"] as? String else { return nil }
-            return G7ShareFollower(
-                contactId: contactId,
-                subscriptionId: entry["SubscriptionId"] as? String,
-                contactName: entry["ContactName"] as? String ?? "",
-                displayName: entry["DisplayName"] as? String,
-                state: (entry["State"] as? String) ?? (entry["State"] as? Int).map(String.init),
-                permissions: entry["Permissions"] as? Int
-            )
-        }
-    }
-
-    /// Invites someone to follow: a contact is created for them and an
-    /// invitation attached to it, which the service emails. Returns the
-    /// contact id, which is also what removes them.
-    public func inviteFollower(name: String, email: String, displayName: String, alerts: G7ShareFollowerAlerts = G7ShareFollowerAlerts()) async throws -> String {
-        let sessionId = try await requireSession()
-        let contactId: String
-        var createdContact = false
-        do {
-            contactId = try await post("Publisher/CreateContact", query: ["sessionId": sessionId, "contactName": name, "emailAddress": email])
-            createdContact = true
-        } catch let error as G7ShareError where error.isContactNameTaken {
-            // A contact of that name is already on the account, e.g. from an
-            // invitation that did not complete. Reuse it.
-            guard let existing = try await existingContactId(named: name, sessionId: sessionId) else {
-                throw G7ShareError.service(code: G7ShareError.contactNameTaken, message: LocalizedString("A contact with this name was left on the account by an earlier invitation that did not complete, and it cannot be reused. Invite them under a slightly different name.", comment: "Share error: contact name taken by an orphaned contact"))
-            }
-            logHandler?("Reusing existing contact \(existing) for \(name)")
-            contactId = existing
-        }
-
-        let invitation: [String: Any] = [
-            "AlertSettings": alerts.json,
-            "Permissions": 1,
-            "DisplayName": displayName,
-        ]
-        // A contact that was just created takes the invitation side of the
-        // service a while to see (DeleteContact knows it at once; observed
-        // 2 s not always being enough), so keep trying with a growing wait.
-        // If it never appears, take the contact back out so the name is free
-        // for another attempt.
-        var attempt = 0
-        while true {
-            do {
-                try await createInvitation(contactId: contactId, sessionId: sessionId, body: invitation)
-                return contactId
-            } catch let error as G7ShareError where error.isContactNotFound && attempt < G7ShareClient.invitationRetryDelays.count {
-                let delay = G7ShareClient.invitationRetryDelays[attempt]
-                attempt += 1
-                logHandler?("Contact not visible to the invitation yet; retrying in \(Int(delay)) s")
-                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-            } catch {
-                if createdContact {
-                    logHandler?("Invitation failed; removing the contact just created")
-                    try? await removeFollower(contactId: contactId)
-                }
-                throw error
-            }
-        }
-    }
-
-    /// The id of an existing contact, by name, among the followers. A
-    /// contact with no subscription cannot be found: `ReadContactByName`
-    /// belongs to the newer request generation and wants a signed request
-    /// ("String parameter 'signedRequest' cannot be null"), signed with a
-    /// key the Dexcom app holds.
-    private func existingContactId(named name: String, sessionId: String) async throws -> String? {
-        try await listFollowers().first(where: { $0.contactName.caseInsensitiveCompare(name) == .orderedSame })?.contactId
-    }
-
-    static let invitationRetryDelays: [TimeInterval] = [2, 4, 8]
-
-    private func createInvitation(contactId: String, sessionId: String, body: [String: Any]) async throws {
-        let _: String = try await post("Publisher/CreateSubscriptionInvitation", query: ["sessionId": sessionId, "contactId": contactId], body: body)
-    }
-
-    public func removeFollower(contactId: String) async throws {
-        let sessionId = try await requireSession()
-        try await postExpectingNothing("Publisher/DeleteContact", query: ["sessionId": sessionId, "contactId": contactId])
     }
 
     // MARK: - Transport

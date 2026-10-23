@@ -469,11 +469,6 @@ if viewModel.sessionMode == .eavesdropping {
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
-                if let client = viewModel.shareClient {
-                    NavigationLink(destination: G7ShareFollowersView(client: client)) {
-                        Text(LocalizedString("Followers", comment: "Row label opening the followers page"))
-                    }
-                }
                 Button(action: viewModel.signOutOfShare) {
                     Text(LocalizedString("Sign Out", comment: "Button title to sign out of Dexcom Share"))
                         .foregroundColor(guidanceColors.critical)
