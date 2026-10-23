@@ -116,6 +116,43 @@ final class G7ShareTests: XCTestCase {
         XCTAssertEqual(G7ShareStubProtocol.requestedPaths.filter { $0 == "Publisher/ReplacePublisherAccountMonitoredReceiver" }.count, 1)
     }
 
+    func testUploadRegistersSensorWhenMonitoringStartIsRefused() {
+        G7ShareStubProtocol.responses = [
+            .string("account"), .string("session"),
+            .refusal("MonitoringSessionNotActive"),
+            .refusal("MonitoredReceiverNotAssigned"), .empty,
+            .refusal("MonitoringSessionNotActive"), .empty,
+            .empty,
+        ]
+        let status = runUpload()
+        XCTAssertNotNil(status.lastUploadAt)
+        XCTAssertEqual(G7ShareStubProtocol.requestedPaths, [
+            "General/AuthenticatePublisherAccount",
+            "General/LoginPublisherAccountById",
+            "Publisher/PostReceiverEgvRecords",
+            "Publisher/StartRemoteMonitoringSession",
+            "Publisher/ReplacePublisherAccountMonitoredReceiver",
+            "Publisher/PostReceiverEgvRecords",
+            "Publisher/StartRemoteMonitoringSession",
+            "Publisher/PostReceiverEgvRecords",
+        ])
+    }
+
+    func testUploadDoesNotTakeTheDeviceBackOnceRegistered() {
+        let uploader = makeUploader()
+        G7ShareStubProtocol.responses = [
+            .string("account"), .string("session"),
+            .refusal("MonitoredReceiverNotAssigned"), .empty, .empty,
+        ]
+        XCTAssertNotNil(runUpload(uploader, readingAt: Date(timeIntervalSinceNow: -300)).lastUploadAt)
+
+        G7ShareStubProtocol.requestedPaths = []
+        G7ShareStubProtocol.responses = [.refusal("MonitoredReceiverNotAssigned")]
+        let status = runUpload(uploader, readingAt: Date(), until: { $0.lastError != nil })
+        XCTAssertNotNil(status.lastError)
+        XCTAssertEqual(G7ShareStubProtocol.requestedPaths, ["Publisher/PostReceiverEgvRecords"])
+    }
+
     func testUploadSignsInAgainWhenSessionLapses() {
         G7ShareStubProtocol.responses = [
             .string("account"), .string("session"),
@@ -128,21 +165,32 @@ final class G7ShareTests: XCTestCase {
         XCTAssertEqual(G7ShareStubProtocol.requestedPaths.filter { $0 == "Publisher/PostReceiverEgvRecords" }.count, 2)
     }
 
-    private func runUpload() -> G7ShareUploadStatus {
+    private func makeUploader() -> G7ShareUploader {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [G7ShareStubProtocol.self]
         let client = G7ShareClient(credentials: G7ShareCredentials(username: "user", password: "pass", server: .us), session: URLSession(configuration: configuration))
         let uploader = G7ShareUploader(client: client, uploadedThrough: nil)
         uploader.serial = "123456789012"
-        let finished = expectation(description: "upload finished")
+        return uploader
+    }
+
+    private func runUpload(
+        _ uploader: G7ShareUploader? = nil,
+        readingAt date: Date = Date(),
+        until finished: @escaping (G7ShareUploadStatus) -> Bool = { $0.lastUploadAt != nil || $0.lastError != nil }
+    ) -> G7ShareUploadStatus {
+        let uploader = uploader ?? makeUploader()
+        let done = expectation(description: "upload finished")
         var result = G7ShareUploadStatus()
+        var reported = false
         uploader.onStatusChange = { status, _ in
-            guard status.lastUploadAt != nil || status.lastError != nil else { return }
+            guard !reported, finished(status) else { return }
+            reported = true
             result = status
-            finished.fulfill()
+            done.fulfill()
         }
-        uploader.enqueue([G7ShareReading(date: Date(), glucose: 120, trend: .flat)])
-        wait(for: [finished], timeout: 5)
+        uploader.enqueue([G7ShareReading(date: date, glucose: 120, trend: .flat)])
+        wait(for: [done], timeout: 5)
         return result
     }
 }

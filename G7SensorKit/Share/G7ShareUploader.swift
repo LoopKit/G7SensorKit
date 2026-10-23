@@ -35,7 +35,9 @@ final class G7ShareUploader {
     private var pending: [G7ShareReading] = []
     private var uploadedThrough: Date?
     /// The serial last registered as the account's device, so a refusal for
-    /// it is not answered by registering it again.
+    /// it is not answered by registering it again. Kept until relaunch or a
+    /// new sign-in: if the Dexcom app takes the account's device back, we
+    /// let it rather than taking turns with it.
     private var assignedSerial: String?
     private var task: Task<Void, Never>?
     private(set) var status = G7ShareUploadStatus()
@@ -121,21 +123,30 @@ final class G7ShareUploader {
         case assignReceiver
     }
 
+    /// Posts, answering each refusal with its recovery, including a refusal of
+    /// a recovery itself (a monitoring session refused because the sensor is
+    /// not registered yet). Each recovery runs once per attempt, except that a
+    /// new registration may need a new monitoring session.
     private func upload(_ batch: [G7ShareReading], serial: String) async -> Result<Void, Error> {
         var attempted: Set<Recovery> = []
+        var next: Recovery?
         while true {
             do {
+                if let recovery = next {
+                    next = nil
+                    try await perform(recovery, serial: serial)
+                    if recovery == .assignReceiver {
+                        attempted.remove(.startMonitoring)
+                    }
+                    continue
+                }
                 try await post(batch, serial: serial)
                 return .success(())
             } catch let error as G7ShareError {
                 guard let recovery = recovery(for: error, serial: serial), attempted.insert(recovery).inserted else {
                     return .failure(error)
                 }
-                do {
-                    try await perform(recovery, serial: serial)
-                } catch {
-                    return .failure(error)
-                }
+                next = recovery
             } catch {
                 return .failure(error)
             }
