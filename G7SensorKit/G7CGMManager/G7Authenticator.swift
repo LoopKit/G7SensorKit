@@ -124,6 +124,9 @@ final class G7Authenticator {
         /// or could not be verified. Only meaningful after a fresh pairing (a
         /// reconnect does not re-exchange certificates); `.unverified` then.
         let authenticity: G7SensorAuthenticity
+        /// The sensor dropped the link before confirming the Bluetooth bond. The key holds only if the
+        /// system pairing went through; with the app in the background it can't, and the sensor discards it.
+        var bondUnconfirmed = false
     }
 
     /// Per-step response deadline for a reconnect. Short: the link is up and
@@ -249,7 +252,7 @@ final class G7Authenticator {
             return Result(sharedKey: sharedKey, deviceName: peripheral.peripheral.name, didExchangeKeys: didExchangeKeys, authenticity: .unverified)
         }
 
-        if !didExchangeKeys {
+        if !didExchangeKeys, !status.isAuthenticated {
             // A reconnect that got this far without being authenticated has a
             // key the sensor no longer honours. Re-pairing is the only fix,
             // and the caller decides whether it can do that unattended.
@@ -257,9 +260,17 @@ final class G7Authenticator {
         }
 
         report("Running the certificate exchange (auth=\(status.authStatus) bond=\(status.bondStatus))")
-        try exchangeCertificates(peripheral, authentication: authentication)
-        try answerKeyChallenge(peripheral, authentication: authentication)
-        try finalizeAndBond(peripheral, authentication: authentication)
+        let bonded: Bool
+        do {
+            try exchangeCertificates(peripheral, authentication: authentication)
+            try answerKeyChallenge(peripheral, authentication: authentication)
+            bonded = try finalizeAndBond(peripheral, authentication: authentication)
+        } catch where !didExchangeKeys {
+            // Authenticated but not bonded on a reconnect (05 01 02 after the system bond was lost): the key
+            // still holds, so the certificate phase bonds again. If that fails, pair again as before.
+            report("Bonding again with the saved key failed: \(error)")
+            throw G7AuthenticatorError.storedKeyNotBonded(authStatus: status.authStatus, bondStatus: status.bondStatus)
+        }
 
         let authenticity = evaluateAuthenticity()
         report("Sensor authenticity: \(authenticity.rawValue)")
@@ -267,7 +278,8 @@ final class G7Authenticator {
             sharedKey: sharedKey,
             deviceName: peripheral.peripheral.name,
             didExchangeKeys: didExchangeKeys,
-            authenticity: authenticity
+            authenticity: authenticity,
+            bondUnconfirmed: !bonded
         )
     }
 
@@ -290,9 +302,29 @@ final class G7Authenticator {
         }
         let jpake = G7JPAKE(pairingCode: pairingCode)
 
-        let sensorRound1 = try exchangeRound(peripheral, round: 0, ours: jpake.makeRound1())
-        let sensorRound2 = try exchangeRound(peripheral, round: 1, ours: jpake.makeRound2())
+        // The sensor drops the link after about four seconds without a reply, so everything we can
+        // compute ahead of its request is computed ahead of it.
+        let computeStart = Date()
+        let ourRound1 = jpake.makeRound1()
+        let ourRound2 = jpake.makeRound2()
+        let precomputeSeconds = Date().timeIntervalSince(computeStart)
+
+        let sensorRound1 = try exchangeRound(peripheral, round: 0, ours: ourRound1)
+        let sensorRound2 = try exchangeRound(peripheral, round: 1, ours: ourRound2)
+
+        let round3Start = Date()
+        let ourRound3 = try jpake.makeRound3(peerRound1: sensorRound1, peerRound2: sensorRound2)
+        let round3Seconds = Date().timeIntervalSince(round3Start)
+
         let sensorRound3 = try requestSensorRound(peripheral, round: 2)
+
+        let deriveStart = Date()
+        let secret = try jpake.deriveSharedSecret(peerRound2: sensorRound2, peerRound3: sensorRound3)
+        try peripheral.writeCertificateBytes(ourRound3)
+        let deriveSeconds = Date().timeIntervalSince(deriveStart)
+
+        report(String(format: "Key exchange complete (compute: rounds 1-2 %.0f ms before the first request, round 3 %.0f ms, secret %.0f ms)",
+                      precomputeSeconds * 1000, round3Seconds * 1000, deriveSeconds * 1000))
 
         // Advisory only: the sensor does not require us to check its proofs,
         // and the AES challenge below is the real gate. On hardware they do
@@ -305,13 +337,6 @@ final class G7Authenticator {
         if !proofsVerified {
             report("Key exchange: the sensor's proofs did not verify under our transcript format (advisory)")
         }
-
-        // Derive before sending our own round 3: the sensor may drop the link
-        // as soon as it has what it needs.
-        let secret = try jpake.deriveSharedSecret(peerRound2: sensorRound2, peerRound3: sensorRound3)
-        try peripheral.writeCertificateBytes(jpake.makeRound3(peerRound1: sensorRound1, peerRound2: sensorRound2))
-
-        report("Key exchange complete")
         return secret.prefix(16)
     }
 
@@ -462,7 +487,8 @@ final class G7Authenticator {
 
     // MARK: - Finalize
 
-    private func finalizeAndBond(_ peripheral: G7PeripheralManager, authentication: G7AuthMessageBuffer) throws {
+    /// - Returns: false when the sensor dropped the link before confirming the bond.
+    private func finalizeAndBond(_ peripheral: G7PeripheralManager, authentication: G7AuthMessageBuffer) throws -> Bool {
         report("Finalizing")
         try peripheral.writeValue(Data([0x06, 0x1E]), for: .authentication, type: .withResponse)
         _ = try waitForAuthentication(authentication, prefix: 0x06, step: "finalize")
@@ -485,10 +511,13 @@ final class G7Authenticator {
         if let confirmation = confirmation {
             report("Bonded (\(confirmation.match.hexadecimalString))")
         } else if peripheral.peripheral.state != .connected {
-            report("The sensor dropped the link after the bond request; the key is installed and the next connection will use it")
+            report("The sensor dropped the link after the bond request. The key holds only if the Bluetooth pairing "
+                + "went through; if not, the next connection finds it refused and pairs again")
+            return false
         } else {
             report("No bond confirmation arrived; continuing, since the handshake already succeeded")
         }
+        return true
     }
 
     // MARK: - Waiting
