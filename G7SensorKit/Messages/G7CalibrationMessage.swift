@@ -117,7 +117,7 @@ public enum G7CalibrationProcessingStatus: UInt8 {
 }
 
 /// Calibration Bounds (0x32): the sensor's calibration state. 20 bytes:
-/// `32 | status u8 | session u8 | sessionSignature u32 | lastEGV u16 |
+/// `32 | status u8 | session u8 | sessionSignature u32 | lastGlucose u16 |
 /// lastCalibrationTime u32 | processing u8 | permitted u8 | display u8 |
 /// lastProcessingUpdateTime u32`, little-endian, times in sensor seconds.
 public struct G7CalibrationBoundsMessage: SensorMessage, Equatable {
@@ -126,8 +126,9 @@ public struct G7CalibrationBoundsMessage: SensorMessage, Equatable {
     public let status: UInt8
     public let sessionNumber: UInt8
     public let sessionSignature: UInt32
-    /// The meter value of the last calibration (entered 145, read back 145
-    /// with the same sensor-seconds stamp, 2026-09-15).
+    /// The stored value of the most recent calibration, from any display;
+    /// `lastCalibrationTime` is its entry time in sensor seconds. It is not
+    /// the sensor's running reading, and can be stale or another display's.
     public let lastGlucose: UInt16
     /// Sensor seconds; 0 when the sensor has never been calibrated.
     public let lastCalibrationTime: UInt32
