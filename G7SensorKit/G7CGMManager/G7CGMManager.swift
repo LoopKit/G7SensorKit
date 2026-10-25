@@ -1326,7 +1326,8 @@ extension G7CGMManager: G7SensorDelegate {
                 trend: message.trendType,
                 trendRate: message.trendRate,
                 isDisplayOnly: message.glucoseIsDisplayOnly,
-                wasUserEntered: message.glucoseIsDisplayOnly,
+                // user-entered marks a manual entry; this is a device reading.
+                wasUserEntered: false,
                 syncIdentifier: generateSyncIdentifier(timestamp: message.glucoseTimestamp),
                 device: device
             )
@@ -1388,7 +1389,7 @@ extension G7CGMManager: G7SensorDelegate {
                 trend: entry.trendType,
                 trendRate: entry.trendRate,
                 isDisplayOnly: entry.glucoseIsDisplayOnly,
-                wasUserEntered: entry.glucoseIsDisplayOnly,
+                wasUserEntered: false,
                 syncIdentifier: generateSyncIdentifier(timestamp: entry.timestamp),
                 device: device,
                 isBackfill: true

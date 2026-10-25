@@ -201,6 +201,36 @@ final class G7CalibrationTests: XCTestCase {
         XCTAssertNotEqual(sample.syncIdentifier, "invalid")
     }
 
+    /// A reading the sensor shifted for display is still a device reading:
+    /// display-only, never user-entered.
+    @MainActor
+    func testDisplayOnlyReadingIsNotUserEntered() {
+        var state = G7CGMManagerState()
+        state.sessionMode = .direct
+        state.sensorID = "DXCM99"
+        let sensor = G7Sensor(mode: .direct, credentials: state.sensorCredentials, bluetoothManager: TestBluetoothManager())
+        let manager = G7CGMManager(state: state, sensor: sensor)
+        let recorder = ReadingRecordingDelegate()
+        manager.cgmManagerDelegate = recorder
+        manager.delegateQueue = DispatchQueue.main
+        sensor.activationDate = Date(timeIntervalSince1970: 1_700_000_000)
+
+        // Byte 18 = 0x1f (bgTriggered), as the sensor sends after a calibration.
+        let displayOnly = G7GlucoseMessage(data: Data(hexadecimalString: "4e00c6cc0d00ca0b00010500610006fe5b001f")!)!
+        XCTAssertTrue(displayOnly.glucoseIsDisplayOnly)
+        manager.sensor(sensor, didRead: displayOnly)
+
+        let settled = expectation(description: "settle")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { settled.fulfill() }
+        wait(for: [settled], timeout: 2)
+
+        guard case .newData(let samples)? = recorder.readingResults.last, samples.count == 1 else {
+            return XCTFail("expected one emitted sample, got \(recorder.readingResults)")
+        }
+        XCTAssertTrue(samples[0].isDisplayOnly)
+        XCTAssertFalse(samples[0].wasUserEntered)
+    }
+
     func testDisplayTypeSurvivesARelaunch() {
         var state = G7CGMManagerState()
         state.displayType = .watch
