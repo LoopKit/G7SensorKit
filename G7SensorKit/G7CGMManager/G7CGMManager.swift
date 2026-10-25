@@ -1017,12 +1017,35 @@ extension G7CGMManager: G7SensorDelegate {
 
     /// Hands a meter glucose (mg/dL, taken at `date`) to the sensor on its
     /// next connection. Replaces any calibration still waiting.
+    /// The value is also emitted right away as a user-entered glucose
+    /// sample, timestamped when it was taken, whatever the sensor decides.
     public func calibrate(glucose: UInt16, at date: Date = Date()) {
         logDeviceCommunication("Calibration \(glucose) mg/dL entered; queued for the sensor's next connection", type: .connection)
         mutateState { state in
             state.calibration = G7CalibrationRecord(glucose: glucose, enteredAt: date)
         }
         sensor.calibrate(glucose: glucose, at: date)
+        updateDelegate(with: .newData([calibrationSample(glucose: glucose, date: date)]))
+    }
+
+    /// The entered meter value as a user-entered sample, at the time it was taken.
+    private func calibrationSample(glucose: UInt16, date: Date) -> NewGlucoseSample {
+        NewGlucoseSample(
+            date: date,
+            quantity: LoopQuantity(unit: .milligramsPerDeciliter, doubleValue: Double(min(max(glucose, GlucoseLimits.minimum), GlucoseLimits.maximum))),
+            condition: nil,
+            trend: nil,
+            trendRate: nil,
+            isDisplayOnly: false,
+            wasUserEntered: true,
+            syncIdentifier: calibrationSyncIdentifier(glucose: glucose, date: date),
+            device: device
+        )
+    }
+
+    /// Its own namespace, so a calibration never dedup-collides with a sensor reading.
+    private func calibrationSyncIdentifier(glucose: UInt16, date: Date) -> String {
+        "calibration \(state.sensorID ?? "unknown") \(date.timeIntervalSince1970) \(glucose)"
     }
 
     public func cancelPendingCalibration() {

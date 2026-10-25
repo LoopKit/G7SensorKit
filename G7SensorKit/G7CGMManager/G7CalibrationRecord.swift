@@ -10,6 +10,10 @@ import Foundation
 /// The most recent calibration entered for the current sensor and what
 /// became of it. The sensor is the source of truth (`G7CalibrationBoundsMessage`);
 /// this is what the settings screen shows while that plays out.
+///
+/// `glucose` is the meter value as entered. The bounds message's
+/// `lastGlucose` echoes it back once stored, but can be stale or another
+/// display's, so it is never the source for the entered value.
 public struct G7CalibrationRecord: RawRepresentable, Equatable {
     public typealias RawValue = [String: Any]
 
