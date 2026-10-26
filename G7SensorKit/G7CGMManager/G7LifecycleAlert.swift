@@ -30,6 +30,9 @@ enum G7LifecycleAlert: String, CaseIterable {
     /// The sensor accepted the code but refused the connection, or a stored
     /// key stopped working: something the user has to act on.
     case connectionRefused
+    /// A pairing ran but its Bluetooth bond never finished (the system's pairing request could not show with
+    /// the app in the background), so the sensor refused the key afterwards.
+    case pairingUnfinished
 
     /// How long before nominal expiry each warning fires.
     static let expiringSoonLeadTime = TimeInterval(hours: 24)
@@ -50,7 +53,7 @@ enum G7LifecycleAlert: String, CaseIterable {
         switch self {
         case .sensorExpiringSoon:
             return .active
-        case .sensorExpiringImminently, .sensorExpired, .sessionEnded, .signalLoss, .connectionRefused:
+        case .sensorExpiringImminently, .sensorExpired, .sessionEnded, .signalLoss, .connectionRefused, .pairingUnfinished:
             return .timeSensitive
         case .sensorFailed:
             return .critical
@@ -73,6 +76,8 @@ enum G7LifecycleAlert: String, CaseIterable {
             return LocalizedString("No Sensor Readings", comment: "Alert title for signal loss")
         case .connectionRefused:
             return LocalizedString("Sensor Connection Refused", comment: "Alert title when the sensor refuses authentication")
+        case .pairingUnfinished:
+            return LocalizedString("Sensor Pairing Not Finished", comment: "Alert title when a G7 pairing's Bluetooth bond did not complete")
         }
     }
 
@@ -92,6 +97,8 @@ enum G7LifecycleAlert: String, CaseIterable {
             return LocalizedString("No readings have arrived for 20 minutes. Keep your phone within range of the sensor. If this continues, check your glucose with a meter.", comment: "Alert body for signal loss")
         case .connectionRefused:
             return LocalizedString("The sensor refused to connect. It may be in use by another phone or app. Open the CGM settings for details.", comment: "Alert body when the sensor refuses authentication")
+        case .pairingUnfinished:
+            return LocalizedString("The pairing code was right, but pairing could not finish with the app in the background. Open the app and keep it open until a glucose reading shows, and accept the Bluetooth pairing request if one appears.", comment: "Alert body when a G7 pairing's Bluetooth bond did not complete")
         }
     }
 

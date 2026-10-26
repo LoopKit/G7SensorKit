@@ -32,6 +32,9 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     /// this to `.direct`.
     public var sessionMode: G7SessionMode = .eavesdropping
 
+    /// Which of the sensor's display slots this manager takes.
+    public var displayType: G7DisplayType = .phone
+
     /// The 4-digit code printed on the sensor applicator. Direct mode only.
     /// Kept so a stale shared key can be recovered from without asking the
     /// user again, and cleared whenever the sensor is forgotten: it is only
@@ -121,6 +124,13 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     /// would leave the manager tracking a sensor that will never advertise again.
     public var suspectedSessionEndAt: Date?
 
+    /// Built from another controller's export (DeviceConfigurationSharing): the sensor and its code
+    /// were passed in, so setup, pairing and the sensor's lifecycle belong to that controller.
+    var configuredByAnotherController: Bool = false
+
+    /// The user wants the watch to read this sensor itself (the Read on Apple Watch setting).
+    var watchDirectReadEnabled = false
+
     init() {
     }
 
@@ -130,7 +140,8 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
             sensorID: sensorID,
             pairingCode: pairingCode,
             sharedKey: sharedKey,
-            peripheralIdentifier: peripheralIdentifier
+            peripheralIdentifier: peripheralIdentifier,
+            configuredByAnotherController: configuredByAnotherController
         )
     }
 
@@ -149,6 +160,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.latestReadingTimestamp = rawValue["latestReadingTimestamp"] as? Date
         self.latestConnect = rawValue["latestConnect"] as? Date
         self.sessionMode = (rawValue["sessionMode"] as? String).flatMap(G7SessionMode.init(rawValue:)) ?? .eavesdropping
+        self.displayType = (rawValue["displayType"] as? Int).flatMap { G7DisplayType(rawValue: UInt8(truncatingIfNeeded: $0)) } ?? .phone
         self.pairingCode = rawValue["pairingCode"] as? String
         self.sharedKey = rawValue["sharedKey"] as? Data
         self.sensorAuthenticity = (rawValue["sensorAuthenticity"] as? String).flatMap(G7SensorAuthenticity.init(rawValue:)) ?? .unverified
@@ -177,6 +189,13 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.shareLastError = rawValue["shareLastError"] as? String
         self.shareLastErrorAt = rawValue["shareLastErrorAt"] as? Date
         self.suspectedSessionEndAt = rawValue["suspectedSessionEndAt"] as? Date
+        self.configuredByAnotherController = rawValue["configuredByAnotherController"] as? Bool ?? false
+        self.watchDirectReadEnabled = rawValue["watchDirectReadEnabled"] as? Bool ?? false
+        // A manager passed its configuration reads directly: there is no session to eavesdrop on.
+        // Without a code it stands down until a new configuration brings one.
+        if configuredByAnotherController {
+            self.sessionMode = .direct
+        }
     }
 
     public var rawValue: RawValue {
@@ -189,6 +208,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["latestReadingTimestamp"] = latestReadingTimestamp
         rawValue["latestConnect"] = latestConnect
         rawValue["sessionMode"] = sessionMode.rawValue
+        rawValue["displayType"] = Int(displayType.rawValue)
         rawValue["pairingCode"] = pairingCode
         rawValue["sharedKey"] = sharedKey
         rawValue["sensorAuthenticity"] = sensorAuthenticity.rawValue
@@ -217,6 +237,39 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["shareLastError"] = shareLastError
         rawValue["shareLastErrorAt"] = shareLastErrorAt
         rawValue["suspectedSessionEndAt"] = suspectedSessionEndAt
+        if watchDirectReadEnabled {
+            rawValue["watchDirectReadEnabled"] = true
+        }
+        if configuredByAnotherController {
+            rawValue["configuredByAnotherController"] = true
+        }
         return rawValue
+    }
+}
+
+extension G7CGMManagerState {
+    /// What another controller needs to read this sensor directly: its identity, activation and
+    /// pairing code. The link, key and readings are this controller's own.
+    var sharedState: RawValue {
+        var shared = G7CGMManagerState()
+        shared.sensorID = sensorID
+        shared.activatedAt = activatedAt
+        shared.pairingCode = pairingCode
+        return shared.rawValue
+    }
+
+    /// Another controller's shared state as a manager of its own, reading directly.
+    static func adopted(from shared: RawValue) -> G7CGMManagerState {
+        let passed = G7CGMManagerState(rawValue: shared)
+        var state = G7CGMManagerState()
+        state.sensorID = passed.sensorID
+        state.activatedAt = passed.activatedAt
+        state.pairingCode = passed.pairingCode
+        state.sessionMode = .direct
+        state.pairedAt = Date()
+        state.configuredByAnotherController = true
+        // The secondary (watch) slot, so it never takes the slot of the controller that passed it.
+        state.displayType = .watch
+        return state
     }
 }

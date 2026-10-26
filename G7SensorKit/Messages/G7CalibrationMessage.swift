@@ -29,16 +29,26 @@ public struct G7CalibrateTxMessage: Equatable {
     }
 }
 
-/// The sensor's answer to a calibration: `34 xx status:u16`. 1 is accepted;
-/// anything else is a refusal (warmup, or a value it will not take).
+/// The sensor's answer to a calibration: `34 xx result:u8 detail:u8`.
+/// Result 0 is accepted (high), 1 accepted (low), 2 rejected with the reason
+/// in `detail`, 3 factory calibrated. An acceptance only counts with detail 0.
+/// The byte meanings are from xDrip4iOS (DexcomG7CalibrationMessages.swift).
 public struct G7CalibrateRxMessage: SensorMessage, Equatable {
-    public static let acceptedStatus: UInt16 = 1
-
+    /// `result | detail << 8`, as stored in `G7CalibrationRecord`.
     public let status: UInt16
     public let data: Data
 
+    public var result: UInt8 { UInt8(truncatingIfNeeded: status) }
+    public var detail: UInt8 { UInt8(truncatingIfNeeded: status >> 8) }
+
     public var accepted: Bool {
-        status == G7CalibrateRxMessage.acceptedStatus
+        G7CalibrateRxMessage.isAccepted(status: status)
+    }
+
+    public static func isAccepted(status: UInt16) -> Bool {
+        let result = UInt8(truncatingIfNeeded: status)
+        let detail = UInt8(truncatingIfNeeded: status >> 8)
+        return result <= 1 && detail == 0
     }
 
     public init?(data: Data) {
@@ -47,6 +57,45 @@ public struct G7CalibrateRxMessage: SensorMessage, Equatable {
         }
         self.data = data
         status = data[2..<4].to(UInt16.self)
+    }
+}
+
+/// Why the sensor did not take a calibration, from its reply's status.
+public enum G7CalibrationRefusal: Equatable {
+    case factoryCalibrated
+    case acceptanceError(UInt8)
+    case unspecified
+    case outsideRange
+    case timestampInFuture
+    case duplicate
+    case earlierThanSessionStart
+    case notInOrder
+    case alreadyEntered
+    case disabled
+    case notPermitted
+    case calibrationBoundsFailed
+    case extremeOutlier
+    case stale
+    case unknown(result: UInt8, detail: UInt8)
+
+    /// Nil when `status` is an acceptance.
+    public init?(status: UInt16) {
+        guard !G7CalibrateRxMessage.isAccepted(status: status) else {
+            return nil
+        }
+        let result = UInt8(truncatingIfNeeded: status)
+        let detail = UInt8(truncatingIfNeeded: status >> 8)
+        switch result {
+        case 0, 1:
+            self = .acceptanceError(detail)
+        case 2:
+            let reasons: [G7CalibrationRefusal] = [.unspecified, .outsideRange, .timestampInFuture, .duplicate, .earlierThanSessionStart, .notInOrder, .alreadyEntered, .disabled, .notPermitted, .calibrationBoundsFailed, .extremeOutlier, .stale]
+            self = Int(detail) < reasons.count ? reasons[Int(detail)] : .unknown(result: result, detail: detail)
+        case 3:
+            self = .factoryCalibrated
+        default:
+            self = .unknown(result: result, detail: detail)
+        }
     }
 }
 
@@ -68,7 +117,7 @@ public enum G7CalibrationProcessingStatus: UInt8 {
 }
 
 /// Calibration Bounds (0x32): the sensor's calibration state. 20 bytes:
-/// `32 | status u8 | session u8 | sessionSignature u32 | lastEGV u16 |
+/// `32 | status u8 | session u8 | sessionSignature u32 | lastGlucose u16 |
 /// lastCalibrationTime u32 | processing u8 | permitted u8 | display u8 |
 /// lastProcessingUpdateTime u32`, little-endian, times in sensor seconds.
 public struct G7CalibrationBoundsMessage: SensorMessage, Equatable {
@@ -77,8 +126,9 @@ public struct G7CalibrationBoundsMessage: SensorMessage, Equatable {
     public let status: UInt8
     public let sessionNumber: UInt8
     public let sessionSignature: UInt32
-    /// The meter value of the last calibration (entered 145, read back 145
-    /// with the same sensor-seconds stamp, 2026-09-15).
+    /// The stored value of the most recent calibration, from any display;
+    /// `lastCalibrationTime` is its entry time in sensor seconds. It is not
+    /// the sensor's running reading, and can be stale or another display's.
     public let lastGlucose: UInt16
     /// Sensor seconds; 0 when the sensor has never been calibrated.
     public let lastCalibrationTime: UInt32

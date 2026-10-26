@@ -187,7 +187,7 @@ class G7LifecycleAlertManagerTests: XCTestCase {
 
     func testDiscoveringASensorSchedulesTheSessionTimedAlerts() {
         let manager = makeManager()
-        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: Date())
+        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: Date(), peripheralIdentifier: UUID())
         settle()
 
         let scheduled = recorder.issued.filter { alert in
@@ -203,13 +203,13 @@ class G7LifecycleAlertManagerTests: XCTestCase {
 
     func testReschedulingIsIdempotentPerSensorAndLifetime() {
         let manager = makeManager()
-        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: Date())
+        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: Date(), peripheralIdentifier: UUID())
         settle()
         let issuedOnce = recorder.issued.count
 
         // Same sensor, same lifetime: a relaunch-style repeat must not
         // duplicate notifications Loop already holds.
-        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: manager.state.activatedAt!)
+        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: manager.state.activatedAt!, peripheralIdentifier: UUID())
         settle()
         XCTAssertEqual(recorder.issued.count, issuedOnce)
 
@@ -280,6 +280,23 @@ class G7LifecycleAlertManagerTests: XCTestCase {
         }
     }
 
+    /// A manager passed its configuration schedules the same alerts, so deleting it retracts them.
+    func testDeletingAPassedConfigurationRetractsEveryAlert() {
+        var shared = G7CGMManagerState()
+        shared.sensorID = "DXCM99"
+        shared.activatedAt = Date()
+        var state = G7CGMManagerState.adopted(from: shared.rawValue)
+        state.lifecycleAlertsScheduledFor = "scheduled"
+        let manager = makeManager(state: state)
+
+        let done = expectation(description: "delete completed")
+        manager.delete { done.fulfill() }
+        wait(for: [done], timeout: 2)
+        settle()
+
+        XCTAssertEqual(Set(recorder.retracted.map(\.alertIdentifier)), Set(G7LifecycleAlert.allCases.map(\.rawValue)))
+    }
+
     func testForgettingTheSensorRetractsEverything() {
         var state = G7CGMManagerState()
         state.sensorID = "DXCM99"
@@ -304,7 +321,7 @@ class G7LifecycleAlertManagerTests: XCTestCase {
     func testSensorStartWaitsForTheSerialNumber() {
         let manager = makeManager()
         let activatedAt = Date().addingTimeInterval(-.hours(1))
-        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: activatedAt)
+        _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: activatedAt, peripheralIdentifier: UUID())
         settle()
         XCTAssertTrue(recorder.cgmEvents.isEmpty)
 

@@ -30,8 +30,10 @@ public protocol G7SensorDelegate: AnyObject {
 
     func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage])
 
-    // If this returns true, then start following this sensor
-    func sensor(_ sensor: G7Sensor, didDiscoverNewSensor name: String, activatedAt: Date) -> Bool
+    // If this returns true, then start following this sensor. The identifier is
+    // the peripheral the sensor was found under. It is passed explicitly because
+    // the sensor's own credentials are only updated after this returns.
+    func sensor(_ sensor: G7Sensor, didDiscoverNewSensor name: String, activatedAt: Date, peripheralIdentifier: UUID) -> Bool
 
     func sensor(_ sensor: G7Sensor, didReceive extendedVersion: ExtendedVersionMessage)
 
@@ -39,6 +41,9 @@ public protocol G7SensorDelegate: AnyObject {
 
     /// The sensor's answer to a calibration we sent.
     func sensor(_ sensor: G7Sensor, didReceiveCalibrationResponse response: G7CalibrateRxMessage)
+
+    /// A queued calibration grew too old to send before the sensor connected.
+    func sensor(_ sensor: G7Sensor, didDiscardStaleCalibrationEnteredAt date: Date)
 
     /// The sensor's calibration state, after a calibration or on request.
     func sensor(_ sensor: G7Sensor, didReadCalibrationBounds bounds: G7CalibrationBoundsMessage)
@@ -54,6 +59,27 @@ public protocol G7SensorDelegate: AnyObject {
     /// sensor. It has been discarded; if a pairing code is still held, the
     /// next connection will run a full handshake.
     func sensorDidInvalidateSharedKey(_ sensor: G7Sensor)
+
+    /// One line for the host's device log. Optional.
+    func sensor(_ sensor: G7Sensor, logEvent line: String)
+
+    /// A sensor passed in by another controller found its own peripheral (nil when it let go of
+    /// one). Optional.
+    func sensor(_ sensor: G7Sensor, didAdoptPeripheral identifier: UUID?)
+
+    /// `needsCodeForSensor` or `isSearchingForSensor` changed. Optional.
+    func sensorStatusDidChange(_ sensor: G7Sensor)
+
+    /// The key from a pairing whose Bluetooth bond was never confirmed was refused: the pairing did not
+    /// finish. The key has been discarded and the next connection pairs again. Optional.
+    func sensorPairingDidNotFinish(_ sensor: G7Sensor)
+}
+
+public extension G7SensorDelegate {
+    func sensor(_ sensor: G7Sensor, logEvent line: String) {}
+    func sensor(_ sensor: G7Sensor, didAdoptPeripheral identifier: UUID?) {}
+    func sensorStatusDidChange(_ sensor: G7Sensor) {}
+    func sensorPairingDidNotFinish(_ sensor: G7Sensor) {}
 }
 
 public enum G7SensorError: Error {
@@ -112,6 +138,10 @@ struct G7SensorCredentials: Equatable {
     /// The paired sensor's CoreBluetooth identifier, so a relaunch can go
     /// straight to it instead of waiting for an advertisement.
     var peripheralIdentifier: UUID?
+
+    /// Passed in by another controller, whose peripheral handle means nothing here: this session
+    /// keeps the one it finds itself.
+    var configuredByAnotherController = false
 }
 
 
@@ -145,6 +175,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     /// Used to detect connections that do not authenticate, signalling possible sensor switchover
     private var pendingAuth: Bool = false
+    /// The last fresh pairing ended without the sensor confirming its Bluetooth bond.
+    private var lastPairingBondUnconfirmed = false
 
     /// The backfill data buffer
     private var backfillBuffer: [G7BackfillMessage] = []
@@ -163,6 +195,10 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     /// only up for a few seconds around each reading, so one entered between
     /// readings has to wait. Newest wins. Settable from any queue.
     private let lockedPendingCalibration = Locked<(glucose: UInt16, date: Date)?>(nil)
+
+    /// A meter reading older than this no longer describes the glucose the
+    /// sensor is measuring, so it is dropped rather than sent.
+    public static let calibrationMaxAge = TimeInterval(minutes: 5)
 
     /// Whether to ask for the calibration state on the next connection.
     private let lockedCalibrationBoundsRequestPending = Locked(false)
@@ -315,9 +351,23 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         bluetoothManager.disconnect()
     }
 
+    /// Seeds the acquisition arm's reading clock after a relaunch; nothing without an arm.
+    func noteLatestReading(at date: Date) {
+        bluetoothManager.noteReading(at: date)
+    }
+
     public func resumeScanning() {
-        bluetoothManager.setActivePeripheralIdentifier(lockedCredentials.value.peripheralIdentifier)
+        // Deliberately leaves the active peripheral identifier alone. Every
+        // write to the credentials already reaches the bluetooth manager, and
+        // a session relaunched by state restoration knows its peripheral only
+        // through the manager: overwriting that with a nil persisted
+        // identifier left the rescan after the next disconnect with nothing
+        // to retrieve and, with the peripheral still active, nothing to scan for.
         bluetoothManager.scanForPeripheral()
+    }
+
+    func recheckAcquisition() {
+        bluetoothManager.recheckAcquisition()
     }
 
     public func stopScanning() {
@@ -359,7 +409,13 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         guard let activationDate = activationDate else {
             return
         }
-        if let calibration = lockedPendingCalibration.value {
+        if let calibration = lockedPendingCalibration.value, Date().timeIntervalSince(calibration.date) > G7Sensor.calibrationMaxAge {
+            lockedPendingCalibration.value = nil
+            logToDevice("Dropping calibration \(calibration.glucose) mg/dL entered at \(calibration.date): older than \(Int(G7Sensor.calibrationMaxAge)) s", type: .connection)
+            delegateQueue.async {
+                self.delegate?.sensor(self, didDiscardStaleCalibrationEnteredAt: calibration.date)
+            }
+        } else if let calibration = lockedPendingCalibration.value {
             lockedPendingCalibration.value = nil
             let sensorAge = UInt32(max(0, calibration.date.timeIntervalSince(activationDate)))
             let request = G7CalibrateTxMessage(glucose: calibration.glucose, sensorAge: sensorAge).data
@@ -390,6 +446,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     private func handleGlucoseMessage(message: G7GlucoseMessage, peripheralManager: G7PeripheralManager) {
         activationDate = Date().addingTimeInterval(-TimeInterval(message.messageTimestamp))
+        // The reading's own timestamp, for the acquisition arm's miss clock.
+        bluetoothManager.noteReading(at: Date().addingTimeInterval(-TimeInterval(message.age)))
         let credentials = lockedCredentials.value
 
         if mode == .direct, credentials.sensorID != nil, isOurSensor(peripheralManager) {
@@ -436,7 +494,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                     return
                 }
 
-                if delegate.sensor(self, didDiscoverNewSensor: name, activatedAt: activationDate) {
+                if delegate.sensor(self, didDiscoverNewSensor: name, activatedAt: activationDate, peripheralIdentifier: peripheralManager.peripheral.identifier) {
                     self.mutateCredentials { credentials in
                         credentials.sensorID = name
                         credentials.peripheralIdentifier = peripheralManager.peripheral.identifier
@@ -503,6 +561,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             case .success(let authResult):
                 self.pendingAuth = false
                 if authResult.didExchangeKeys {
+                    self.lastPairingBondUnconfirmed = authResult.bondUnconfirmed
                     self.mutateCredentials { $0.sharedKey = authResult.sharedKey }
                     self.delegateQueue.async {
                         self.delegate?.sensor(
@@ -599,22 +658,23 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         }
     }
 
-    private func handleAuthenticationFailure(_ error: Error) {
+    func handleAuthenticationFailure(_ error: Error) {
         pendingAuth = false
         log.error("Authentication failed: %{public}@", String(describing: error))
 
         // A stale key is recoverable without the user: drop it, and the next
         // connection runs a full handshake with the pairing code we still
-        // hold. Two signals say the key is stale: the sensor's answer to our
+        // hold. Three signals say the key is stale: the sensor's answer to our
         // challenge not matching (caught before we ever send a wrong reply,
         // so the sensor records no rejection), and the sensor saying outright
-        // that it has no key for us. Without a code there is nothing to fall
-        // back to, so leave the key in place rather than locking the sensor
-        // out of reconnecting.
+        // that it has no key for us, or not as bonded on a reconnect. Without
+        // a code there is nothing to fall back to, so leave the key in place
+        // rather than locking the sensor out of reconnecting.
         let keyIsStale: Bool
         switch error {
         case G7AuthenticatorError.challengeMismatch,
-             G7AuthenticatorError.rejected(_, .noAppKey):
+             G7AuthenticatorError.rejected(_, .noAppKey),
+             G7AuthenticatorError.storedKeyNotBonded:
             keyIsStale = true
         default:
             keyIsStale = false
@@ -624,9 +684,12 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
            lockedCredentials.value.pairingCode != nil
         {
             log.default("Discarding the stored shared key; the next connection will re-run the key exchange")
+            let pairingUnfinished = lastPairingBondUnconfirmed
+            lastPairingBondUnconfirmed = false
             mutateCredentials { $0.sharedKey = nil }
             delegateQueue.async {
                 self.delegate?.sensorDidInvalidateSharedKey(self)
+                if pairingUnfinished { self.delegate?.sensorPairingDidNotFinish(self) }
             }
             return
         }
@@ -723,9 +786,12 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
         let credentials = lockedCredentials.value
 
-        // Nothing to pair with yet: no code, no key. Connecting would only
-        // take a slot on whatever sensor is nearby.
-        if mode == .direct, credentials.pairingCode == nil, credentials.sharedKey == nil, credentials.peripheralIdentifier == nil {
+        // Nothing to authenticate with: no code, no key. Connecting would only take a slot on
+        // whatever sensor is nearby, or open a link to our own that closes unauthenticated.
+        if !G7Sensor.canAuthenticate(mode: mode, credentials: credentials) {
+            if let identifier = credentials.peripheralIdentifier, peripheral.identifier == identifier {
+                manager.setNeedsCodeForSensor(peripheral.name ?? name)
+            }
             return .ignore
         }
 
@@ -762,6 +828,40 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     func bluetoothManagerShouldAcceptRestoredPeripherals(_ manager: G7BluetoothManager) -> Bool {
         // A session wants its sensor back after a relaunch.
         return true
+    }
+
+    /// A device-log line from the bluetooth manager, forwarded to the host on the delegate queue.
+    func bluetoothManager(_ manager: G7BluetoothManager, logEvent line: String) {
+        delegateQueue.async { self.delegate?.sensor(self, logEvent: line) }
+    }
+
+    /// A sensor passed in by another controller keeps the peripheral it finds; one set up here
+    /// keeps the identifier it paired with.
+    func bluetoothManager(_ manager: G7BluetoothManager, didAdoptPeripheral identifier: UUID?) {
+        guard lockedCredentials.value.configuredByAnotherController else { return }
+        manager.setActivePeripheralIdentifier(identifier)
+        guard lockedCredentials.value.peripheralIdentifier != identifier else { return }
+        mutateCredentials { $0.peripheralIdentifier = identifier }
+        delegateQueue.async { self.delegate?.sensor(self, didAdoptPeripheral: identifier) }
+    }
+
+    func bluetoothManagerStatusDidChange(_ manager: G7BluetoothManager) {
+        delegateQueue.async { self.delegate?.sensorStatusDidChange(self) }
+    }
+
+    /// The sensor a direct connection would reach without a pairing code or key; nil once one exists.
+    var needsCodeForSensor: String? { bluetoothManager.needsCodeForSensor }
+
+    /// Scanning for a sensor this session has never connected to.
+    var isSearchingForSensor: Bool { bluetoothManager.isSearchingForSensor }
+
+    func bluetoothManagerCanAuthenticate(_ manager: G7BluetoothManager) -> Bool {
+        G7Sensor.canAuthenticate(mode: mode, credentials: lockedCredentials.value)
+    }
+
+    /// Reading directly needs a pairing code or a stored key; eavesdropping needs neither.
+    static func canAuthenticate(mode: G7SessionMode, credentials: G7SensorCredentials) -> Bool {
+        mode != .direct || credentials.sharedKey != nil || credentials.pairingCode != nil
     }
 
     func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReceiveControlResponse response: Data) {
@@ -811,15 +911,13 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             }
         case .calibrate:
             if let message = G7CalibrateRxMessage(data: response) {
-                logToDevice("Calibration \(message.accepted ? "accepted" : "refused") by the sensor (status \(message.status))", type: .connection)
+                logToDevice("Calibration \(message.accepted ? "accepted" : "refused") by the sensor (result \(message.result), detail \(message.detail))", type: .connection)
                 delegateQueue.async {
                     self.delegate?.sensor(self, didReceiveCalibrationResponse: message)
                 }
                 // Confirm what the sensor made of it while the link is up.
-                if message.accepted {
-                    peripheralManager.perform { peripheral in
-                        self.sendCalibrationBoundsRequest(peripheral)
-                    }
+                peripheralManager.perform { peripheral in
+                    self.sendCalibrationBoundsRequest(peripheral)
                 }
             }
         case .calibrationBounds:

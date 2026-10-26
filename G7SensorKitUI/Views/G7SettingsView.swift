@@ -136,6 +136,10 @@ if viewModel.sessionMode == .eavesdropping {
                 }
             }
 
+            if viewModel.showsWatchDirectRead {
+                watchDirectReadSection
+            }
+
             if viewModel.sessionMode == .direct {
                 calibrationSection
                 shareSection
@@ -227,6 +231,13 @@ if viewModel.sessionMode == .eavesdropping {
                         ]
                     )
                 }
+            }
+            if viewModel.hasSensorIssue && !sessionIsOver {
+                warning(
+                    title: LocalizedString("Sensor Issue", comment: "Settings warning title while the sensor reports a temporary issue"),
+                    message: LocalizedString("The sensor is reporting a temporary problem and is not sending glucose readings. They usually come back on their own, which can take up to 3 hours; you do not need to remove the sensor. Use a meter for treatment decisions until they do.", comment: "Settings warning body while the sensor reports a temporary issue"),
+                    style: .informational
+                )
             }
             // Eavesdropping sessions lead with the way out of them.
             if viewModel.sessionMode == .eavesdropping {
@@ -394,6 +405,25 @@ if viewModel.sessionMode == .eavesdropping {
     }
 
     /// Calibration is a direct-mode command; an eavesdropper can only listen.
+    /// The watch reads the sensor itself, in its own display slot. Eavesdropping, the phone has no code,
+    /// so the watch needs it entered here; reading directly, the phone's own code goes with the sensor.
+    private var watchDirectReadSection: some View {
+        Section(header: Text(LocalizedString("Apple Watch", comment: "Section title for the watch reading the G7 itself")),
+                footer: Text(LocalizedString("The watch reads this sensor itself, so readings continue on the watch when your phone isn't there. The watch takes the sensor's watch slot, so the Dexcom watch app can't read it at the same time.", comment: "Footer explaining the watch reading the G7 directly"))) {
+            Toggle(LocalizedString("Read on Apple Watch", comment: "Toggle for the watch reading the G7 directly"),
+                   isOn: Binding(get: { viewModel.watchDirectReadEnabled }, set: { viewModel.setWatchDirectReadEnabled($0) }))
+            if viewModel.watchDirectReadEnabled, viewModel.sessionMode == .eavesdropping {
+                LabeledValueView(label: LocalizedString("Pairing Code", comment: "Label for the pairing code status in the watch direct read section"), value: viewModel.watchPairingCodeStatusText)
+                HStack {
+                    TextField(LocalizedString("4-digit code", comment: "Placeholder for the G7 pairing code entry for the watch"), text: $viewModel.watchPairingCodeEntry)
+                        .keyboardType(.numberPad)
+                    Button(LocalizedString("Save", comment: "Button to save the G7 pairing code for the watch")) { viewModel.saveWatchPairingCode() }
+                        .disabled(viewModel.sensorName == nil || viewModel.watchPairingCodeEntry.filter { $0.isNumber }.count != 4)
+                }
+            }
+        }
+    }
+
     private var calibrationSection: some View {
         Section(header: Text(LocalizedString("Calibration", comment: "Section header for sensor calibration"))) {
             if let calibration = viewModel.calibration {
@@ -483,7 +513,12 @@ if viewModel.sessionMode == .eavesdropping {
         case .pending:
             return String(format: LocalizedString("Entered %@, waiting for the sensor's next connection", comment: "Calibration outcome: pending (1: time entered)"), entered)
         case .rejected(let status, _):
-            return String(format: LocalizedString("Entered %1$@, refused by the sensor (status %2$d)", comment: "Calibration outcome: rejected (1: time entered, 2: status code)"), entered, Int(status))
+            guard let reason = G7CalibrationRefusal(status: status).flatMap(calibrationRefusalText) else {
+                return String(format: LocalizedString("Entered %1$@, refused by the sensor (status %2$d)", comment: "Calibration outcome: rejected (1: time entered, 2: status code)"), entered, Int(status))
+            }
+            return String(format: LocalizedString("Entered %1$@, refused by the sensor: %2$@", comment: "Calibration outcome: rejected (1: time entered, 2: the sensor's reason)"), entered, reason)
+        case .expired:
+            return String(format: LocalizedString("Entered %@, not sent: the sensor did not connect within 5 minutes", comment: "Calibration outcome: dropped because the sensor did not connect in time (1: time entered)"), entered)
         case .accepted(let at):
             switch calibration.processingStatus {
             case .inProgress?:
@@ -493,6 +528,31 @@ if viewModel.sessionMode == .eavesdropping {
             default:
                 return String(format: LocalizedString("Accepted %@", comment: "Calibration outcome: accepted (1: time accepted)"), timeFormatter.string(from: at))
             }
+        }
+    }
+
+    private func calibrationRefusalText(_ refusal: G7CalibrationRefusal) -> String? {
+        switch refusal {
+        case .factoryCalibrated:
+            return LocalizedString("it is using its factory calibration", comment: "Calibration refusal reason: factory calibrated")
+        case .outsideRange:
+            return LocalizedString("the value is outside the range it accepts", comment: "Calibration refusal reason: outside range")
+        case .timestampInFuture:
+            return LocalizedString("the time is in the future", comment: "Calibration refusal reason: timestamp in future")
+        case .duplicate, .alreadyEntered:
+            return LocalizedString("it already has this calibration", comment: "Calibration refusal reason: duplicate")
+        case .earlierThanSessionStart:
+            return LocalizedString("the time is before the session started", comment: "Calibration refusal reason: earlier than session start")
+        case .notInOrder:
+            return LocalizedString("it is older than the last calibration", comment: "Calibration refusal reason: not in order")
+        case .disabled, .notPermitted:
+            return LocalizedString("calibration is not allowed right now", comment: "Calibration refusal reason: not permitted")
+        case .calibrationBoundsFailed, .extremeOutlier:
+            return LocalizedString("the value is too far from its own reading", comment: "Calibration refusal reason: outlier")
+        case .stale:
+            return LocalizedString("the reading is too old", comment: "Calibration refusal reason: stale")
+        case .acceptanceError, .unspecified, .unknown:
+            return nil
         }
     }
 
@@ -716,6 +776,13 @@ if viewModel.sessionMode == .eavesdropping {
                         .foregroundColor(.secondary)
                 }
             }
+        } else if viewModel.hasSensorIssue {
+            HStack(spacing: 8) {
+                badge(systemName: "exclamationmark", color: guidanceColors.warning)
+                Text(LocalizedString("Sensor Issue", comment: "Last reading row text while the sensor reports a temporary issue"))
+                    .font(.headline)
+                    .lineLimit(2)
+            }
         } else if viewModel.lifecycleState == .warmup {
             HStack(spacing: 8) {
                 outlinedBadge(systemName: "clock", color: glucoseTintColor)
@@ -730,30 +797,56 @@ if viewModel.sessionMode == .eavesdropping {
         }
     }
 
-    /// Minutes since the last reading, live. Readings are 5 minutes apart,
-    /// so past 10 something is late and past 20 something is wrong.
+    /// Readings are 5 minutes apart: until the next is due, a countdown to it; once one is late, the
+    /// minutes since the last, as past 10 something is late and past 20 something is wrong.
     @ViewBuilder
     private var lastReadingAge: some View {
         if let latest = viewModel.latestReadingTimestamp {
-            TimelineView(.everyMinute) { context in
-                let minutes = max(0, Int(context.date.timeIntervalSince(latest) / 60))
-                let color: Color = minutes > 20 ? guidanceColors.critical : (minutes > 10 ? guidanceColors.warning : glucoseTintColor)
-                HStack(spacing: 8) {
-                    badge(systemName: "arrow.triangle.2.circlepath", color: color)
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text(minutes < 90 ? String(minutes) : String(minutes / 60))
-                            .font(.system(size: 28, weight: .bold))
-                        Text(minutes < 90
-                            ? LocalizedString("min", comment: "Unit after the minutes-since-last-reading number")
-                            : LocalizedString("hr", comment: "Unit after the hours-since-last-reading number"))
-                            .foregroundColor(.secondary)
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                let age = max(0, context.date.timeIntervalSince(latest))
+                if age < Self.readingInterval + Self.readingGrace {
+                    let remaining = max(0, Int((Self.readingInterval - age).rounded(.up)))
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .accessibilityHidden(true)
+                        Text(String(format: "%d:%02d", remaining / 60, remaining % 60))
+                            .monospacedDigit()
+                            .accessibilityLabel(String(format: LocalizedString("Next reading in %1$@", comment: "Accessibility label for the countdown to the next G7 reading (1: duration)"),
+                                                       Self.countdownFormatter.string(from: TimeInterval(remaining)) ?? ""))
                     }
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(sessionLengthFormatter.string(from: TimeInterval(minutes * 60)) ?? "")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                } else {
+                    let minutes = Int(age / 60)
+                    let color: Color = minutes > 20 ? guidanceColors.critical : (minutes > 10 ? guidanceColors.warning : glucoseTintColor)
+                    HStack(spacing: 8) {
+                        badge(systemName: "arrow.triangle.2.circlepath", color: color)
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text(minutes < 90 ? String(minutes) : String(minutes / 60))
+                                .font(.system(size: 28, weight: .bold))
+                            Text(minutes < 90
+                                ? LocalizedString("min", comment: "Unit after the minutes-since-last-reading number")
+                                : LocalizedString("hr", comment: "Unit after the hours-since-last-reading number"))
+                                .foregroundColor(.secondary)
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(sessionLengthFormatter.string(from: TimeInterval(minutes * 60)) ?? "")
+                    }
                 }
             }
         }
     }
+
+    private static let countdownFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.minute, .second]
+        formatter.unitsStyle = .full
+        return formatter
+    }()
+
+    private static let readingInterval: TimeInterval = 5 * 60
+    /// How long past due the countdown holds at 0:00 before the age shows instead.
+    private static let readingGrace: TimeInterval = 60
 
     private func badge(systemName: String, color: Color) -> some View {
         Image(systemName: systemName)
