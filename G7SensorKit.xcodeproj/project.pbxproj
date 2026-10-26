@@ -10,7 +10,6 @@
 		FE87266E3AE98CA87D903665 /* G7PCert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 324F8C967DDB24EB158A1A45 /* G7PCert.swift */; };
 		2BC9F3807D05FB72B54407C6 /* G7Authenticator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 899E19256E3224A54FA35AD8 /* G7Authenticator.swift */; };
 		FADE00000000000000000330 /* Locked.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F513B291EB13D00555EB5 /* Locked.swift */; };
-		07C6427E5068FF4C00B4ACE7 /* G7ShareFollowersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BD28E35C047C73E1EC8AE73 /* G7ShareFollowersView.swift */; };
 		0BE316E9E980C04C39842D94 /* G7SensorModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A301AE5854C83E5BD9C6539 /* G7SensorModel.swift */; };
 		0C557E84497DE72C92503098 /* G7AlertsFromLoopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A62D050A4DCCED5F4A51F9 /* G7AlertsFromLoopView.swift */; };
 		0F2F5FD6CB203E12707A95F0 /* G7SensorPackageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43AE2890ABEAE0FB78B276F1 /* G7SensorPackageTests.swift */; };
@@ -237,7 +236,6 @@
 		4A3F076AE2157B22DE43B91A /* G7PreviousSensorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7PreviousSensorView.swift; sourceTree = "<group>"; };
 		4CAA6FF14E0E9C16A25FD3B6 /* G7SessionMode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7SessionMode.swift; sourceTree = "<group>"; };
 		588CB2A449236A6A47F4579B /* G7SessionModeMigrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7SessionModeMigrationTests.swift; sourceTree = "<group>"; };
-		5BD28E35C047C73E1EC8AE73 /* G7ShareFollowersView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7ShareFollowersView.swift; sourceTree = "<group>"; };
 		6180916611D0990A46355025 /* G7PeripheralManager+Handshake.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "G7PeripheralManager+Handshake.swift"; sourceTree = "<group>"; };
 		63E50F6710E2494A0E14A6D8 /* G7JPAKE.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7JPAKE.swift; sourceTree = "<group>"; };
 		64134474341A32F8DFDA266F /* G7P256Tests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7P256Tests.swift; sourceTree = "<group>"; };
@@ -416,7 +414,6 @@
 		A83C615FDD5582DDDBD42526 /* Share */ = {
 			isa = PBXGroup;
 			children = (
-				5BD28E35C047C73E1EC8AE73 /* G7ShareFollowersView.swift */,
 				01B1A199C4CD5420A75C58E4 /* G7ShareSignInView.swift */,
 			);
 			name = Share;
@@ -1066,7 +1063,6 @@
 				0C557E84497DE72C92503098 /* G7AlertsFromLoopView.swift in Sources */,
 				EF41639FF51B727324A04A49 /* G7NotificationPermissionsView.swift in Sources */,
 				86DE2F2A3F8F5B73AFED5E75 /* G7CalibrationFlowView.swift in Sources */,
-				07C6427E5068FF4C00B4ACE7 /* G7ShareFollowersView.swift in Sources */,
 				33D21C38F39F73BCDFCFC0C5 /* G7ShareSignInView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

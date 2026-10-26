@@ -164,10 +164,6 @@ class G7SettingsViewModel: ObservableObject {
         updateValues()
     }
 
-    var shareClient: G7ShareClient? {
-        cgmManager.shareClient
-    }
-
     // MARK: - Watch direct read
 
     /// Offered when a paired watch has the app installed, or while it is on; otherwise the screen is
