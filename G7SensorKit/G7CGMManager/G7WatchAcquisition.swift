@@ -310,22 +310,6 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         look(after: 2, last: false)
     }
 
-    /// performExpiringActivity, once-only: `onEnd` runs when `wait` elapses, when the system ends the
-    /// hold, or when the returned release closure is called — whichever first, exactly once.
-    @discardableResult
-    private func holdProcess(reason: String, upTo wait: TimeInterval, onEnd: @escaping (_ systemEnded: Bool) -> Void = { _ in }) -> () -> Void {
-        let gate = DispatchSemaphore(value: 0)
-        let once = NSLock(); var done = false
-        let end: (Bool) -> Void = { s in once.lock(); let first = !done; done = true; once.unlock(); if first { onEnd(s) } }
-        DispatchQueue.global(qos: .userInitiated).async {
-            ProcessInfo.processInfo.performExpiringActivity(withReason: reason) { expired in
-                if expired { end(true); gate.signal(); return }
-                _ = gate.wait(timeout: .now() + wait); end(false)
-            }
-        }
-        return { gate.signal() }
-    }
-
     // MARK: - Bootstrap: the one scan pass (fresh install / sensor change / 3 misses)
 
     private func startBootstrapPass(reason: String) {

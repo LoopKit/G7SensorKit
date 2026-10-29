@@ -123,6 +123,22 @@ extension G7BluetoothManagerDelegate {
     func bluetoothManagerStatusDidChange(_ manager: G7BluetoothManager) {}
 }
 
+/// performExpiringActivity, once-only: `onEnd` runs when `wait` elapses, when the system ends the
+/// hold, or when the returned release closure is called — whichever first, exactly once.
+@discardableResult
+func holdProcess(reason: String, upTo wait: TimeInterval, onEnd: @escaping (_ systemEnded: Bool) -> Void = { _ in }) -> () -> Void {
+    let gate = DispatchSemaphore(value: 0)
+    let once = NSLock(); var done = false
+    let end: (Bool) -> Void = { s in once.lock(); let first = !done; done = true; once.unlock(); if first { onEnd(s) } }
+    DispatchQueue.global(qos: .userInitiated).async {
+        ProcessInfo.processInfo.performExpiringActivity(withReason: reason) { expired in
+            if expired { end(true); gate.signal(); return }
+            _ = gate.wait(timeout: .now() + wait); end(false)
+        }
+    }
+    return { gate.signal() }
+}
+
 /// Takes over acquisition where a platform cannot use the stock steps (watchOS: the app sleeps
 /// between readings and its scanning is rationed). Called on the manager's queue.
 protocol G7AcquisitionArm: AnyObject {
@@ -236,6 +252,16 @@ class G7BluetoothManager: NSObject {
     private static let poweredOnRecheckInterval: TimeInterval = 3
     private static let poweredOnRechecksBeforeRecreating = 10
     private static let maximumCentralRecreations = 5
+
+    /// The sensor advertises for other displays for ~20–24 s after closing a link; a connect into
+    /// that tail fails, and repeated failures make CoreBluetooth demand a very strong signal.
+    static let reconnectStartDelay: TimeInterval = 30
+
+    /// Upper bound for keeping the app running from link-up until the sensor closes the link.
+    static let connectionHoldLimit: TimeInterval = 20
+
+    /// Ends the hold over the active peripheral's current link. Confined to `managerQueue`.
+    private var releaseConnectionHold: (() -> Void)?
 
     /// There is exactly one of these per session, and a pairing run borrows
     /// it rather than building a second: only one central per app may claim
@@ -406,6 +432,12 @@ class G7BluetoothManager: NSObject {
             return
         }
 
+        // Leave a pending (delayed) reconnect alone; a plain connect now could land in the advertising tail.
+        guard currentState != .connecting else {
+            log.default("Not scanning: active peripheral has a connect pending")
+            return
+        }
+
         if let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
             log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
             handleDiscoveredPeripheral(peripheral)
@@ -505,6 +537,42 @@ class G7BluetoothManager: NSObject {
         }
     }
 
+    /// Lodges the active peripheral's reconnect at once, so it stands even if the app is suspended,
+    /// with a start delay that lets the sensor's advertising tail pass first.
+    private func reconnectAfterAdvertisingTail(_ peripheral: CBPeripheral) {
+        dispatchPrecondition(condition: .onQueue(managerQueue))
+        log.default("Reconnecting to %{public}@ with a %{public}.0f s start delay", peripheral.identifier.uuidString, G7BluetoothManager.reconnectStartDelay)
+        handleDiscoveredPeripheral(peripheral, connectOptions: [CBConnectPeripheralOptionStartDelayKey: G7BluetoothManager.reconnectStartDelay])
+    }
+
+    /// Keeps the app running from link-up until the sensor closes the link, so a background wake
+    /// finishes the handshake and reading instead of being suspended mid-way.
+    private func holdForConnection(_ peripheral: CBPeripheral) {
+        dispatchPrecondition(condition: .onQueue(managerQueue))
+        releaseConnectionHold?()
+        releaseConnectionHold = holdProcess(reason: "G7 reading", upTo: G7BluetoothManager.connectionHoldLimit) { [weak self] systemEnded in
+            if systemEnded {
+                self?.log.default("System ended the hold on %{public}@ before the link closed", peripheral.identifier.uuidString)
+            }
+        }
+    }
+
+    private func endConnectionHold() {
+        dispatchPrecondition(condition: .onQueue(managerQueue))
+        releaseConnectionHold?()
+        releaseConnectionHold = nil
+    }
+
+    /// Stock path only (no arm): an active peripheral reconnects on its own; anything else rescans.
+    private func resumeAfterLinkEnded(_ peripheral: CBPeripheral) {
+        dispatchPrecondition(condition: .onQueue(managerQueue))
+        if peripheral == activePeripheral, centralManager.state == .poweredOn {
+            reconnectAfterAdvertisingTail(peripheral)
+        } else {
+            scanAfterDelay()
+        }
+    }
+
     // MARK: - Accessors
 
     var isScanning: Bool {
@@ -539,7 +607,7 @@ class G7BluetoothManager: NSObject {
         return G7PeripheralManager(peripheral: peripheral, configuration: .dexcomG7, centralManager: centralManager)
     }
 
-    func handleDiscoveredPeripheral(_ peripheral: CBPeripheral, advertisementData: [String: Any] = [:], rssi: NSNumber = 127) {
+    func handleDiscoveredPeripheral(_ peripheral: CBPeripheral, advertisementData: [String: Any] = [:], rssi: NSNumber = 127, connectOptions: [String: Any]? = nil) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
         if let delegate = delegate {
@@ -560,7 +628,7 @@ class G7BluetoothManager: NSObject {
                 if let arm = acquisitionArm {
                     arm.found(peripheral)
                 } else {
-                    self.centralManager.connect(peripheral)
+                    self.centralManager.connect(peripheral, options: connectOptions)
                 }
 
             case .connect:
@@ -655,6 +723,10 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
 
         log.default("%{public}@: %{public}@", #function, peripheral)
 
+        if acquisitionArm == nil, peripheral == activePeripheral {
+            holdForConnection(peripheral)
+        }
+
         if let peripheralManager = managedPeripherals[peripheral.identifier] {
             peripheralManager.centralManager(central, didConnect: peripheral)
 
@@ -692,7 +764,10 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         }
 
         if acquisitionArm?.disconnected(peripheral, error: error) == true { return }
-        scanAfterDelay()
+        if acquisitionArm == nil, peripheral == activePeripheral {
+            endConnectionHold()
+        }
+        resumeAfterLinkEnded(peripheral)
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
@@ -709,7 +784,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
             managedPeripherals.removeValue(forKey: peripheral.identifier)
         }
 
-        scanAfterDelay()
+        resumeAfterLinkEnded(peripheral)
     }
 }
 
