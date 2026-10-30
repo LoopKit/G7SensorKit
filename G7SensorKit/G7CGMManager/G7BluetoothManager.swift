@@ -237,6 +237,18 @@ class G7BluetoothManager: NSObject {
     private static let poweredOnRechecksBeforeRecreating = 10
     private static let maximumCentralRecreations = 5
 
+    /// The sensor advertises for other displays for ~20–24 s after closing a link; a connect into
+    /// that tail fails, and repeated failures make CoreBluetooth demand a very strong signal.
+    /// Whole seconds: CoreBluetooth rejects a fractional start delay as an invalid parameter.
+    static let reconnectStartDelay = 30
+
+    /// A failure this soon after lodging is CoreBluetooth refusing the request itself; wait before asking again.
+    static let reconnectRefusalWindow: TimeInterval = 2
+    static let reconnectRefusalBackoff: TimeInterval = 30
+
+    /// When the last delayed reconnect was lodged. Confined to `managerQueue`.
+    private var reconnectLodgedAt: Date?
+
     /// There is exactly one of these per session, and a pairing run borrows
     /// it rather than building a second: only one central per app may claim
     /// the restore identifier, and sharing the central is what lets the
@@ -406,6 +418,12 @@ class G7BluetoothManager: NSObject {
             return
         }
 
+        // Leave a pending (delayed) reconnect alone; a plain connect now could land in the advertising tail.
+        guard currentState != .connecting else {
+            log.default("Not scanning: active peripheral has a connect pending")
+            return
+        }
+
         if let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
             log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
             handleDiscoveredPeripheral(peripheral)
@@ -497,12 +515,40 @@ class G7BluetoothManager: NSObject {
         }
     }
 
-    fileprivate func scanAfterDelay() {
-        DispatchQueue.global(qos: .utility).async {
-            Thread.sleep(forTimeInterval: 2)
+    /// Lodges the active peripheral's reconnect at once, so it stands even if the app is suspended,
+    /// with a start delay that lets the sensor's advertising tail pass first.
+    private func reconnectAfterAdvertisingTail(_ peripheral: CBPeripheral) {
+        dispatchPrecondition(condition: .onQueue(managerQueue))
+        reconnectLog("Reconnecting with a \(G7BluetoothManager.reconnectStartDelay) s start delay")
+        reconnectLodgedAt = Date()
+        handleDiscoveredPeripheral(peripheral, connectOptions: [CBConnectPeripheralOptionStartDelayKey: NSNumber(value: G7BluetoothManager.reconnectStartDelay)])
+    }
 
-            self.scanForPeripheral()
+    /// To both the system log and the host's device log, so field reports show it.
+    private func reconnectLog(_ line: String) {
+        log.default("%{public}@", line)
+        delegate?.bluetoothManager(self, logEvent: line)
+    }
+
+    /// Stock path only (no arm): an active peripheral reconnects on its own; anything else rescans.
+    private func resumeAfterLinkEnded(_ peripheral: CBPeripheral, refusedAt failure: Date? = nil) {
+        dispatchPrecondition(condition: .onQueue(managerQueue))
+        guard peripheral == activePeripheral, centralManager.state == .poweredOn else {
+            managerQueue.asyncAfter(deadline: .now() + 2) { [weak self] in
+                self?.managerQueue_scanForPeripheral()
+            }
+            return
         }
+        // Re-lodging a refused request at once would spin; back off and go through the stock scan instead.
+        if let failure, let lodgedAt = reconnectLodgedAt, failure.timeIntervalSince(lodgedAt) < G7BluetoothManager.reconnectRefusalWindow {
+            reconnectLodgedAt = nil
+            reconnectLog("Reconnect refused; retrying in \(Int(G7BluetoothManager.reconnectRefusalBackoff)) s")
+            managerQueue.asyncAfter(deadline: .now() + G7BluetoothManager.reconnectRefusalBackoff) { [weak self] in
+                self?.managerQueue_scanForPeripheral()
+            }
+            return
+        }
+        reconnectAfterAdvertisingTail(peripheral)
     }
 
     // MARK: - Accessors
@@ -539,7 +585,7 @@ class G7BluetoothManager: NSObject {
         return G7PeripheralManager(peripheral: peripheral, configuration: .dexcomG7, centralManager: centralManager)
     }
 
-    func handleDiscoveredPeripheral(_ peripheral: CBPeripheral, advertisementData: [String: Any] = [:], rssi: NSNumber = 127) {
+    func handleDiscoveredPeripheral(_ peripheral: CBPeripheral, advertisementData: [String: Any] = [:], rssi: NSNumber = 127, connectOptions: [String: Any]? = nil) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
         if let delegate = delegate {
@@ -560,7 +606,7 @@ class G7BluetoothManager: NSObject {
                 if let arm = acquisitionArm {
                     arm.found(peripheral)
                 } else {
-                    self.centralManager.connect(peripheral)
+                    self.centralManager.connect(peripheral, options: connectOptions)
                 }
 
             case .connect:
@@ -692,7 +738,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         }
 
         if acquisitionArm?.disconnected(peripheral, error: error) == true { return }
-        scanAfterDelay()
+        resumeAfterLinkEnded(peripheral)
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
@@ -709,7 +755,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
             managedPeripherals.removeValue(forKey: peripheral.identifier)
         }
 
-        scanAfterDelay()
+        resumeAfterLinkEnded(peripheral, refusedAt: Date())
     }
 }
 
