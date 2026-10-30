@@ -515,14 +515,6 @@ class G7BluetoothManager: NSObject {
         }
     }
 
-    fileprivate func scanAfterDelay() {
-        DispatchQueue.global(qos: .utility).async {
-            Thread.sleep(forTimeInterval: 2)
-
-            self.scanForPeripheral()
-        }
-    }
-
     /// Lodges the active peripheral's reconnect at once, so it stands even if the app is suspended,
     /// with a start delay that lets the sensor's advertising tail pass first.
     private func reconnectAfterAdvertisingTail(_ peripheral: CBPeripheral) {
@@ -542,7 +534,9 @@ class G7BluetoothManager: NSObject {
     private func resumeAfterLinkEnded(_ peripheral: CBPeripheral, refusedAt failure: Date? = nil) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
         guard peripheral == activePeripheral, centralManager.state == .poweredOn else {
-            scanAfterDelay()
+            managerQueue.asyncAfter(deadline: .now() + 2) { [weak self] in
+                self?.managerQueue_scanForPeripheral()
+            }
             return
         }
         // Re-lodging a refused request at once would spin; back off and go through the stock scan instead.
