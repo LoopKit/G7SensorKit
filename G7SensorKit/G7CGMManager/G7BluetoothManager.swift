@@ -123,22 +123,6 @@ extension G7BluetoothManagerDelegate {
     func bluetoothManagerStatusDidChange(_ manager: G7BluetoothManager) {}
 }
 
-/// performExpiringActivity, once-only: `onEnd` runs when `wait` elapses, when the system ends the
-/// hold, or when the returned release closure is called — whichever first, exactly once.
-@discardableResult
-func holdProcess(reason: String, upTo wait: TimeInterval, onEnd: @escaping (_ systemEnded: Bool) -> Void = { _ in }) -> () -> Void {
-    let gate = DispatchSemaphore(value: 0)
-    let once = NSLock(); var done = false
-    let end: (Bool) -> Void = { s in once.lock(); let first = !done; done = true; once.unlock(); if first { onEnd(s) } }
-    DispatchQueue.global(qos: .userInitiated).async {
-        ProcessInfo.processInfo.performExpiringActivity(withReason: reason) { expired in
-            if expired { end(true); gate.signal(); return }
-            _ = gate.wait(timeout: .now() + wait); end(false)
-        }
-    }
-    return { gate.signal() }
-}
-
 /// Takes over acquisition where a platform cannot use the stock steps (watchOS: the app sleeps
 /// between readings and its scanning is rationed). Called on the manager's queue.
 protocol G7AcquisitionArm: AnyObject {
@@ -261,12 +245,6 @@ class G7BluetoothManager: NSObject {
     /// A failure this soon after lodging is CoreBluetooth refusing the request itself; wait before asking again.
     static let reconnectRefusalWindow: TimeInterval = 2
     static let reconnectRefusalBackoff: TimeInterval = 30
-
-    /// Upper bound for keeping the app running from link-up until the sensor closes the link.
-    static let connectionHoldLimit: TimeInterval = 20
-
-    /// Ends the hold over the active peripheral's current link. Confined to `managerQueue`.
-    private var releaseConnectionHold: (() -> Void)?
 
     /// When the last delayed reconnect was lodged. Confined to `managerQueue`.
     private var reconnectLodgedAt: Date?
@@ -554,28 +532,10 @@ class G7BluetoothManager: NSObject {
         handleDiscoveredPeripheral(peripheral, connectOptions: [CBConnectPeripheralOptionStartDelayKey: NSNumber(value: G7BluetoothManager.reconnectStartDelay)])
     }
 
-    /// Keeps the app running from link-up until the sensor closes the link, so a background wake
-    /// finishes the handshake and reading instead of being suspended mid-way.
-    private func holdForConnection(_ peripheral: CBPeripheral) {
-        dispatchPrecondition(condition: .onQueue(managerQueue))
-        releaseConnectionHold?()
-        releaseConnectionHold = holdProcess(reason: "G7 reading", upTo: G7BluetoothManager.connectionHoldLimit) { [weak self] systemEnded in
-            if systemEnded {
-                self?.managerQueue.async { self?.reconnectLog("System ended the hold before the link closed") }
-            }
-        }
-    }
-
     /// To both the system log and the host's device log, so field reports show it.
     private func reconnectLog(_ line: String) {
         log.default("%{public}@", line)
         delegate?.bluetoothManager(self, logEvent: line)
-    }
-
-    private func endConnectionHold() {
-        dispatchPrecondition(condition: .onQueue(managerQueue))
-        releaseConnectionHold?()
-        releaseConnectionHold = nil
     }
 
     /// Stock path only (no arm): an active peripheral reconnects on its own; anything else rescans.
@@ -747,10 +707,6 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
 
         log.default("%{public}@: %{public}@", #function, peripheral)
 
-        if acquisitionArm == nil, peripheral == activePeripheral {
-            holdForConnection(peripheral)
-        }
-
         if let peripheralManager = managedPeripherals[peripheral.identifier] {
             peripheralManager.centralManager(central, didConnect: peripheral)
 
@@ -788,9 +744,6 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         }
 
         if acquisitionArm?.disconnected(peripheral, error: error) == true { return }
-        if acquisitionArm == nil, peripheral == activePeripheral {
-            endConnectionHold()
-        }
         resumeAfterLinkEnded(peripheral)
     }
 
