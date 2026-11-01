@@ -12,7 +12,6 @@
 
 import Foundation
 import LoopKit
-import LoopAlgorithm
 
 public struct G7GlucoseMessage: SensorMessage, Equatable {
     /// Nonzero when the sensor has no current reading, e.g. 0x80 from a failed sensor; glucose is then nil.
