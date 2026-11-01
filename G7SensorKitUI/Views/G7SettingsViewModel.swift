@@ -8,7 +8,6 @@
 
 import Foundation
 import G7SensorKit
-import LoopAlgorithm
 import LoopKit
 import LoopKitUI
 import WatchConnectivity
