@@ -256,18 +256,16 @@ class G7LifecycleAlertManagerTests: XCTestCase {
     /// replayed by Loop at every launch until acknowledged. Deleting must
     /// retract every alert this manager can issue, and must do so before the
     /// deletion notification that makes Loop release the manager.
-    func testDeletingTheCGMRetractsEveryAlertBeforeNotifying() {
+    func testDeletingTheCGMRetractsEveryAlertBeforeNotifying() async {
         var state = G7CGMManagerState()
         state.sensorID = "DXCM99"
         state.activatedAt = Date()
         state.lifecycleAlertsScheduledFor = "scheduled"
         let manager = makeManager(state: state)
 
-        let done = expectation(description: "delete completed")
-        manager.delete { done.fulfill() }
-        wait(for: [done], timeout: 2)
-        settle()
+        await manager.delete()
 
+        XCTAssertEqual(recorder.events.last, "delete", "delete() returns once Loop has been told to delete")
         XCTAssertEqual(
             Set(recorder.retracted.map(\.alertIdentifier)),
             Set(G7LifecycleAlert.allCases.map(\.rawValue)),
@@ -281,7 +279,7 @@ class G7LifecycleAlertManagerTests: XCTestCase {
     }
 
     /// A manager passed its configuration schedules the same alerts, so deleting it retracts them.
-    func testDeletingAPassedConfigurationRetractsEveryAlert() {
+    func testDeletingAPassedConfigurationRetractsEveryAlert() async {
         var shared = G7CGMManagerState()
         shared.sensorID = "DXCM99"
         shared.activatedAt = Date()
@@ -289,10 +287,7 @@ class G7LifecycleAlertManagerTests: XCTestCase {
         state.lifecycleAlertsScheduledFor = "scheduled"
         let manager = makeManager(state: state)
 
-        let done = expectation(description: "delete completed")
-        manager.delete { done.fulfill() }
-        wait(for: [done], timeout: 2)
-        settle()
+        await manager.delete()
 
         XCTAssertEqual(Set(recorder.retracted.map(\.alertIdentifier)), Set(G7LifecycleAlert.allCases.map(\.rawValue)))
     }

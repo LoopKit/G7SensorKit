@@ -138,11 +138,9 @@ final class G7DeviceHandoffTests: XCTestCase {
         XCTAssertNil(manager.state.suspectedSessionEndAt)
     }
 
-    func testDeletingAPassedConfigurationRecordsNoSensorEnd() {
+    func testDeletingAPassedConfigurationRecordsNoSensorEnd() async {
         let manager = makeManager(state: G7CGMManagerState.adopted(from: makeManager(state: phoneState).exportConfiguration().state))
-        let deleted = expectation(description: "deleted")
-        manager.delete { deleted.fulfill() }
-        wait(for: [deleted], timeout: 2)
+        await manager.delete()
         XCTAssertNil(manager.state.sensorEndRecordedFor, "the sensor's lifecycle is the other controller's")
         XCTAssertNil(manager.state.previousSensor)
         XCTAssertEqual(manager.state.sensorID, sensorID)
