@@ -484,13 +484,11 @@ final class G7SessionModeMigrationTests: XCTestCase {
         XCTAssertGreaterThan(manager.state.pairedAt!, state.pairedAt!)
     }
 
-    func testDeletingKeepsThePreviousSensorAsRemoved() {
+    func testDeletingKeepsThePreviousSensorAsRemoved() async {
         var state = G7CGMManagerState(rawValue: legacyRawState)
         state.sensorID = "DXCM99"
         let manager = makeManager(state: state)
-        let done = expectation(description: "deleted")
-        manager.delete { done.fulfill() }
-        wait(for: [done], timeout: 2)
+        await manager.delete()
         XCTAssertEqual(manager.state.previousSensor?.endReason, .deleted)
     }
 
