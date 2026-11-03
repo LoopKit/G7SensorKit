@@ -547,7 +547,8 @@ public class G7CGMManager: CGMManager {
             state.sharedKey = nil
             state.peripheralIdentifier = nil
             state.lifecycleAlertsScheduledFor = nil
-            state.sensorFailedAlertIssuedFor = nil
+            // The scan can rediscover the failed sensor. Keep its alert marker
+            // so it cannot raise another alert when it reconnects.
             state.sensorEndRecordedFor = nil
             state.pairedAt = nil
             state.sensorFailureMessage = nil
