@@ -20,6 +20,7 @@
 		1689B0403302877CE35C8BF3 /* TransmitterVersionMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9491D07D366D9B6E1486F1F6 /* TransmitterVersionMessageTests.swift */; };
 		FADE0000000000000000032C /* G7BluetoothManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F50E7291EAC6500555EB5 /* G7BluetoothManager.swift */; };
 		FADE00000000000000000341 /* G7WatchAcquisition.swift in Sources */ = {isa = PBXBuildFile; fileRef = FADE00000000000000000340 /* G7WatchAcquisition.swift */; };
+		08371A6E0FDA4827041807A4 /* G7WatchPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECF5216B24A9A73E01C113B9 /* G7WatchPlugin.swift */; };
 		FADE00000000000000000336 /* G7PeripheralManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F50E4291EAC6500555EB5 /* G7PeripheralManager.swift */; };
 		FADE00000000000000000334 /* G7Sensor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F50E1291EAC6500555EB5 /* G7Sensor.swift */; };
 		44ED51DCD84D31C49A0562A5 /* G7DisplayType.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0ED7F4C52EF2B7DCF8DFFB /* G7DisplayType.swift */; };
@@ -288,6 +289,7 @@
 		C17F50E6291EAC6500555EB5 /* G7CGMManagerState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = G7CGMManagerState.swift; sourceTree = "<group>"; };
 		C17F50E7291EAC6500555EB5 /* G7BluetoothManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = G7BluetoothManager.swift; sourceTree = "<group>"; };
 		FADE00000000000000000340 /* G7WatchAcquisition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = G7WatchAcquisition.swift; sourceTree = "<group>"; };
+		ECF5216B24A9A73E01C113B9 /* G7WatchPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = G7WatchPlugin.swift; sourceTree = "<group>"; };
 		C17F50E8291EAC6500555EB5 /* G7GlucoseMessage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = G7GlucoseMessage.swift; sourceTree = "<group>"; };
 		C17F50F8291EAC9100555EB5 /* G7SensorKitUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = G7SensorKitUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C17F50FA291EAC9100555EB5 /* G7SensorKitUI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = G7SensorKitUI.h; sourceTree = "<group>"; };
@@ -520,6 +522,7 @@
 				C17F50E4291EAC6500555EB5 /* G7PeripheralManager.swift */,
 				C17F50E1291EAC6500555EB5 /* G7Sensor.swift */,
 				FADE00000000000000000340 /* G7WatchAcquisition.swift */,
+				ECF5216B24A9A73E01C113B9 /* G7WatchPlugin.swift */,
 				899E19256E3224A54FA35AD8 /* G7Authenticator.swift */,
 				6180916611D0990A46355025 /* G7PeripheralManager+Handshake.swift */,
 				4CAA6FF14E0E9C16A25FD3B6 /* G7SessionMode.swift */,
@@ -914,6 +917,7 @@
 				FADE0000000000000000032B /* AlgorithmState.swift in Sources */,
 				FADE0000000000000000032C /* G7BluetoothManager.swift in Sources */,
 				FADE00000000000000000341 /* G7WatchAcquisition.swift in Sources */,
+				08371A6E0FDA4827041807A4 /* G7WatchPlugin.swift in Sources */,
 				FADE0000000000000000032D /* Data.swift in Sources */,
 				FADE0000000000000000032F /* G7LastReading.swift in Sources */,
 				FADE00000000000000000330 /* Locked.swift in Sources */,
@@ -1105,6 +1109,7 @@
 		FADE0000000000000000030A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				INFOPLIST_FILE = "G7SensorKit/Info-watchOS.plist";
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -1145,6 +1150,7 @@
 		FADE00000000000000000309 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				INFOPLIST_FILE = "G7SensorKit/Info-watchOS.plist";
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
