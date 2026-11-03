@@ -300,7 +300,7 @@ public class G7CGMManager: CGMManager {
 
     /// Posted on the main queue when `needsCodeForSensor` or `isSearchingForSensor` changes; the
     /// object is the manager.
-    public static let statusDidChange = Notification.Name("G7CGMManagerStatusDidChange")
+    public static let statusDidChange = Notification.Name.directReadCGMStatusDidChange
 
     /// The sensor a direct connection would reach without a pairing code or key; nil once one exists.
     public var needsCodeForSensor: String? { sensor.needsCodeForSensor }
