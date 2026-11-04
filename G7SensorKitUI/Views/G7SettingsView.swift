@@ -462,6 +462,11 @@ if viewModel.sessionMode == .eavesdropping {
                 }
                 .disabled(!viewModel.canCalibrate)
             }
+            #if DEBUG
+            if viewModel.calibrationAdviceSeen {
+                Button("Reset Calibration Advice (Debug)", action: viewModel.resetCalibrationAdviceSeen)
+            }
+            #endif
         }
     }
 

@@ -495,6 +495,7 @@ public class G7CGMManager: CGMManager {
             "pairedAt: \(String(describing: state.pairedAt))",
             "sensorFailure: \(String(describing: state.sensorFailureMessage)) at \(String(describing: state.sensorFailedAt))",
             "previousSensor: \(String(describing: state.previousSensor?.rawValue))",
+            "calibrationAdviceSeen: \(state.calibrationAdviceSeen)",
         ]
         return lines.joined(separator: "\n")
     }
@@ -579,6 +580,20 @@ public class G7CGMManager: CGMManager {
     public func suppressSimulatedSensorWarning() {
         mutateState { $0.simulatedSensorWarningSuppressed = true }
     }
+
+    /// Record that the calibration advice page has been shown, so later
+    /// calibrations skip straight to the entry page.
+    public func markCalibrationAdviceSeen() {
+        mutateState { $0.calibrationAdviceSeen = true }
+    }
+
+    #if DEBUG
+    /// Debug-only: forget that the calibration advice page has been shown,
+    /// so the first-time flow can be tested again without a fresh pairing.
+    public func resetCalibrationAdviceSeen() {
+        mutateState { $0.calibrationAdviceSeen = false }
+    }
+    #endif
 
     public func logDeviceCommunication(_ message: String, type: DeviceLogEntryType = .send) {
         self.cgmManagerDelegate?.deviceManager(self, logEventForDeviceIdentifier: state.sensorID, type: type, message: message, completion: nil)

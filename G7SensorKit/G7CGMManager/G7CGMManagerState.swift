@@ -61,6 +61,12 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     /// per-reading HealthKit metadata still marks the data simulated.
     public var simulatedSensorWarningSuppressed: Bool = false
 
+    /// Whether the calibration advice page has already been shown once.
+    /// Not reset on sensor replacement: the advice is about calibrating in
+    /// general, not about any one sensor, so it only needs to be seen once
+    /// per app install.
+    public var calibrationAdviceSeen: Bool = false
+
     /// The paired sensor's CoreBluetooth identifier, so a relaunch can
     /// retrieve it directly instead of waiting for its next advertisement.
     public var peripheralIdentifier: UUID?
@@ -165,6 +171,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         self.sharedKey = rawValue["sharedKey"] as? Data
         self.sensorAuthenticity = (rawValue["sensorAuthenticity"] as? String).flatMap(G7SensorAuthenticity.init(rawValue:)) ?? .unverified
         self.simulatedSensorWarningSuppressed = rawValue["simulatedSensorWarningSuppressed"] as? Bool ?? false
+        self.calibrationAdviceSeen = rawValue["calibrationAdviceSeen"] as? Bool ?? false
         self.peripheralIdentifier = (rawValue["peripheralIdentifier"] as? String).flatMap(UUID.init(uuidString:))
         self.lastAuthenticationFailure = rawValue["lastAuthenticationFailure"] as? String
         self.lastAuthenticationFailureDate = rawValue["lastAuthenticationFailureDate"] as? Date
@@ -213,6 +220,7 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
         rawValue["sharedKey"] = sharedKey
         rawValue["sensorAuthenticity"] = sensorAuthenticity.rawValue
         rawValue["simulatedSensorWarningSuppressed"] = simulatedSensorWarningSuppressed
+        rawValue["calibrationAdviceSeen"] = calibrationAdviceSeen
         rawValue["peripheralIdentifier"] = peripheralIdentifier?.uuidString
         rawValue["lastAuthenticationFailure"] = lastAuthenticationFailure
         rawValue["lastAuthenticationFailureDate"] = lastAuthenticationFailureDate
