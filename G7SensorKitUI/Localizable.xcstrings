@@ -670,7 +670,7 @@
       }
     },
     "Before You Calibrate" : {
-      "comment" : "Title of the calibration advice page"
+      "comment" : "Calibration why-page: navigation title and header text"
     },
     "Before You Pair" : {
       "comment" : "Navigation title of the Dexcom app warning screen"
@@ -836,7 +836,7 @@
       "comment" : "Last calibration value when the sensor reports one this app did not enter"
     },
     "Calibrate" : {
-      "comment" : "Button title to send the calibration\nButton title to start calibrating the sensor\nNavigation title of the calibration pages"
+      "comment" : "Button title to send the calibration\nButton title to start calibrating the sensor"
     },
     "Calibrate Anyway" : {
       "comment" : "Button title to send a calibration despite the large difference"
@@ -1957,7 +1957,7 @@
       "comment" : "Lead-in to the list of ways to remove the Dexcom app"
     },
     "Done" : {
-      "comment" : "Button title to finish setup",
+      "comment" : "Button title to finish setup\nButton to dismiss a sheet",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -2761,6 +2761,9 @@
     },
     "How to Apply a Sensor" : {
       "comment" : "Button title opening the step-by-step application guide\nNavigation title of the step-by-step application guide"
+    },
+    "How to Calibrate" : {
+      "comment" : "Calibration how-page: navigation title, header text, and pill button"
     },
     "hr" : {
       "comment" : "Abbreviated hours unit after a remaining-time number\nUnit after the hours-since-last-reading number"

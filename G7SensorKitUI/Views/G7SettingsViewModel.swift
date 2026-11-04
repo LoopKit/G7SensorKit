@@ -54,6 +54,7 @@ class G7SettingsViewModel: ObservableObject {
     @Published private(set) var calibrationBounds: G7CalibrationBoundsMessage?
     @Published private(set) var hasPendingCalibration: Bool = false
     @Published private(set) var canCalibrate: Bool = false
+    @Published private(set) var calibrationAdviceSeen: Bool = false
     @Published private(set) var shareUsername: String?
     @Published private(set) var shareServer: G7ShareServer?
     @Published private(set) var shareUploadStatus = G7ShareUploadStatus()
@@ -144,6 +145,7 @@ class G7SettingsViewModel: ObservableObject {
         calibrationBounds = cgmManager.state.calibrationBounds
         hasPendingCalibration = cgmManager.hasPendingCalibration
         canCalibrate = cgmManager.canCalibrate
+        calibrationAdviceSeen = cgmManager.state.calibrationAdviceSeen
         shareUsername = cgmManager.shareAccount?.username
         shareServer = cgmManager.shareAccount?.server
         shareUploadStatus = cgmManager.shareUploadStatus
@@ -363,6 +365,19 @@ class G7SettingsViewModel: ObservableObject {
         cgmManager.suppressSimulatedSensorWarning()
         updateValues()
     }
+
+    func markCalibrationAdviceSeen() {
+        guard !calibrationAdviceSeen else { return }
+        cgmManager.markCalibrationAdviceSeen()
+        updateValues()
+    }
+
+    #if targetEnvironment(simulator)
+    func resetCalibrationAdviceSeen() {
+        cgmManager.resetCalibrationAdviceSeen()
+        updateValues()
+    }
+    #endif
 
     /// Whether the last reading reports a temporary sensor issue, the same
     /// check behind the "Sensor Issue" status highlight.
