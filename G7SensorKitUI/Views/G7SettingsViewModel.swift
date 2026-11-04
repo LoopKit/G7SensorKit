@@ -372,7 +372,7 @@ class G7SettingsViewModel: ObservableObject {
         updateValues()
     }
 
-    #if DEBUG
+    #if targetEnvironment(simulator)
     func resetCalibrationAdviceSeen() {
         cgmManager.resetCalibrationAdviceSeen()
         updateValues()
