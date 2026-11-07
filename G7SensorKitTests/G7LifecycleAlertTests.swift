@@ -363,4 +363,67 @@ class G7LifecycleAlertManagerTests: XCTestCase {
 
         XCTAssertEqual(recorder.cgmEvents.map(\.type), [.sensorStart, .sensorEnd])
     }
+
+    private func sensorFailedAlerts() -> Int {
+        recorder.issued.filter { $0.identifier.alertIdentifier == G7LifecycleAlert.sensorFailed.rawValue }.count
+    }
+
+    func testAFailedSensorFoundAgainIsNotAdopted() {
+        let manager = sensorIssueManager()
+        let activatedAt = manager.state.activatedAt!
+        manager.sensor(manager.sensor, didRead: reading(state: 25, minutes: 1))
+        settle()
+
+        XCTAssertEqual(sensorFailedAlerts(), 1)
+        XCTAssertFalse(recorder.retracted.contains { $0.alertIdentifier == G7LifecycleAlert.sensorFailed.rawValue },
+                       "the failure alert stays up until a new sensor is adopted")
+        XCTAssertEqual(manager.state.previousSensor?.endReason, .failed)
+        XCTAssertNotNil(manager.state.previousSensor?.failureMessage)
+        let eventCount = recorder.cgmEvents.count
+
+        // The scan for a replacement finds the failed sensor again, every reading.
+        for _ in 0..<3 {
+            XCTAssertFalse(manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: activatedAt.addingTimeInterval(1), peripheralIdentifier: UUID()))
+        }
+        settle()
+
+        XCTAssertEqual(sensorFailedAlerts(), 1)
+        XCTAssertNil(manager.state.sensorID)
+        XCTAssertEqual(manager.state.previousSensor?.endReason, .failed)
+        XCTAssertEqual(recorder.cgmEvents.count, eventCount, "no sensor start or end for the failed sensor")
+    }
+
+    func testANewSensorRetractsTheFailureAlert() {
+        let manager = sensorIssueManager()
+        manager.sensor(manager.sensor, didRead: reading(state: 25, minutes: 1))
+        settle()
+
+        XCTAssertTrue(manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM98", activatedAt: Date(), peripheralIdentifier: UUID()))
+        settle()
+
+        XCTAssertTrue(recorder.retracted.contains { $0.alertIdentifier == G7LifecycleAlert.sensorFailed.rawValue })
+        XCTAssertEqual(manager.state.sensorID, "DXCM98")
+        XCTAssertNil(manager.state.sensorFailedAlertIssuedFor)
+    }
+
+    func testASensorWhoseSessionEndedIsNotAdoptedAgain() {
+        let manager = sensorIssueManager()
+        let activatedAt = manager.state.activatedAt!
+        manager.sensor(manager.sensor, didRead: reading(state: 26, minutes: 1))
+        settle()
+
+        XCTAssertEqual(manager.state.previousSensor?.endReason, .sessionEnded)
+        XCTAssertFalse(manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: activatedAt, peripheralIdentifier: UUID()))
+        XCTAssertNil(manager.state.sensorID)
+    }
+
+    func testAReplacedSensorCanBeAdoptedAgain() {
+        let manager = sensorIssueManager()
+        let activatedAt = manager.state.activatedAt!
+        manager.scanForNewSensor()
+        settle()
+
+        XCTAssertTrue(manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM99", activatedAt: activatedAt, peripheralIdentifier: UUID()))
+        XCTAssertEqual(manager.state.sensorID, "DXCM99")
+    }
 }

@@ -125,6 +125,10 @@ struct G7PreviousSensorView: View {
             return LocalizedString("Replaced", comment: "Row label for when the previous sensor was replaced")
         case .deleted:
             return LocalizedString("Removed", comment: "Row label for when the previous sensor's CGM was deleted")
+        case .failed:
+            return LocalizedString("Failed", comment: "Row label for when the previous sensor failed")
+        case .sessionEnded:
+            return LocalizedString("Session Ended", comment: "Row label for when the previous sensor's session ended")
         }
     }
 }
