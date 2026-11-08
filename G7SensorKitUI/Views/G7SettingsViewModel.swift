@@ -233,6 +233,17 @@ class G7SettingsViewModel: ObservableObject {
         updateValues()
     }
 
+    /// Whether the session has run its course and the next thing to do is
+    /// put on and pair a new sensor.
+    var needsNewSensor: Bool {
+        switch lifecycleState {
+        case .expired, .failed, .gracePeriod, .unpaired:
+            return true
+        case .searching, .connecting, .warmup, .ok:
+            return false
+        }
+    }
+
     /// Re-check things that change outside the manager, such as the Dexcom
     /// app being deleted while this screen was in the background.
     func refreshEnvironment() {

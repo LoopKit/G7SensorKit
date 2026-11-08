@@ -124,6 +124,7 @@ struct G7SettingsView: View {
             Section () {
                 switch viewModel.sessionMode {
                 case .direct:
+                    Button(LocalizedString("Pair New Sensor", comment: "Button title in settings to pair a replacement sensor"), action: pairNewSensor)
                     Button(LocalizedString("Use with the Dexcom App Instead", comment: "Button title in settings to go back to reading through the Dexcom app"), action: { showingDexcomAppModeConfirmation = true })
                 case .eavesdropping:
                     if !self.viewModel.scanning {
@@ -276,13 +277,15 @@ struct G7SettingsView: View {
                 )
             }
             if viewModel.sessionMode == .direct {
-                Button(action: pairNewSensor) {
-                    Label(LocalizedString("Pair New Sensor", comment: "Button title in settings to pair a replacement sensor"), systemImage: "plus.circle.fill")
-                        .font(.headline)
+                if viewModel.needsNewSensor {
+                    // The one thing to do now; the same button also lives at
+                    // the bottom of the screen, but this is where the eye lands
+                    // after tapping an "expired" status.
+                    Button(action: pairNewSensor) {
+                        Label(LocalizedString("Pair New Sensor", comment: "Button title in settings to pair a replacement sensor"), systemImage: "plus.circle.fill")
+                            .font(.headline)
+                    }
                 }
-            }
-
-            if viewModel.sessionMode == .direct {
                 if let failure = viewModel.lastAuthenticationFailure {
                     warning(
                         title: LocalizedString("Sensor Refused Connection", comment: "Title of the settings warning after the sensor refused authentication"),
