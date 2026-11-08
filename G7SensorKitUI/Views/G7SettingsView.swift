@@ -78,19 +78,20 @@ struct G7SettingsView: View {
             sessionSection
             previousSensorSection
 
-            // Passive (eavesdropping) mode has no settings screen of its own
-            // for the Bluetooth link, since the Dexcom app owns it; direct
-            // mode's connection state is already on the sensor card above.
-            if viewModel.sessionMode == .eavesdropping {
-                Section("Bluetooth") {
-                    if viewModel.scanning {
-                        HStack {
-                            Text(LocalizedString("Scanning", comment: "title for g7 settings connection status when scanning"))
-                            Spacer()
-                            SwiftUI.ProgressView()
-                        }
-                    } else if viewModel.connected {
+            Section("Bluetooth") {
+                if viewModel.scanning {
+                    HStack {
+                        Text(LocalizedString("Scanning", comment: "title for g7 settings connection status when scanning"))
+                        Spacer()
+                        SwiftUI.ProgressView()
+                    }
+                } else {
+                    if viewModel.connected {
                         Text(LocalizedString("Connected", comment: "title for g7 settings connection status when connected"))
+                    } else if viewModel.sessionMode == .direct {
+                        // The sensor drops the link between readings; a spinner
+                        // here would spin ~95% of the time and read as broken.
+                        Text(LocalizedString("Waiting for next reading", comment: "title for g7 settings connection status between readings in direct mode"))
                     } else {
                         HStack {
                             Text(LocalizedString("Connecting", comment: "title for g7 settings connection status when connecting"))
@@ -98,15 +99,14 @@ struct G7SettingsView: View {
                             SwiftUI.ProgressView()
                         }
                     }
-                    if let lastConnect = viewModel.lastConnect {
-                        LabeledValueView(label: LocalizedString("Last Connect", comment: "title for g7 settings row showing sensor last connect time"),
-                                         value: timeFormatter.string(from: lastConnect))
-                    }
-                    if !viewModel.scanning {
-                        Button("Scan for new sensor", action: viewModel.scanForNewSensor)
-                    }
                 }
+                if let lastConnect = viewModel.lastConnect {
+                    LabeledValueView(label: LocalizedString("Last Connect", comment: "title for g7 settings row showing sensor last connect time"),
+                                     value: timeFormatter.string(from: lastConnect))
+                }
+            }
 
+            if viewModel.sessionMode == .eavesdropping {
                 Section () {
                     Button(LocalizedString("Open Dexcom App", comment:"Opens the dexcom G7 app to allow users to manage active sensors"), action: {
                         G7DexcomApp.open()
@@ -123,8 +123,15 @@ struct G7SettingsView: View {
             }
 
             Section () {
-                if viewModel.sessionMode == .direct {
+                switch viewModel.sessionMode {
+                case .direct:
                     Button(LocalizedString("Use with the Dexcom App Instead", comment: "Button title in settings to go back to reading through the Dexcom app"), action: { showingDexcomAppModeConfirmation = true })
+                case .eavesdropping:
+                    if !self.viewModel.scanning {
+                        Button("Scan for new sensor", action: {
+                            self.viewModel.scanForNewSensor()
+                        })
+                    }
                 }
 
                 deleteCGMButton
