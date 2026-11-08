@@ -8,8 +8,9 @@
 import Foundation
 import LoopKit
 
-extension G7CGMManager: DirectReadCGMManager {
-    public var directReadStatusNote: String? {
+/// The watch reads the sensor itself; the phone leaves the note to its own status display.
+extension G7CGMManager {
+    public var shortStatusNote: String? {
         G7WatchDirectRead.needsCodeNote(for: needsCodeForSensor) ?? G7WatchDirectRead.searchingNote(isSearchingForSensor)
     }
 }
