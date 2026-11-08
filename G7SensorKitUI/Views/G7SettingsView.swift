@@ -257,6 +257,10 @@ struct G7SettingsView: View {
             }
             if let activatedAt = viewModel.activatedAt {
                 LabeledValueView(
+                    label: LocalizedString("Sensor Expiration", comment: "title for g7 settings row showing sensor expiration time"),
+                    value: timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime))
+                )
+                LabeledValueView(
                     label: LocalizedString("Grace Period End", comment: "title for g7 settings row showing sensor grace period end time"),
                     value: timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime + G7Sensor.gracePeriod))
                 )
