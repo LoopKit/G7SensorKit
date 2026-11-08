@@ -38,16 +38,8 @@ class G7SettingsViewModel: ObservableObject {
     @Published private(set) var sensorModelName: String = ""
     @Published private(set) var pairingCode: String?
     @Published private(set) var serialNumber: String?
-    @Published private(set) var firmwareVersion: String?
-    @Published private(set) var softwareNumber: String?
-    @Published private(set) var siliconVersion: String?
-    @Published private(set) var hardwareVersion: String?
-    @Published private(set) var algorithmVersion: String?
     @Published private(set) var sensorAuthenticity: G7SensorAuthenticity = .unverified
     @Published private(set) var simulatedSensorWarningSuppressed: Bool = false
-    /// Whether the sensor has reported its lifetime; until then the defaults
-    /// are in use and not worth presenting as the sensor's own.
-    @Published private(set) var hasReportedLifetime: Bool = false
     @Published private(set) var lastAuthenticationFailure: String?
     @Published private(set) var lastAuthenticationFailureDate: Date?
     @Published private(set) var calibration: G7CalibrationRecord?
@@ -132,12 +124,6 @@ class G7SettingsViewModel: ObservableObject {
         serialNumber = cgmManager.state.transmitterVersion?.serialNumberString
         sensorAuthenticity = cgmManager.state.sensorAuthenticity
         simulatedSensorWarningSuppressed = cgmManager.state.simulatedSensorWarningSuppressed
-        firmwareVersion = cgmManager.state.transmitterVersion?.firmwareVersion
-        softwareNumber = cgmManager.state.transmitterVersion.map { String($0.softwareNumber) }
-        siliconVersion = cgmManager.state.transmitterVersion.map { String($0.siliconVersion) }
-        hardwareVersion = cgmManager.state.extendedVersion.map { String($0.hardwareVersion) }
-        algorithmVersion = cgmManager.state.extendedVersion.map { String($0.algorithmVersion) }
-        hasReportedLifetime = cgmManager.state.extendedVersion != nil
         lastAuthenticationFailure = cgmManager.state.lastAuthenticationFailure
         lastAuthenticationFailureDate = cgmManager.state.lastAuthenticationFailureDate
         calibration = cgmManager.calibration
