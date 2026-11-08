@@ -477,7 +477,7 @@ extension G7PeripheralManager: CBPeripheralDelegate {
             default: break
             }
         }
-        log.error("[gatt] %{public}@ error on %{public}@ — %{public}@ (%{public}@#%d)%{public}@", what, characteristic.uuid.uuidString, error.localizedDescription, ns.domain, ns.code, tag)
+        log.error("[gatt] %{public}@ error on %{public}@ — %{public}@ (%{public}@)", what, characteristic.uuid.uuidString, error.localizedDescription, "\(ns.domain)#\(ns.code)\(tag)")
     }
 
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
