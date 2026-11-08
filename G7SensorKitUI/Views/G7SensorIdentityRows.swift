@@ -9,14 +9,8 @@ import Foundation
 import SwiftUI
 import LoopKitUI
 
-/// The rows that identify a sensor the same way wherever it is shown: model,
-/// name, serial number, and pairing code. Serial number and pairing code
-/// copy on tap (and offer Copy in their context menu), for things like
-/// support forms and Dexcom's website.
-///
-/// No `Section` of its own: the current sensor's screen has notices that
-/// belong above these rows, in the same section, so the caller supplies the
-/// `Section` and header.
+/// Model, name, serial number and pairing code, the last two copyable.
+/// The caller supplies the `Section`, so notices can sit above these rows.
 struct G7SensorIdentityRows: View {
     let model: String
     let name: String?

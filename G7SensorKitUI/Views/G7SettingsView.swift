@@ -247,10 +247,8 @@ struct G7SettingsView: View {
         }
     }
 
-    /// When the current sensor's session started, was paired, and expires,
-    /// and the actions to end or replace it. Eavesdropping mode has none of
-    /// this until a sensor is actually being followed, so the section itself
-    /// (header included) is skipped rather than left floating and empty.
+    /// The current session's dates and the pairing action. Skipped while
+    /// eavesdropping until there is a session to show.
     @ViewBuilder
     private var sessionSection: some View {
         if viewModel.activatedAt != nil || viewModel.pairedAt != nil || viewModel.sessionMode == .direct {
@@ -311,8 +309,7 @@ struct G7SettingsView: View {
         }
     }
 
-    /// A link to the sensor before this one, in its own unheaded section so
-    /// it reads as a single row rather than a tail on the session's details.
+    /// A link to the sensor before this one, in its own unheaded section.
     @ViewBuilder
     private var previousSensorSection: some View {
         if let previousSensor = viewModel.previousSensor {
