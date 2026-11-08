@@ -70,7 +70,10 @@ struct G7SettingsView: View {
                 }
             }
 
-            sensorSection
+            // Eavesdropping always has the Dexcom app notice to show here.
+            if hasSensor || viewModel.sessionMode == .eavesdropping {
+                sensorSection
+            }
             sessionSection
             previousSensorSection
 
@@ -231,14 +234,16 @@ struct G7SettingsView: View {
             }
             Button(LocalizedString("Pair Sensor Directly", comment: "Button title in settings to upgrade an eavesdropping session to direct pairing"), action: pairCurrentSensor)
             }
-            G7SensorIdentityRows(
-                model: viewModel.sensorModelName,
-                name: viewModel.sensorName,
-                serialNumber: viewModel.serialNumber,
-                // The applicator gets thrown away; this is where the code
-                // lives afterwards, for pairing the same sensor elsewhere.
-                pairingCode: viewModel.sessionMode == .direct ? viewModel.pairingCode : nil
-            )
+            if hasSensor {
+                G7SensorIdentityRows(
+                    model: viewModel.sensorModelName,
+                    name: viewModel.sensorName,
+                    serialNumber: viewModel.serialNumber,
+                    // The applicator gets thrown away; this is where the code
+                    // lives afterwards, for pairing the same sensor elsewhere.
+                    pairingCode: viewModel.sessionMode == .direct ? viewModel.pairingCode : nil
+                )
+            }
         }
     }
 
