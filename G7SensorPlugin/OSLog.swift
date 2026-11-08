@@ -44,7 +44,7 @@ extension OSLog {
         case 5:
             os_log(message, log: self, type: type, args[0], args[1], args[2], args[3], args[4])
         default:
-            os_log(message, log: self, type: type, args)
+            os_log("%{public}@ (%d arguments not logged; the helper takes at most 5)", log: self, type: type, message.description, args.count)
         }
     }
 }
