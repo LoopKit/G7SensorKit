@@ -70,10 +70,6 @@ struct G7SettingsView: View {
                 }
             }
 
-            if viewModel.sessionMode == .direct {
-                calibrationSection
-            }
-
             sensorSection
             sessionSection
             previousSensorSection
@@ -119,6 +115,9 @@ struct G7SettingsView: View {
             }
 
             if viewModel.sessionMode == .direct {
+                if hasSensor {
+                    calibrationSection
+                }
                 shareSection
             }
 
@@ -519,6 +518,12 @@ struct G7SettingsView: View {
                 ]
             )
         }
+    }
+
+    /// Whether a sensor is known: not before a pairing has found one, nor
+    /// while eavesdropping waits for one.
+    private var hasSensor: Bool {
+        viewModel.sensorName != nil
     }
 
     /// Whether the session is over and the sensor needs replacing: the card
