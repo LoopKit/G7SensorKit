@@ -524,12 +524,6 @@ public class G7CGMManager: CGMManager {
         return nil
     }
 
-    /// For a wake that is not the sensor's own (on the watch, each context from the phone): makes sure
-    /// a connect is standing or a scan running. No effect on the phone.
-    public func ensureConnectionActiveOrPending() {
-        sensor.recheckAcquisition()
-    }
-
     public func scanForNewSensor() {
         cancelSuspectedSessionEndScan()
         retractAllLifecycleAlerts()

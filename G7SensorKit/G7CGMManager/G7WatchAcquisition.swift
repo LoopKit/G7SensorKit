@@ -117,21 +117,6 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         relodge(peripheral, sinceLinkUp: sinceLinkUp, why: "acquisition armed")
     }
 
-    /// What `scan()` does at launch, on any wake. Callbacks are the only thing that update `lodged`; one
-    /// that never comes (2026-10-05: a cancelled restored connect went unanswered for an hour) leaves
-    /// nothing lodged and nothing scheduled to notice. A pass in progress already owns acquisition.
-    func recheck() {
-        // The pass's timer runs only while the app does: a pass the app was suspended in outlives its cap
-        // and turns every wake away. The first wake past the cap ends it, which lodges again.
-        if bootstrapPass, let started = lastBootstrapAt,
-           Date().timeIntervalSince(started) > G7WatchAcquisition.bootstrapScanCap {
-            endBootstrapPass(reason: "cap passed while the app was asleep")
-            return
-        }
-        guard !bootstrapPass else { return }
-        scan()
-    }
-
     func found(_ peripheral: CBPeripheral) {
         lodge(peripheral, why: "adopted on discovery")   // handles .connecting/.connected/no-code
     }
@@ -364,7 +349,7 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         watchLog("bootstrap pass over — \(reason)")
         guard reason != "connected" else { return }
         if let p = manager.activePeripheral, p.state == .connecting { central.cancelPeripheralConnection(p); lodged = false; lodgedAt = nil }
-        // Nothing adopted: stand down until the next wake (poweredOn / foreground / the phone's code).
+        // Nothing adopted: stand down until Bluetooth comes on, the app relaunches, or the phone sends a code.
         if manager.activePeripheralIdentifier != nil { scan() }
     }
 }
