@@ -61,10 +61,8 @@ public struct G7CGMManagerState: RawRepresentable, Equatable {
     /// per-reading HealthKit metadata still marks the data simulated.
     public var simulatedSensorWarningSuppressed: Bool = false
 
-    /// Whether the calibration advice page has already been shown once.
-    /// Not reset on sensor replacement: the advice is about calibrating in
-    /// general, not about any one sensor, so it only needs to be seen once
-    /// per app install.
+    /// Whether the calibration advice has been read through to the entry
+    /// page. Kept across sensor changes; removing the CGM resets it.
     public var calibrationAdviceSeen: Bool = false
 
     /// The paired sensor's CoreBluetooth identifier, so a relaunch can
