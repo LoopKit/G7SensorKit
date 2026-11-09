@@ -252,60 +252,60 @@ struct G7SettingsView: View {
     @ViewBuilder
     private var sessionSection: some View {
         if viewModel.activatedAt != nil || viewModel.pairedAt != nil || viewModel.sessionMode == .direct {
-        Section(header: Text(LocalizedString("Session", comment: "Section header for the current sensor's session dates"))) {
-            if let activatedAt = viewModel.activatedAt {
-                LabeledValueView(
-                    label: LocalizedString("Sensor Start", comment: "title for g7 settings row showing sensor start time"),
-                    value: timeFormatter.string(from: activatedAt)
-                )
-            }
-            if let pairedAt = viewModel.pairedAt {
-                LabeledValueView(
-                    label: LocalizedString("Paired", comment: "Row label for when the sensor was paired"),
-                    value: timeFormatter.string(from: pairedAt)
-                )
-            }
-            if let activatedAt = viewModel.activatedAt {
-                LabeledValueView(
-                    label: LocalizedString("Sensor Expiration", comment: "title for g7 settings row showing sensor expiration time"),
-                    value: timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime))
-                )
-                LabeledValueView(
-                    label: LocalizedString("Grace Period End", comment: "title for g7 settings row showing sensor grace period end time"),
-                    value: timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime + G7Sensor.gracePeriod))
-                )
-                LabeledValueView(
-                    label: LocalizedString("Worn For", comment: "Row label for how long the current sensor has been worn so far"),
-                    value: sessionLengthFormatter.string(from: Date().timeIntervalSince(activatedAt)) ?? ""
-                )
-            }
-            if viewModel.sessionMode == .direct {
-                if viewModel.needsNewSensor {
-                    // The one thing to do now; the same button also lives at
-                    // the bottom of the screen, but this is where the eye lands
-                    // after tapping an "expired" status.
-                    Button(action: pairNewSensor) {
-                        Label(LocalizedString("Pair New Sensor", comment: "Button title in settings to pair a replacement sensor"), systemImage: "plus.circle.fill")
-                            .font(.headline)
+            Section(header: Text(LocalizedString("Session", comment: "Section header for the current sensor's session dates"))) {
+                if let activatedAt = viewModel.activatedAt {
+                    LabeledValueView(
+                        label: LocalizedString("Sensor Start", comment: "title for g7 settings row showing sensor start time"),
+                        value: timeFormatter.string(from: activatedAt)
+                    )
+                }
+                if let pairedAt = viewModel.pairedAt {
+                    LabeledValueView(
+                        label: LocalizedString("Paired", comment: "Row label for when the sensor was paired"),
+                        value: timeFormatter.string(from: pairedAt)
+                    )
+                }
+                if let activatedAt = viewModel.activatedAt {
+                    LabeledValueView(
+                        label: LocalizedString("Sensor Expiration", comment: "title for g7 settings row showing sensor expiration time"),
+                        value: timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime))
+                    )
+                    LabeledValueView(
+                        label: LocalizedString("Grace Period End", comment: "title for g7 settings row showing sensor grace period end time"),
+                        value: timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime + G7Sensor.gracePeriod))
+                    )
+                    LabeledValueView(
+                        label: LocalizedString("Worn For", comment: "Row label for how long the current sensor has been worn so far"),
+                        value: sessionLengthFormatter.string(from: Date().timeIntervalSince(activatedAt)) ?? ""
+                    )
+                }
+                if viewModel.sessionMode == .direct {
+                    if viewModel.needsNewSensor {
+                        // The one thing to do now; the same button also lives at
+                        // the bottom of the screen, but this is where the eye lands
+                        // after tapping an "expired" status.
+                        Button(action: pairNewSensor) {
+                            Label(LocalizedString("Pair New Sensor", comment: "Button title in settings to pair a replacement sensor"), systemImage: "plus.circle.fill")
+                                .font(.headline)
+                        }
                     }
-                }
-                if let failure = viewModel.lastAuthenticationFailure {
-                    warning(
-                        title: LocalizedString("Sensor Refused Connection", comment: "Title of the settings warning after the sensor refused authentication"),
-                        message: failure + (viewModel.lastAuthenticationFailureDate.map { " (" + timeFormatter.string(from: $0) + ")" } ?? ""),
-                        style: .critical
-                    )
-                }
-                if viewModel.isDexcomAppInstalled {
-                    warning(
-                        title: String(format: LocalizedString("Stop the %@ App", comment: "Title of the settings warning when a Dexcom app is installed in direct mode (1: app name)"), G7DexcomApp.installedAppNames),
-                        message: String(format: LocalizedString("%1$@ is connected to the sensor directly and does not need the %2$@ app. A sensor works with only one app at a time, so it will take readings away for as long as it is on this phone. Delete it, or offload it under Settings, General, iPhone Storage.", comment: "Body of the settings warning when a Dexcom app is installed in direct mode (1: appName, 2: Dexcom app name)"), appName, G7DexcomApp.installedAppNames),
-                        style: .critical
-                    )
-                }
+                    if let failure = viewModel.lastAuthenticationFailure {
+                        warning(
+                            title: LocalizedString("Sensor Refused Connection", comment: "Title of the settings warning after the sensor refused authentication"),
+                            message: failure + (viewModel.lastAuthenticationFailureDate.map { " (" + timeFormatter.string(from: $0) + ")" } ?? ""),
+                            style: .critical
+                        )
+                    }
+                    if viewModel.isDexcomAppInstalled {
+                        warning(
+                            title: String(format: LocalizedString("Stop the %@ App", comment: "Title of the settings warning when a Dexcom app is installed in direct mode (1: app name)"), G7DexcomApp.installedAppNames),
+                            message: String(format: LocalizedString("%1$@ is connected to the sensor directly and does not need the %2$@ app. A sensor works with only one app at a time, so it will take readings away for as long as it is on this phone. Delete it, or offload it under Settings, General, iPhone Storage.", comment: "Body of the settings warning when a Dexcom app is installed in direct mode (1: appName, 2: Dexcom app name)"), appName, G7DexcomApp.installedAppNames),
+                            style: .critical
+                        )
+                    }
 
+                }
             }
-        }
         }
     }
 
