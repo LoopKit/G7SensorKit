@@ -587,16 +587,6 @@ public class G7CGMManager: CGMManager {
         mutateState { $0.calibrationAdviceSeen = true }
     }
 
-    #if targetEnvironment(simulator)
-    /// Simulator-only: forget that the calibration advice page has been
-    /// shown, so the first-time flow can be tested again without a fresh
-    /// pairing. `#if DEBUG` alone would still ship this to real phones,
-    /// since Trio's own builds are commonly Debug configuration.
-    public func resetCalibrationAdviceSeen() {
-        mutateState { $0.calibrationAdviceSeen = false }
-    }
-    #endif
-
     public func logDeviceCommunication(_ message: String, type: DeviceLogEntryType = .send) {
         self.cgmManagerDelegate?.deviceManager(self, logEventForDeviceIdentifier: state.sensorID, type: type, message: message, completion: nil)
     }

@@ -462,11 +462,6 @@ if viewModel.sessionMode == .eavesdropping {
                 }
                 .disabled(!viewModel.canCalibrate)
             }
-            #if targetEnvironment(simulator)
-            if viewModel.calibrationAdviceSeen {
-                Button("Reset Calibration Advice (Simulator Only)", action: viewModel.resetCalibrationAdviceSeen)
-            }
-            #endif
         }
     }
 

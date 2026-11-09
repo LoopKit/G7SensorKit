@@ -372,13 +372,6 @@ class G7SettingsViewModel: ObservableObject {
         updateValues()
     }
 
-    #if targetEnvironment(simulator)
-    func resetCalibrationAdviceSeen() {
-        cgmManager.resetCalibrationAdviceSeen()
-        updateValues()
-    }
-    #endif
-
     /// Whether the last reading reports a temporary sensor issue, the same
     /// check behind the "Sensor Issue" status highlight.
     var hasSensorIssue: Bool {
