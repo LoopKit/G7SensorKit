@@ -10,9 +10,9 @@ import LoopKitUI
 import SwiftUI
 
 /// Calibration in three pages the first time: whether it is a good idea at
-/// all, how to do it properly, then the value. Once left — cancelled or
-/// continued past — later calibrations skip straight to the entry page,
-/// and the how-to stays reachable from the "How to Calibrate" pill there.
+/// all, how to do it properly, then the value. Once the entry page has been
+/// reached, later calibrations skip straight to it, and the how-to stays
+/// reachable from the "How to Calibrate" pill there.
 struct G7CalibrationFlowView: View {
     @ObservedObject var viewModel: G7SettingsViewModel
 
@@ -30,11 +30,6 @@ struct G7CalibrationFlowView: View {
                 }
             }
             .navigationBarItems(leading: Button(LocalizedString("Cancel", comment: "Button text to cancel G7 setup")) {
-                // Cancelling out of the advice counts as having been shown
-                // it, the same as reading through to the end: marking this
-                // on an explicit exit, not on mere appearance, is what keeps
-                // a sheet nobody ever acted on from counting as "seen."
-                viewModel.markCalibrationAdviceSeen()
                 dismiss()
             })
         }
