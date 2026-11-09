@@ -581,7 +581,7 @@ public class G7CGMManager: CGMManager {
         mutateState { $0.simulatedSensorWarningSuppressed = true }
     }
 
-    /// Record that the calibration advice page has been shown, so later
+    /// Record that the calibration advice has been read, so later
     /// calibrations skip straight to the entry page.
     public func markCalibrationAdviceSeen() {
         mutateState { $0.calibrationAdviceSeen = true }

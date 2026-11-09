@@ -9,10 +9,8 @@ import G7SensorKit
 import LoopKitUI
 import SwiftUI
 
-/// Calibration in three pages the first time: whether it is a good idea at
-/// all, how to do it properly, then the value. Once the entry page has been
-/// reached, later calibrations skip straight to it, and the how-to stays
-/// reachable from the "How to Calibrate" pill there.
+/// Calibration: the why and how advice the first time, then straight to
+/// the entry page once it has been reached.
 struct G7CalibrationFlowView: View {
     @ObservedObject var viewModel: G7SettingsViewModel
 
@@ -36,10 +34,7 @@ struct G7CalibrationFlowView: View {
     }
 }
 
-/// Page 1 of the first-time advice: whether calibrating is a good idea at
-/// all. The sensor trails blood glucose by several minutes, so a
-/// calibration taken while glucose is moving teaches it the wrong value;
-/// and every reading Loop doses on shifts with it.
+/// Page 1 of the first-time advice: whether to calibrate at all.
 struct G7CalibrationWhyView: View {
     @ObservedObject var viewModel: G7SettingsViewModel
     var didFinish: () -> Void
@@ -85,9 +80,7 @@ private struct G7CalibrationWhyContent: View {
     }
 }
 
-/// Page 2 of the first-time advice, and the "How to Calibrate" reference
-/// reachable later: the practical checklist for a calibration that is
-/// actually worth sending.
+/// Page 2 of the first-time advice: how to calibrate well.
 struct G7CalibrationHowView: View {
     @ObservedObject var viewModel: G7SettingsViewModel
     var didFinish: () -> Void
@@ -109,8 +102,7 @@ struct G7CalibrationHowView: View {
     }
 }
 
-/// Reopens the how-to page on demand, once it is no longer shown
-/// automatically, via the "How to Calibrate" pill on the entry page.
+/// The how-to, reopened from the entry page's "How to Calibrate" pill.
 struct G7CalibrationHowToCalibrateView: View {
     @ObservedObject var viewModel: G7SettingsViewModel
     var didFinish: () -> Void
@@ -287,10 +279,7 @@ struct G7CalibrationEntryView: View {
         }
         .onAppear {
             fieldFocused = true
-            // Reaching this page at all — including via VoiceOver or Voice
-            // Control activation, which a tap gesture on the "Continue" link
-            // would not see — is what "got through the advice" means; a
-            // no-op when already seen (the usual, direct-entry case).
+            // Reaching this page is what counts as having read the advice.
             viewModel.markCalibrationAdviceSeen()
         }
         .alert(
