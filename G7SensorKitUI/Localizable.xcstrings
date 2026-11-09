@@ -670,7 +670,7 @@
       }
     },
     "Before You Calibrate" : {
-      "comment" : "Calibration why-page: navigation title and header text"
+      "comment" : "Calibration why-page: navigation title and header text\nNavigation title of the full calibration advice sheet"
     },
     "Before You Pair" : {
       "comment" : "Navigation title of the Dexcom app warning screen"
@@ -2763,7 +2763,7 @@
       "comment" : "Button title opening the step-by-step application guide\nNavigation title of the step-by-step application guide"
     },
     "How to Calibrate" : {
-      "comment" : "Calibration how-page: navigation title, header text, and pill button"
+      "comment" : "Calibration how-page: navigation title and header text"
     },
     "hr" : {
       "comment" : "Abbreviated hours unit after a remaining-time number\nUnit after the hours-since-last-reading number"
@@ -3673,6 +3673,9 @@
     },
     "Pull the tab to remove the colored top liner, leaving the overpatch in place." : {
       "comment" : "Overpatch step D"
+    },
+    "Read Before Calibrating" : {
+      "comment" : "Button on the calibration entry page that opens the full advice"
     },
     "Relax the muscles at the site. Press the applicator flat against your skin until the clear ring disappears, then press the button." : {
       "comment" : "Apply step 4: insert the sensor"

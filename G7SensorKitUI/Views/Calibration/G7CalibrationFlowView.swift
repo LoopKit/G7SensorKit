@@ -98,22 +98,26 @@ struct G7CalibrationHowView: View {
             .padding()
             .background(Color(.systemBackground))
         }
-        .navigationBarTitle(Text(LocalizedString("How to Calibrate", comment: "Calibration how-page: navigation title, header text, and pill button")), displayMode: .inline)
+        .navigationBarTitle(Text(LocalizedString("How to Calibrate", comment: "Calibration how-page: navigation title and header text")), displayMode: .inline)
     }
 }
 
-/// The how-to, reopened from the entry page's "How to Calibrate" pill.
-struct G7CalibrationHowToCalibrateView: View {
+/// The full advice, why and how on one sheet, opened from the entry page.
+struct G7CalibrationAdviceSheet: View {
     @ObservedObject var viewModel: G7SettingsViewModel
     var didFinish: () -> Void
 
     var body: some View {
         NavigationView {
             ScrollView {
-                G7CalibrationHowContent(viewModel: viewModel)
-                    .padding()
+                VStack(alignment: .leading, spacing: 32) {
+                    G7CalibrationWhyContent()
+                    Divider()
+                    G7CalibrationHowContent(viewModel: viewModel)
+                }
+                .padding()
             }
-            .navigationBarTitle(Text(LocalizedString("How to Calibrate", comment: "Calibration how-page: navigation title, header text, and pill button")), displayMode: .inline)
+            .navigationBarTitle(Text(LocalizedString("Before You Calibrate", comment: "Navigation title of the full calibration advice sheet")), displayMode: .inline)
             .navigationBarItems(trailing: Button(LocalizedString("Done", comment: "Button to dismiss a sheet")) { didFinish() })
         }
     }
@@ -130,7 +134,7 @@ private struct G7CalibrationHowContent: View {
                 Image(systemName: "checklist")
                     .font(.largeTitle)
                     .foregroundColor(.accentColor)
-                Text(LocalizedString("How to Calibrate", comment: "Calibration how-page: navigation title, header text, and pill button"))
+                Text(LocalizedString("How to Calibrate", comment: "Calibration how-page: navigation title and header text"))
                     .font(.title2)
                     .fontWeight(.semibold)
             }
@@ -203,7 +207,7 @@ struct G7CalibrationEntryView: View {
 
     @State private var text = ""
     @State private var showingLargeDifferenceWarning = false
-    @State private var showingHowToCalibrate = false
+    @State private var showingAdvice = false
     @FocusState private var fieldFocused: Bool
 
     /// Difference from the sensor at which the warning steps in (mg/dL).
@@ -256,8 +260,8 @@ struct G7CalibrationEntryView: View {
             } footer: {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(LocalizedString("The sensor connects for a few seconds around each reading, so the calibration is sent at the next one, within about five minutes. Until then you can cancel it from the settings screen.", comment: "Calibration entry footer: when the value is sent"))
-                    Button(action: { showingHowToCalibrate = true }) {
-                        Label(LocalizedString("How to Calibrate", comment: "Calibration how-page: navigation title, header text, and pill button"), systemImage: "questionmark.circle.fill")
+                    Button(action: { showingAdvice = true }) {
+                        Label(LocalizedString("Read Before Calibrating", comment: "Button on the calibration entry page that opens the full advice"), systemImage: "questionmark.circle.fill")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
@@ -265,8 +269,8 @@ struct G7CalibrationEntryView: View {
             }
         }
         .insetGroupedListStyle()
-        .sheet(isPresented: $showingHowToCalibrate) {
-            G7CalibrationHowToCalibrateView(viewModel: viewModel, didFinish: { showingHowToCalibrate = false })
+        .sheet(isPresented: $showingAdvice) {
+            G7CalibrationAdviceSheet(viewModel: viewModel, didFinish: { showingAdvice = false })
         }
         .safeAreaInset(edge: .bottom) {
             Button(action: submitTapped) {
