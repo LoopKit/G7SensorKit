@@ -87,7 +87,7 @@ struct G7CalibrationHowView: View {
 
     var body: some View {
         ScrollView {
-            G7CalibrationHowContent(viewModel: viewModel)
+            G7CalibrationHowContent()
                 .padding()
         }
         .safeAreaInset(edge: .bottom) {
@@ -104,7 +104,6 @@ struct G7CalibrationHowView: View {
 
 /// The full advice, why and how on one sheet, opened from the entry page.
 struct G7CalibrationAdviceSheet: View {
-    @ObservedObject var viewModel: G7SettingsViewModel
     var didFinish: () -> Void
 
     var body: some View {
@@ -113,7 +112,7 @@ struct G7CalibrationAdviceSheet: View {
                 VStack(alignment: .leading, spacing: 32) {
                     G7CalibrationWhyContent()
                     Divider()
-                    G7CalibrationHowContent(viewModel: viewModel)
+                    G7CalibrationHowContent()
                 }
                 .padding()
             }
@@ -124,10 +123,6 @@ struct G7CalibrationAdviceSheet: View {
 }
 
 private struct G7CalibrationHowContent: View {
-    @ObservedObject var viewModel: G7SettingsViewModel
-
-    @Environment(\.guidanceColors) private var guidanceColors
-
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 12) {
@@ -162,22 +157,7 @@ private struct G7CalibrationHowContent: View {
                 title: LocalizedString("Fingersticks only", comment: "Calibration advice heading: fingersticks only"),
                 body: LocalizedString("Calibrate only with a blood glucose meter, and enter the value within five minutes of the test. Never calibrate from another CGM's reading.", comment: "Calibration advice: fingersticks only")
             )
-
-            if let stabilityNote = stabilityNote {
-                Label(stabilityNote, systemImage: "exclamationmark.triangle.fill")
-                    .foregroundColor(guidanceColors.warning)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
-    }
-
-    /// Whether the last reading says now is a bad moment.
-    private var stabilityNote: String? {
-        guard let trend = viewModel.lastTrendMgdlPerMinute else { return nil }
-        if abs(trend) >= 1 {
-            return LocalizedString("Your glucose is changing right now. Wait until the trend is flat.", comment: "Calibration advice warning: trend is not flat")
-        }
-        return nil
     }
 }
 
@@ -228,6 +208,18 @@ struct G7CalibrationEntryView: View {
         return entered - current
     }
 
+    /// Reasons now is a bad moment to calibrate.
+    private var warnings: [String] {
+        var warnings: [String] = []
+        if let trend = viewModel.lastTrendMgdlPerMinute, abs(trend) >= 1 {
+            warnings.append(LocalizedString("Your glucose is changing right now. Wait until the trend is flat.", comment: "Calibration advice warning: trend is not flat"))
+        }
+        if let activatedAt = viewModel.activatedAt, Date().timeIntervalSince(activatedAt) < .hours(24) {
+            warnings.append(LocalizedString("This sensor is less than a day old, and its readings may still be settling.", comment: "Calibration entry warning: sensor in its first day"))
+        }
+        return warnings
+    }
+
     var body: some View {
         List {
             Section {
@@ -271,7 +263,30 @@ struct G7CalibrationEntryView: View {
         }
         .insetGroupedListStyle()
         .sheet(isPresented: $showingAdvice) {
-            G7CalibrationAdviceSheet(viewModel: viewModel, didFinish: { showingAdvice = false })
+            G7CalibrationAdviceSheet(didFinish: { showingAdvice = false })
+        }
+        .safeAreaInset(edge: .bottom) {
+            // On the page background, just above the Calibrate bar.
+            if !warnings.isEmpty {
+                VStack(spacing: 8) {
+                    ForEach(warnings, id: \.self) { warning in
+                        Label {
+                            Text(warning)
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(guidanceColors.warning)
+                        }
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .background(guidanceColors.warning.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color(.systemGroupedBackground))
+            }
         }
         .safeAreaInset(edge: .bottom) {
             Button(action: submitTapped) {

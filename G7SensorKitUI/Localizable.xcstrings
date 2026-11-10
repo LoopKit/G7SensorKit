@@ -5852,6 +5852,9 @@
     "This sensor has been used by the Dexcom app. Wait about 15 minutes after it last connected, then pair." : {
       "comment" : "Dexcom app warning: lease wait when moving an existing session"
     },
+    "This sensor is less than a day old, and its readings may still be settling." : {
+      "comment" : "Calibration entry warning: sensor in its first day"
+    },
     "Time" : {
       "comment" : "Field label",
       "extractionState" : "stale",
