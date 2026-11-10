@@ -9,8 +9,8 @@ import G7SensorKit
 import LoopKitUI
 import SwiftUI
 
-/// Calibration: the why and how advice the first time, then straight to
-/// the entry page once it has been reached.
+/// Calibration: the why, how and after advice the first time, then
+/// straight to the entry page once it has been reached.
 struct G7CalibrationFlowView: View {
     @ObservedObject var viewModel: G7SettingsViewModel
 
@@ -91,7 +91,7 @@ struct G7CalibrationHowView: View {
                 .padding()
         }
         .safeAreaInset(edge: .bottom) {
-            NavigationLink(destination: G7CalibrationEntryView(viewModel: viewModel, didFinish: didFinish)) {
+            NavigationLink(destination: G7CalibrationAfterView(viewModel: viewModel, didFinish: didFinish)) {
                 Text(LocalizedString("Continue", comment: "Button title to continue"))
                     .actionButtonStyle(.primary)
             }
@@ -102,7 +102,29 @@ struct G7CalibrationHowView: View {
     }
 }
 
-/// The full advice, why and how on one sheet, opened from the entry page.
+/// Page 3 of the first-time advice: what happens once it is entered.
+struct G7CalibrationAfterView: View {
+    @ObservedObject var viewModel: G7SettingsViewModel
+    var didFinish: () -> Void
+
+    var body: some View {
+        ScrollView {
+            G7CalibrationAfterContent()
+                .padding()
+        }
+        .safeAreaInset(edge: .bottom) {
+            NavigationLink(destination: G7CalibrationEntryView(viewModel: viewModel, didFinish: didFinish)) {
+                Text(LocalizedString("Continue", comment: "Button title to continue"))
+                    .actionButtonStyle(.primary)
+            }
+            .padding()
+            .background(Color(.systemBackground))
+        }
+        .navigationBarTitle(Text(LocalizedString("After You Calibrate", comment: "Calibration after-page: navigation title and header text")), displayMode: .inline)
+    }
+}
+
+/// The full advice, why, how and after on one sheet, opened from the entry page.
 struct G7CalibrationAdviceSheet: View {
     var didFinish: () -> Void
 
@@ -113,6 +135,8 @@ struct G7CalibrationAdviceSheet: View {
                     G7CalibrationWhyContent()
                     Divider()
                     G7CalibrationHowContent()
+                    Divider()
+                    G7CalibrationAfterContent()
                 }
                 .padding()
             }
@@ -161,7 +185,40 @@ private struct G7CalibrationHowContent: View {
     }
 }
 
-/// One icon + title + body row, shared by the why and how advice pages.
+private struct G7CalibrationAfterContent: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 12) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.largeTitle)
+                    .foregroundColor(.accentColor)
+                Text(LocalizedString("After You Calibrate", comment: "Calibration after-page: navigation title and header text"))
+                    .font(.title2)
+                    .fontWeight(.semibold)
+            }
+
+            calibrationAdviceRow(
+                icon: "antenna.radiowaves.left.and.right",
+                title: LocalizedString("Sent at the next reading", comment: "Calibration advice heading: when it is sent"),
+                body: LocalizedString("The sensor connects for a few seconds about every five minutes, and the calibration goes with the next connection. If the sensor has not connected within five minutes, the calibration is dropped and you can enter it again. Until it is sent you can cancel it from the settings screen.", comment: "Calibration advice: when it is sent")
+            )
+
+            calibrationAdviceRow(
+                icon: "xmark.circle",
+                title: LocalizedString("The sensor may refuse it", comment: "Calibration advice heading: refusals"),
+                body: LocalizedString("The sensor checks every calibration and can turn one down, for example when the value is too far from its own reading. The settings screen shows whether it was accepted and, if not, why.", comment: "Calibration advice: refusals")
+            )
+
+            calibrationAdviceRow(
+                icon: "chart.line.uptrend.xyaxis",
+                title: LocalizedString("Readings adjust gradually", comment: "Calibration advice heading: applying"),
+                body: LocalizedString("Once accepted, the sensor applies the calibration over the next couple of readings, so the change does not show at once. Do not calibrate again to chase it.", comment: "Calibration advice: applying")
+            )
+        }
+    }
+}
+
+/// One icon + title + body row, shared by the advice pages.
 private func calibrationAdviceRow(icon: String, title: String, body: String) -> some View {
     HStack(alignment: .top, spacing: 12) {
         Image(systemName: icon)
@@ -251,7 +308,6 @@ struct G7CalibrationEntryView: View {
                 }
             } footer: {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text(LocalizedString("The sensor connects for a few seconds around each reading, so the calibration is sent at the next one, within about five minutes. Until then you can cancel it from the settings screen.", comment: "Calibration entry footer: when the value is sent"))
                     Text(LocalizedString("The G7 is factory calibrated. Calibrate only when glucose is steady.", comment: "Calibration entry: caution shown every time"))
                     Button(action: { showingAdvice = true }) {
                         Label(LocalizedString("Read Before Calibrating", comment: "Button on the calibration entry page that opens the full advice"), systemImage: "info.circle.fill")

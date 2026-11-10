@@ -479,6 +479,9 @@
     "Adults wear the sensor on the back of the upper arm. Children aged 2 to 17 can also use the abdomen or upper buttocks." : {
       "comment" : "Apply-sensor screen: where the sensor goes"
     },
+    "After You Calibrate" : {
+      "comment" : "Calibration after-page: navigation title and header text"
+    },
     "Alerts" : {
       "comment" : "Navigation title of the alerts hand-off page"
     },
@@ -3468,6 +3471,9 @@
     "On. Urgent alerts will sound even when your phone is silenced or in a Focus." : {
       "comment" : "Status row detail: critical alerts enabled"
     },
+    "Once accepted, the sensor applies the calibration over the next couple of readings, so the change does not show at once. Do not calibrate again to chase it." : {
+      "comment" : "Calibration advice: applying"
+    },
     "Only when glucose is stable" : {
       "comment" : "Calibration advice heading: stability"
     },
@@ -3676,6 +3682,9 @@
     },
     "Read Before Calibrating" : {
       "comment" : "Button on the calibration entry page that opens the full advice"
+    },
+    "Readings adjust gradually" : {
+      "comment" : "Calibration advice heading: applying"
     },
     "Relax the muscles at the site. Press the applicator flat against your skin until the clear ring disappears, then press the button." : {
       "comment" : "Apply step 4: insert the sensor"
@@ -5637,6 +5646,9 @@
     "Sensor Warmup" : {
       "comment" : "Last reading row text during warmup"
     },
+    "Sent at the next reading" : {
+      "comment" : "Calibration advice heading: when it is sent"
+    },
     "Serial Number" : {
       "comment" : "title for g7 settings row showing the sensor serial number"
     },
@@ -5840,8 +5852,14 @@
     "The meter value is %1$@ from the sensor reading. A gap this large is usually temporary, and calibrating to it makes a large correction that swings the readings the other way once the cause passes. Wait and check again; keep any calibration within %2$@ of the reading, or replace the sensor if the gap stays this large." : {
       "comment" : "Message of the large difference alert (1: difference with unit, 2: recommended limit with unit)"
     },
-    "The sensor connects for a few seconds around each reading, so the calibration is sent at the next one, within about five minutes. Until then you can cancel it from the settings screen." : {
-      "comment" : "Calibration entry footer: when the value is sent"
+    "The sensor checks every calibration and can turn one down, for example when the value is too far from its own reading. The settings screen shows whether it was accepted and, if not, why." : {
+      "comment" : "Calibration advice: refusals"
+    },
+    "The sensor connects for a few seconds about every five minutes, and the calibration goes with the next connection. If the sensor has not connected within five minutes, the calibration is dropped and you can enter it again. Until it is sent you can cancel it from the settings screen." : {
+      "comment" : "Calibration advice: when it is sent"
+    },
+    "The sensor may refuse it" : {
+      "comment" : "Calibration advice heading: refusals"
     },
     "The sensor refuses calibrations during warmup, and readings are still settling for the first 12 to 24 hours. Give it a day before deciding it is off." : {
       "comment" : "Calibration advice: timing"
