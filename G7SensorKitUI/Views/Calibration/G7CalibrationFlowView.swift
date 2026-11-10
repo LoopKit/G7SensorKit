@@ -260,8 +260,9 @@ struct G7CalibrationEntryView: View {
             } footer: {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(LocalizedString("The sensor connects for a few seconds around each reading, so the calibration is sent at the next one, within about five minutes. Until then you can cancel it from the settings screen.", comment: "Calibration entry footer: when the value is sent"))
+                    Text(LocalizedString("The G7 is factory calibrated. Calibrate only when glucose is steady.", comment: "Calibration entry: caution shown every time"))
                     Button(action: { showingAdvice = true }) {
-                        Label(LocalizedString("Read Before Calibrating", comment: "Button on the calibration entry page that opens the full advice"), systemImage: "questionmark.circle.fill")
+                        Label(LocalizedString("Read Before Calibrating", comment: "Button on the calibration entry page that opens the full advice"), systemImage: "info.circle.fill")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
