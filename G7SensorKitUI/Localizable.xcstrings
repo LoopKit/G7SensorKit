@@ -5834,6 +5834,12 @@
     "The %@ app is still on this phone. Remove it, then come back here." : {
       "comment" : "Message when the user tries to continue with the Dexcom app still present (1: app name)"
     },
+    "The %@ is factory calibrated and does not need calibrating. Calibrating tells the sensor to trust your meter over itself, so it is only worth doing when a small, steady offset has been there for hours and you have confirmed it with more than one fingerstick." : {
+      "comment" : "Calibration advice: calibration is optional (1: sensor model, e.g. G7)"
+    },
+    "The %@ is factory calibrated. Calibrate only when glucose is steady." : {
+      "comment" : "Calibration entry: caution shown every time (1: sensor model, e.g. G7)"
+    },
     "The barcode on the sensor applicator holds the 4-digit pairing code and the sensor's serial number." : {
       "comment" : "First line of the scan screen"
     },
@@ -5842,12 +5848,6 @@
     },
     "The G7 integration raises these itself and delivers them as %1$@ notifications:" : {
       "comment" : "Sensor alerts paragraph of the alerts hand-off page (1: appName)"
-    },
-    "The G7 is factory calibrated and does not need calibrating. Calibrating tells the sensor to trust your meter over itself, so it is only worth doing when a small, steady offset has been there for hours and you have confirmed it with more than one fingerstick." : {
-      "comment" : "Calibration advice: calibration is optional"
-    },
-    "The G7 is factory calibrated. Calibrate only when glucose is steady." : {
-      "comment" : "Calibration entry: caution shown every time"
     },
     "The meter value is %1$@ from the sensor reading. A gap this large is usually temporary, and calibrating to it makes a large correction that swings the readings the other way once the cause passes. Wait and check again; keep any calibration within %2$@ of the reading, or replace the sensor if the gap stays this large." : {
       "comment" : "Message of the large difference alert (1: difference with unit, 2: recommended limit with unit)"

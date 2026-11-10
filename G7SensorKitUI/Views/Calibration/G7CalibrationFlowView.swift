@@ -41,7 +41,7 @@ struct G7CalibrationWhyView: View {
 
     var body: some View {
         ScrollView {
-            G7CalibrationWhyContent()
+            G7CalibrationWhyContent(sensorName: viewModel.sensorModel.displayName)
                 .padding()
         }
         .safeAreaInset(edge: .bottom) {
@@ -57,6 +57,8 @@ struct G7CalibrationWhyView: View {
 }
 
 private struct G7CalibrationWhyContent: View {
+    var sensorName: String
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 12) {
@@ -68,7 +70,7 @@ private struct G7CalibrationWhyContent: View {
                     .fontWeight(.semibold)
             }
 
-            Text(LocalizedString("The G7 is factory calibrated and does not need calibrating. Calibrating tells the sensor to trust your meter over itself, so it is only worth doing when a small, steady offset has been there for hours and you have confirmed it with more than one fingerstick.", comment: "Calibration advice: calibration is optional"))
+            Text(String(format: LocalizedString("The %@ is factory calibrated and does not need calibrating. Calibrating tells the sensor to trust your meter over itself, so it is only worth doing when a small, steady offset has been there for hours and you have confirmed it with more than one fingerstick.", comment: "Calibration advice: calibration is optional (1: sensor model, e.g. G7)"), sensorName))
                 .fixedSize(horizontal: false, vertical: true)
 
             calibrationAdviceRow(
@@ -126,13 +128,14 @@ struct G7CalibrationAfterView: View {
 
 /// The full advice, why, how and after on one sheet, opened from the entry page.
 struct G7CalibrationAdviceSheet: View {
+    var sensorName: String
     var didFinish: () -> Void
 
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
-                    G7CalibrationWhyContent()
+                    G7CalibrationWhyContent(sensorName: sensorName)
                     Divider()
                     G7CalibrationHowContent()
                     Divider()
@@ -308,7 +311,7 @@ struct G7CalibrationEntryView: View {
                 }
             } footer: {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text(LocalizedString("The G7 is factory calibrated. Calibrate only when glucose is steady.", comment: "Calibration entry: caution shown every time"))
+                    Text(String(format: LocalizedString("The %@ is factory calibrated. Calibrate only when glucose is steady.", comment: "Calibration entry: caution shown every time (1: sensor model, e.g. G7)"), viewModel.sensorModel.displayName))
                     Button(action: { showingAdvice = true }) {
                         Label(LocalizedString("Read Before Calibrating", comment: "Button on the calibration entry page that opens the full advice"), systemImage: "info.circle.fill")
                             .frame(maxWidth: .infinity)
@@ -319,7 +322,7 @@ struct G7CalibrationEntryView: View {
         }
         .insetGroupedListStyle()
         .sheet(isPresented: $showingAdvice) {
-            G7CalibrationAdviceSheet(didFinish: { showingAdvice = false })
+            G7CalibrationAdviceSheet(sensorName: viewModel.sensorModel.displayName, didFinish: { showingAdvice = false })
         }
         .safeAreaInset(edge: .bottom) {
             // On the page background, just above the Calibrate bar.
