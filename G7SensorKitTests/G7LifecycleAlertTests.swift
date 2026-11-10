@@ -47,8 +47,8 @@ private final class RecordingDelegate: CGMManagerDelegate {
     nonisolated func cgmManager(_ manager: CGMManager, didUpdate status: CGMManagerStatus) {}
     nonisolated func startDateToFilterNewData(for manager: CGMManager) -> Date? { nil }
     nonisolated func cgmManager(_ manager: CGMManager, hasNew readingResult: CGMReadingResult) {}
-    nonisolated(unsafe) var cgmEvents: [PersistedCgmEvent] = []
-    nonisolated func cgmManager(_ manager: CGMManager, hasNew events: [PersistedCgmEvent]) {
+    var cgmEvents: [PersistedCgmEvent] = []
+    func cgmManager(_ manager: CGMManager, hasNew events: [PersistedCgmEvent]) async {
         cgmEvents.append(contentsOf: events)
     }
     nonisolated func cgmManagerDidUpdateState(_ manager: CGMManager) {}
@@ -116,7 +116,6 @@ class G7LifecycleAlertManagerTests: XCTestCase {
         let manager = G7CGMManager(state: state, sensor: sensor)
         recorder = RecordingDelegate()
         manager.cgmManagerDelegate = recorder
-        manager.delegateQueue = DispatchQueue.main
         return manager
     }
 

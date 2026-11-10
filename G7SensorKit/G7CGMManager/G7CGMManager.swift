@@ -59,7 +59,7 @@ public class G7CGMManager: CGMManager {
 
         if oldValue != newValue {
             delegate.notify { delegate in
-                delegate?.cgmManagerDidUpdateState(self)
+                await delegate?.cgmManagerDidUpdateState(self)
                 delegate?.cgmManager(self, didUpdate: self.cgmManagerStatus)
             }
 
@@ -90,15 +90,6 @@ public class G7CGMManager: CGMManager {
         }
         set {
             delegate.delegate = newValue
-        }
-    }
-
-    public var delegateQueue: DispatchQueue! {
-        get {
-            return delegate.queue
-        }
-        set {
-            delegate.queue = newValue
         }
     }
 
@@ -593,8 +584,8 @@ public class G7CGMManager: CGMManager {
     }
 
     private func updateDelegate(with result: CGMReadingResult) {
-        delegateQueue?.async {
-            self.cgmManagerDelegate?.cgmManager(self, hasNew: result)
+        delegate.notify { delegate in
+            await delegate?.cgmManager(self, hasNew: result)
         }
     }
 }
@@ -684,7 +675,7 @@ extension G7CGMManager {
             warmupPeriod: warmupDuration
         )
         delegate.notify { delegate in
-            delegate?.cgmManager(self, hasNew: [event])
+            await delegate?.cgmManager(self, hasNew: [event])
         }
         mutateState { state in
             state.sensorStartPendingFor = nil
@@ -719,7 +710,7 @@ extension G7CGMManager {
             error: CgmEventError(code: issue, isFatal: message.algorithmState.sensorFailed)
         )
         delegate.notify { delegate in
-            delegate?.cgmManager(self, hasNew: [event])
+            await delegate?.cgmManager(self, hasNew: [event])
         }
     }
 
@@ -739,7 +730,7 @@ extension G7CGMManager {
             failureMessage: failureMessage
         )
         delegate.notify { delegate in
-            delegate?.cgmManager(self, hasNew: [event])
+            await delegate?.cgmManager(self, hasNew: [event])
         }
         mutateState { state in
             state.sensorEndRecordedFor = sensorID
@@ -757,18 +748,14 @@ extension G7CGMManager {
             logDeviceCommunication("Issuing alert \(alert.rawValue)", type: .connection)
         }
         delegate.notify { delegate in
-            Task {
-                await delegate?.issueAlert(loopAlert)
-            }
+            await delegate?.issueAlert(loopAlert)
         }
     }
 
     private func retractLifecycleAlert(_ alert: G7LifecycleAlert) {
         let identifier = alert.identifier(managerIdentifier: pluginIdentifier)
         delegate.notify { delegate in
-            Task {
-                await delegate?.retractAlert(identifier: identifier)
-            }
+            await delegate?.retractAlert(identifier: identifier)
         }
     }
 
@@ -876,7 +863,7 @@ extension G7CGMManager: G7SensorDelegate {
                 let alert = Alert(identifier: Alert.Identifier(managerIdentifier: pluginIdentifier, alertIdentifier: "directRead.codeNeeded"),
                                   foregroundContent: content, backgroundContent: content, trigger: .immediate)
                 delegate.notify { delegate in
-                    Task { await delegate?.issueAlert(alert) }
+                    await delegate?.issueAlert(alert)
                 }
             }
         }

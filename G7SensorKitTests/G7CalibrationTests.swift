@@ -19,9 +19,9 @@ private class TestBluetoothManager: G7BluetoothManager {
 /// Records the reading results the manager hands Loop.
 @MainActor
 private final class ReadingRecordingDelegate: CGMManagerDelegate {
-    nonisolated(unsafe) var readingResults: [CGMReadingResult] = []
+    var readingResults: [CGMReadingResult] = []
 
-    nonisolated func cgmManager(_ manager: CGMManager, hasNew readingResult: CGMReadingResult) {
+    func cgmManager(_ manager: CGMManager, hasNew readingResult: CGMReadingResult) async {
         readingResults.append(readingResult)
     }
 
@@ -179,7 +179,6 @@ final class G7CalibrationTests: XCTestCase {
         let manager = G7CGMManager(state: state, sensor: sensor)
         let recorder = ReadingRecordingDelegate()
         manager.cgmManagerDelegate = recorder
-        manager.delegateQueue = DispatchQueue.main
 
         let enteredAt = Date(timeIntervalSince1970: 1_700_000_000)
         manager.calibrate(glucose: 145, at: enteredAt)
@@ -212,7 +211,6 @@ final class G7CalibrationTests: XCTestCase {
         let manager = G7CGMManager(state: state, sensor: sensor)
         let recorder = ReadingRecordingDelegate()
         manager.cgmManagerDelegate = recorder
-        manager.delegateQueue = DispatchQueue.main
         sensor.activationDate = Date(timeIntervalSince1970: 1_700_000_000)
 
         // Byte 18 = 0x1f (bgTriggered), as the sensor sends after a calibration.
