@@ -495,6 +495,7 @@ public class G7CGMManager: CGMManager {
             "pairedAt: \(String(describing: state.pairedAt))",
             "sensorFailure: \(String(describing: state.sensorFailureMessage)) at \(String(describing: state.sensorFailedAt))",
             "previousSensor: \(String(describing: state.previousSensor?.rawValue))",
+            "calibrationAdviceSeen: \(state.calibrationAdviceSeen)",
         ]
         return lines.joined(separator: "\n")
     }
@@ -586,6 +587,12 @@ public class G7CGMManager: CGMManager {
     /// screenshots; the per-reading HealthKit metadata stays marked.
     public func suppressSimulatedSensorWarning() {
         mutateState { $0.simulatedSensorWarningSuppressed = true }
+    }
+
+    /// Record that the calibration advice has been read, so later
+    /// calibrations skip straight to the entry page.
+    public func markCalibrationAdviceSeen() {
+        mutateState { $0.calibrationAdviceSeen = true }
     }
 
     public func logDeviceCommunication(_ message: String, type: DeviceLogEntryType = .send) {
