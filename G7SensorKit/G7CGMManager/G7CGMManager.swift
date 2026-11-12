@@ -480,6 +480,8 @@ public class G7CGMManager: CGMManager {
             "## G7CGMManager",
             "sensorID: \(String(describing: state.sensorID))",
             "activatedAt: \(String(describing: state.activatedAt))",
+            "transmitterVersion: \(String(describing: state.transmitterVersion))",
+            "extendedVersion: \(String(describing: state.extendedVersion))",
             "latestReading: \(String(describing: state.latestReading))",
             "latestReadingTimestamp: \(String(describing: state.latestReadingTimestamp))",
             "latestConnect: \(String(describing: state.latestConnect))",

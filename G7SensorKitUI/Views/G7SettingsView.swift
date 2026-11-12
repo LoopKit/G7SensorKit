@@ -70,37 +70,14 @@ struct G7SettingsView: View {
                 }
             }
 
-            sensorSection
-            if let activatedAt = viewModel.activatedAt {
-                HStack {
-                    Text(LocalizedString("Sensor Start", comment: "title for g7 settings row showing sensor start time"))
-                    Spacer()
-                    Text(timeFormatter.string(from: activatedAt))
-                        .foregroundColor(.secondary)
-                }
-                HStack {
-                    Text(LocalizedString("Sensor Expiration", comment: "title for g7 settings row showing sensor expiration time"))
-                    Spacer()
-                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime)))
-                        .foregroundColor(.secondary)
-                }
-                HStack {
-                    Text(LocalizedString("Grace Period End", comment: "title for g7 settings row showing sensor grace period end time"))
-                    Spacer()
-                    Text(timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime + G7Sensor.gracePeriod)))
-                        .foregroundColor(.secondary)
-                }
+            // Eavesdropping always has the Dexcom app notice to show here.
+            if hasSensor || viewModel.sessionMode == .eavesdropping {
+                sensorSection
             }
+            sessionSection
+            previousSensorSection
 
             Section("Bluetooth") {
-                if let name = viewModel.sensorName {
-                    HStack {
-                        Text(LocalizedString("Name", comment: "title for g7 settings row showing BLE Name"))
-                        Spacer()
-                        Text(name)
-                            .foregroundColor(.secondary)
-                    }
-                }
                 if viewModel.scanning {
                     HStack {
                         Text(LocalizedString("Scanning", comment: "title for g7 settings connection status when scanning"))
@@ -128,7 +105,7 @@ struct G7SettingsView: View {
                 }
             }
 
-if viewModel.sessionMode == .eavesdropping {
+            if viewModel.sessionMode == .eavesdropping {
                 Section () {
                     Button(LocalizedString("Open Dexcom App", comment:"Opens the dexcom G7 app to allow users to manage active sensors"), action: {
                         G7DexcomApp.open()
@@ -141,7 +118,9 @@ if viewModel.sessionMode == .eavesdropping {
             }
 
             if viewModel.sessionMode == .direct {
-                calibrationSection
+                if hasSensor {
+                    calibrationSection
+                }
                 shareSection
             }
 
@@ -206,9 +185,8 @@ if viewModel.sessionMode == .eavesdropping {
     /// How readings reach the app, and whatever the Dexcom app's presence
     /// means for that.
     @ViewBuilder
-    /// What we know about the sensor itself: model, identity, and what it
-    /// reported about its own firmware and session. Mode-specific notices
-    /// and the pairing actions live here too.
+    /// What the sensor is and how to identify it: model, name, serial, and
+    /// pairing code. Mode-specific notices live here too.
     private var sensorSection: some View {
         Section(header: Text(LocalizedString("Sensor", comment: "Section header for sensor details"))) {
             if viewModel.sensorAuthenticity == .simulated && !viewModel.simulatedSensorWarningSuppressed {
@@ -256,71 +234,86 @@ if viewModel.sessionMode == .eavesdropping {
             }
             Button(LocalizedString("Pair Sensor Directly", comment: "Button title in settings to upgrade an eavesdropping session to direct pairing"), action: pairCurrentSensor)
             }
-            LabeledValueView(
-                label: LocalizedString("Model", comment: "Row label for the sensor model"),
-                value: viewModel.sensorModelName
-            )
-            if let serialNumber = viewModel.serialNumber {
-                copyableRow(
-                    label: LocalizedString("Serial Number", comment: "title for g7 settings row showing the sensor serial number"),
-                    value: serialNumber
+            if hasSensor {
+                G7SensorIdentityRows(
+                    model: viewModel.sensorModelName,
+                    name: viewModel.sensorName,
+                    serialNumber: viewModel.serialNumber,
+                    // The applicator gets thrown away; this is where the code
+                    // lives afterwards, for pairing the same sensor elsewhere.
+                    pairingCode: viewModel.sessionMode == .direct ? viewModel.pairingCode : nil
                 )
             }
-            if viewModel.sessionMode == .direct, let pairingCode = viewModel.pairingCode {
-                // The applicator gets thrown away; this is where the code
-                // lives afterwards, for pairing the same sensor elsewhere.
-                copyableRow(
-                    label: LocalizedString("Pairing Code", comment: "Row label for the sensor's pairing code"),
-                    value: pairingCode
-                )
+        }
+    }
+
+    /// The current session's dates and the pairing action. Skipped while
+    /// eavesdropping until there is a session to show.
+    @ViewBuilder
+    private var sessionSection: some View {
+        if viewModel.activatedAt != nil || viewModel.pairedAt != nil || viewModel.sessionMode == .direct {
+            Section(header: Text(LocalizedString("Session", comment: "Section header for the current sensor's session dates"))) {
+                if let activatedAt = viewModel.activatedAt {
+                    LabeledValueView(
+                        label: LocalizedString("Sensor Start", comment: "title for g7 settings row showing sensor start time"),
+                        value: timeFormatter.string(from: activatedAt)
+                    )
+                }
+                if let pairedAt = viewModel.pairedAt {
+                    LabeledValueView(
+                        label: LocalizedString("Paired", comment: "Row label for when the sensor was paired"),
+                        value: timeFormatter.string(from: pairedAt)
+                    )
+                }
+                if let activatedAt = viewModel.activatedAt {
+                    LabeledValueView(
+                        label: LocalizedString("Sensor Expiration", comment: "title for g7 settings row showing sensor expiration time"),
+                        value: timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime))
+                    )
+                    LabeledValueView(
+                        label: LocalizedString("Grace Period End", comment: "title for g7 settings row showing sensor grace period end time"),
+                        value: timeFormatter.string(from: activatedAt.addingTimeInterval(viewModel.lifetime + G7Sensor.gracePeriod))
+                    )
+                    LabeledValueView(
+                        label: LocalizedString("Worn For", comment: "Row label for how long the current sensor has been worn so far"),
+                        value: sessionLengthFormatter.string(from: Date().timeIntervalSince(activatedAt)) ?? ""
+                    )
+                }
+                if viewModel.sessionMode == .direct {
+                    if viewModel.needsNewSensor {
+                        // The one thing to do now; the same button also lives at
+                        // the bottom of the screen, but this is where the eye lands
+                        // after tapping an "expired" status.
+                        Button(action: pairNewSensor) {
+                            Label(LocalizedString("Pair New Sensor", comment: "Button title in settings to pair a replacement sensor"), systemImage: "plus.circle.fill")
+                                .font(.headline)
+                        }
+                    }
+                    if let failure = viewModel.lastAuthenticationFailure {
+                        warning(
+                            title: LocalizedString("Sensor Refused Connection", comment: "Title of the settings warning after the sensor refused authentication"),
+                            message: failure + (viewModel.lastAuthenticationFailureDate.map { " (" + timeFormatter.string(from: $0) + ")" } ?? ""),
+                            style: .critical
+                        )
+                    }
+                    if viewModel.isDexcomAppInstalled {
+                        warning(
+                            title: String(format: LocalizedString("Stop the %@ App", comment: "Title of the settings warning when a Dexcom app is installed in direct mode (1: app name)"), G7DexcomApp.installedAppNames),
+                            message: String(format: LocalizedString("%1$@ is connected to the sensor directly and does not need the %2$@ app. A sensor works with only one app at a time, so it will take readings away for as long as it is on this phone. Delete it, or offload it under Settings, General, iPhone Storage.", comment: "Body of the settings warning when a Dexcom app is installed in direct mode (1: appName, 2: Dexcom app name)"), appName, G7DexcomApp.installedAppNames),
+                            style: .critical
+                        )
+                    }
+
+                }
             }
-            if let firmwareVersion = viewModel.firmwareVersion {
-                LabeledValueView(
-                    label: LocalizedString("Firmware", comment: "title for g7 settings row showing the sensor firmware version"),
-                    value: firmwareVersion
-                )
-            }
-            if let softwareNumber = viewModel.softwareNumber {
-                LabeledValueView(
-                    label: LocalizedString("Software Number", comment: "Row label for the sensor's software number"),
-                    value: softwareNumber
-                )
-            }
-            if let hardwareVersion = viewModel.hardwareVersion {
-                LabeledValueView(
-                    label: LocalizedString("Hardware Version", comment: "Row label for the sensor's hardware version"),
-                    value: hardwareVersion
-                )
-            }
-            if let siliconVersion = viewModel.siliconVersion {
-                LabeledValueView(
-                    label: LocalizedString("Silicon Version", comment: "Row label for the sensor's silicon version"),
-                    value: siliconVersion
-                )
-            }
-            if let algorithmVersion = viewModel.algorithmVersion {
-                LabeledValueView(
-                    label: LocalizedString("Algorithm Version", comment: "Row label for the sensor's algorithm version"),
-                    value: algorithmVersion
-                )
-            }
-            if viewModel.hasReportedLifetime {
-                LabeledValueView(
-                    label: LocalizedString("Session Length", comment: "Row label for the sensor's session length"),
-                    value: sessionLengthFormatter.string(from: viewModel.lifetime) ?? ""
-                )
-                LabeledValueView(
-                    label: LocalizedString("Warmup", comment: "Row label for the sensor's warmup duration"),
-                    value: sessionLengthFormatter.string(from: viewModel.warmupDuration) ?? ""
-                )
-            }
-            if let pairedAt = viewModel.pairedAt {
-                LabeledValueView(
-                    label: LocalizedString("Paired", comment: "Row label for when the sensor was paired"),
-                    value: timeFormatter.string(from: pairedAt)
-                )
-            }
-            if let previousSensor = viewModel.previousSensor {
+        }
+    }
+
+    /// A link to the sensor before this one, in its own unheaded section.
+    @ViewBuilder
+    private var previousSensorSection: some View {
+        if let previousSensor = viewModel.previousSensor {
+            Section {
                 NavigationLink(destination: G7PreviousSensorView(record: previousSensor)) {
                     HStack {
                         Text(LocalizedString("Previous Sensor", comment: "Row label linking to the previous sensor page"))
@@ -333,73 +326,6 @@ if viewModel.sessionMode == .eavesdropping {
                             .foregroundColor(.secondary)
                     }
                 }
-            }
-
-            if viewModel.sessionMode == .direct {
-                if viewModel.needsNewSensor {
-                    // The one thing to do now; the same button also lives at
-                    // the bottom of the screen, but this is where the eye lands
-                    // after tapping an "expired" status.
-                    Button(action: pairNewSensor) {
-                        Label(LocalizedString("Pair New Sensor", comment: "Button title in settings to pair a replacement sensor"), systemImage: "plus.circle.fill")
-                            .font(.headline)
-                    }
-                }
-                if let failure = viewModel.lastAuthenticationFailure {
-                    warning(
-                        title: LocalizedString("Sensor Refused Connection", comment: "Title of the settings warning after the sensor refused authentication"),
-                        message: failure + (viewModel.lastAuthenticationFailureDate.map { " (" + timeFormatter.string(from: $0) + ")" } ?? ""),
-                        style: .critical
-                    )
-                }
-                if viewModel.isDexcomAppInstalled {
-                    warning(
-                        title: String(format: LocalizedString("Stop the %@ App", comment: "Title of the settings warning when a Dexcom app is installed in direct mode (1: app name)"), G7DexcomApp.installedAppNames),
-                        message: String(format: LocalizedString("%1$@ is connected to the sensor directly and does not need the %2$@ app. A sensor works with only one app at a time, so it will take readings away for as long as it is on this phone. Delete it, or offload it under Settings, General, iPhone Storage.", comment: "Body of the settings warning when a Dexcom app is installed in direct mode (1: appName, 2: Dexcom app name)"), appName, G7DexcomApp.installedAppNames),
-                        style: .critical
-                    )
-                }
-
-            }
-        }
-    }
-
-    @State private var copiedValue: String?
-
-    /// A value row that copies on tap (and offers Copy in its context menu),
-    /// confirming briefly in place. For things like the serial number that
-    /// end up typed into support forms and Dexcom's website.
-    private func copyableRow(label: String, value: String) -> some View {
-        Button(action: {
-            UIPasteboard.general.string = value
-            withAnimation { copiedValue = value }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                withAnimation {
-                    if copiedValue == value {
-                        copiedValue = nil
-                    }
-                }
-            }
-        }) {
-            HStack {
-                Text(label)
-                    .foregroundColor(.primary)
-                Spacer()
-                if copiedValue == value {
-                    Text(LocalizedString("Copied", comment: "Confirmation shown briefly after copying a settings value"))
-                        .foregroundColor(.secondary)
-                } else {
-                    Text(value)
-                        .foregroundColor(.secondary)
-                    Image(systemName: "doc.on.doc")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
-            }
-        }
-        .contextMenu {
-            Button(action: { UIPasteboard.general.string = value }) {
-                Label(LocalizedString("Copy", comment: "Context menu action to copy a settings value"), systemImage: "doc.on.doc")
             }
         }
     }
@@ -597,6 +523,12 @@ if viewModel.sessionMode == .eavesdropping {
                 ]
             )
         }
+    }
+
+    /// Whether a sensor is known: not before a pairing has found one, nor
+    /// while eavesdropping waits for one.
+    private var hasSensor: Bool {
+        viewModel.sensorName != nil
     }
 
     /// Whether the session is over and the sensor needs replacing: the card
