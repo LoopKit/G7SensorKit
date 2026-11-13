@@ -83,9 +83,6 @@ protocol G7BluetoothManagerDelegate: AnyObject {
     /// - Parameters:
     ///   - manager: The bluetooth manager
     func peripheralDidDisconnect(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, wasRemoteDisconnect: Bool)
-
-    /// One line for the host's device log.
-    func bluetoothManager(_ manager: G7BluetoothManager, logEvent line: String)
 }
 
 
@@ -126,11 +123,6 @@ class G7BluetoothManager: NSObject {
     // MARK: - Synchronization
 
     private let managerQueue = DispatchQueue(label: "com.loudnate.CGMBLEKit.bluetoothManagerQueue", qos: .unspecified)
-
-    /// The sensor advertises for other displays for ~20–24 s after closing a link; a connect into
-    /// that tail fails, and repeated failures make CoreBluetooth demand a very strong signal.
-    /// Whole seconds: CoreBluetooth rejects a fractional start delay as an invalid parameter.
-    static let reconnectStartDelay = 30
 
     override init() {
         super.init()
@@ -214,12 +206,6 @@ class G7BluetoothManager: NSObject {
             return
         }
 
-        // Leave a pending (delayed) reconnect alone; a plain connect now could land in the advertising tail.
-        guard currentState != .connecting else {
-            log.default("Not scanning: active peripheral has a connect pending")
-            return
-        }
-
         if let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
             log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
             handleDiscoveredPeripheral(peripheral)
@@ -250,30 +236,20 @@ class G7BluetoothManager: NSObject {
         }
     }
 
-    /// Lodges the active peripheral's reconnect at once, so it stands even if the app is suspended,
-    /// with a start delay that lets the sensor's advertising tail pass first.
-    private func reconnectAfterAdvertisingTail(_ peripheral: CBPeripheral) {
-        dispatchPrecondition(condition: .onQueue(managerQueue))
-        reconnectLog("Reconnecting with a \(G7BluetoothManager.reconnectStartDelay) s start delay")
-        handleDiscoveredPeripheral(peripheral, connectOptions: [CBConnectPeripheralOptionStartDelayKey: NSNumber(value: G7BluetoothManager.reconnectStartDelay)])
-    }
+    /**
 
-    /// To both the system log and the host's device log, so field reports show it.
-    private func reconnectLog(_ line: String) {
-        log.default("%{public}@", line)
-        delegate?.bluetoothManager(self, logEvent: line)
-    }
+     Persistent connections don't seem to work with the transmitter shutoff: The OS won't re-wake the
+     app unless it's scanning.
 
-    /// An active peripheral reconnects on its own; anything else rescans.
-    private func resumeAfterLinkEnded(_ peripheral: CBPeripheral) {
-        dispatchPrecondition(condition: .onQueue(managerQueue))
-        guard peripheral == activePeripheral, centralManager.state == .poweredOn else {
-            managerQueue.asyncAfter(deadline: .now() + 2) { [weak self] in
-                self?.managerQueue_scanForPeripheral()
-            }
-            return
+     The sleep gives the transmitter time to shut down, but keeps the app running.
+
+     */
+    fileprivate func scanAfterDelay() {
+        DispatchQueue.global(qos: .utility).async {
+            Thread.sleep(forTimeInterval: 2)
+
+            self.scanForPeripheral()
         }
-        reconnectAfterAdvertisingTail(peripheral)
     }
 
     // MARK: - Accessors
@@ -298,7 +274,7 @@ class G7BluetoothManager: NSObject {
         return isConnected
     }
 
-    private func handleDiscoveredPeripheral(_ peripheral: CBPeripheral, connectOptions: [String: Any]? = nil) {
+    private func handleDiscoveredPeripheral(_ peripheral: CBPeripheral) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
         if let delegate = delegate {
@@ -317,7 +293,7 @@ class G7BluetoothManager: NSObject {
                     activePeripheralManager?.delegate = self
                 }
                 self.managedPeripherals[peripheral.identifier] = activePeripheralManager
-                self.centralManager.connect(peripheral, options: connectOptions)
+                self.centralManager.connect(peripheral)
 
             case .connect:
                 log.default("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
@@ -427,7 +403,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
             managedPeripherals.removeValue(forKey: peripheral.identifier)
         }
 
-        resumeAfterLinkEnded(peripheral)
+        scanAfterDelay()
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
@@ -442,7 +418,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
             managedPeripherals.removeValue(forKey: peripheral.identifier)
         }
 
-        resumeAfterLinkEnded(peripheral)
+        scanAfterDelay()
     }
 }
 
