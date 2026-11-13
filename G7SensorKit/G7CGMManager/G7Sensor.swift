@@ -32,13 +32,6 @@ public protocol G7SensorDelegate: AnyObject {
 
     // This is triggered for connection/disconnection events, and enabling/disabling scan
     func sensorConnectionStatusDidUpdate(_ sensor: G7Sensor)
-
-    /// One line for the host's device log. Optional.
-    func sensor(_ sensor: G7Sensor, logEvent line: String)
-}
-
-public extension G7SensorDelegate {
-    func sensor(_ sensor: G7Sensor, logEvent line: String) {}
 }
 
 public enum G7SensorError: Error {
@@ -351,10 +344,6 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         self.delegateQueue.async {
             self.delegate?.sensorConnectionStatusDidUpdate(self)
         }
-    }
-
-    func bluetoothManager(_ manager: G7BluetoothManager, logEvent line: String) {
-        delegateQueue.async { self.delegate?.sensor(self, logEvent: line) }
     }
 }
 

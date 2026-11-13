@@ -348,10 +348,6 @@ extension G7CGMManager: G7SensorDelegate {
         logDeviceCommunication("Sensor connected", type: .connection)
     }
 
-    public func sensor(_ sensor: G7Sensor, logEvent line: String) {
-        logDeviceCommunication(line, type: .connection)
-    }
-
     public func sensorDisconnected(_ sensor: G7Sensor, suspectedEndOfSession: Bool) {
         logDeviceCommunication("Sensor disconnected: suspectedEndOfSession=\(suspectedEndOfSession)", type: .connection)
         if suspectedEndOfSession {
