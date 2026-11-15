@@ -559,6 +559,10 @@ extension G7PeripheralManager {
         try setNotifyValue(enabled, for: characteristic, timeout: timeout)
     }
 
+    func isNotifying(_ characteristicUUID: CGMServiceCharacteristicUUID) -> Bool {
+        return getCharacteristicWithUUID(characteristicUUID)?.isNotifying ?? false
+    }
+
 }
 
 
