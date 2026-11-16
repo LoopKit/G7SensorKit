@@ -140,6 +140,10 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         let waited = lodgedAt.map { Date().timeIntervalSince($0) }
         lodged = false; lodgedAt = nil
         linkUpAt = Date()
+        // A linked sensor is not searched for, and one we can authenticate needs no code. A pass the radio ended
+        // (radioDown) never reaches endBootstrapPass, and a code that arrived by reconfigure clears only on a lodge.
+        manager.setIsSearchingForSensor(false)
+        if manager.delegate?.bluetoothManagerCanAuthenticate(manager) ?? true { manager.setNeedsCodeForSensor(nil) }
         if bootstrapPass { endBootstrapPass(reason: "connected") }
         watchLog(String(format: "link up %@ %@ · pid %d", peripheral.name ?? "unnamed",
                         waited.map { String(format: "%.0f s after the lodge", $0) } ?? "(restored launch)",
@@ -191,6 +195,7 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         lodged = false; lodgedAt = nil; linkUpAt = nil
         bootstrapPass = false
         bootstrapTimer?.cancel(); bootstrapTimer = nil
+        manager.setIsSearchingForSensor(false)
     }
 
     /// An already-connected peripheral gets no second didConnect: run that path now so the
