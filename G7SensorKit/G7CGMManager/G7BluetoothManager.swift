@@ -92,6 +92,12 @@ class G7BluetoothManager: NSObject {
 
     private let log = OSLog(category: "G7BluetoothManager")
 
+    // Lets the sensor's post-link advertising tail pass; CoreBluetooth rejects fractional values.
+    static let reconnectStartDelay = 30
+
+    /// Isolated to `managerQueue`. Without a reading the sensor may serve another link right away, so reconnect without the delay.
+    var readingReceivedOnCurrentLink = false
+
     /// Isolated to `managerQueue`
     private var centralManager: CBCentralManager! = nil
 
@@ -202,7 +208,7 @@ class G7BluetoothManager: NSObject {
         }
 
         let currentState = activePeripheral?.state ?? .disconnected
-        guard currentState != .connected else {
+        guard currentState != .connected, currentState != .connecting else {
             return
         }
 
@@ -274,7 +280,7 @@ class G7BluetoothManager: NSObject {
         return isConnected
     }
 
-    private func handleDiscoveredPeripheral(_ peripheral: CBPeripheral) {
+    private func handleDiscoveredPeripheral(_ peripheral: CBPeripheral, connectOptions: [String: Any]? = nil) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
 
         if let delegate = delegate {
@@ -293,7 +299,7 @@ class G7BluetoothManager: NSObject {
                     activePeripheralManager?.delegate = self
                 }
                 self.managedPeripherals[peripheral.identifier] = activePeripheralManager
-                self.centralManager.connect(peripheral)
+                self.centralManager.connect(peripheral, options: connectOptions)
 
             case .connect:
                 log.default("Connecting to peripheral: %{public}@", peripheral.identifier.uuidString)
@@ -367,6 +373,10 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
 
         log.default("%{public}@: %{public}@", #function, peripheral)
 
+        if peripheral == activePeripheral {
+            readingReceivedOnCurrentLink = false
+        }
+
         if let peripheralManager = managedPeripherals[peripheral.identifier] {
             peripheralManager.centralManager(central, didConnect: peripheral)
 
@@ -403,7 +413,16 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
             managedPeripherals.removeValue(forKey: peripheral.identifier)
         }
 
-        scanAfterDelay()
+        if peripheral == activePeripheral, central.state == .poweredOn, readingReceivedOnCurrentLink {
+            readingReceivedOnCurrentLink = false
+            log.default("Reconnecting to %{public}@ with a %d s start delay", peripheral.identifier.uuidString, G7BluetoothManager.reconnectStartDelay)
+            handleDiscoveredPeripheral(peripheral, connectOptions: [CBConnectPeripheralOptionStartDelayKey: NSNumber(value: G7BluetoothManager.reconnectStartDelay)])
+        } else if peripheral == activePeripheral, central.state == .poweredOn {
+            log.default("Reconnecting to %{public}@ without a start delay: no reading on the last link", peripheral.identifier.uuidString)
+            handleDiscoveredPeripheral(peripheral)
+        } else {
+            scanAfterDelay()
+        }
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {

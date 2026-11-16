@@ -238,9 +238,13 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                 suspectedEndOfSession = false
             }
             pendingAuth = false
+            let readingReceived = manager.readingReceivedOnCurrentLink
 
             delegateQueue.async {
                 self.delegate?.sensorDisconnected(self, suspectedEndOfSession: suspectedEndOfSession)
+                if !readingReceived {
+                    self.delegate?.sensor(self, logComms: "no reading on this link; reconnecting without the start delay")
+                }
             }
         }
     }
@@ -283,6 +287,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                     }
                 }
                 pendingAuth = false
+                manager.readingReceivedOnCurrentLink = true
                 handleGlucoseMessage(message: glucoseMessage, peripheralManager: peripheralManager)
             } else {
                 delegateQueue.async {
