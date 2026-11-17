@@ -34,6 +34,7 @@
 		2ED1C8E18DD717A8FB98CD3C /* G7AES.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C50AD3678079467EE110CD1 /* G7AES.swift */; };
 		3105BF303A53E64B9C14C4DE /* G7LifecycleBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7244B8E7EFF1898AF50B85EB /* G7LifecycleBar.swift */; };
 		310BA65F04D790184F86A2AF /* G7PreviousSensorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A3F076AE2157B22DE43B91A /* G7PreviousSensorView.swift */; };
+		989B299CBB636C03C308CB1F /* G7SensorIdentityRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD7D0BB0666B02D0D4EBCC81 /* G7SensorIdentityRows.swift */; };
 		FADE00000000000000000325 /* G7CGMManagerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17F50E6291EAC6500555EB5 /* G7CGMManagerState.swift */; };
 		33D21C38F39F73BCDFCFC0C5 /* G7ShareSignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01B1A199C4CD5420A75C58E4 /* G7ShareSignInView.swift */; };
 		221B2CC34EE4A73751120F76 /* G7CalibrationMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF238DACCD930310363D3EB5 /* G7CalibrationMessage.swift */; };
@@ -234,6 +235,7 @@
 		FADE00000000000000000302 /* G7SensorKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = G7SensorKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		43AE2890ABEAE0FB78B276F1 /* G7SensorPackageTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7SensorPackageTests.swift; sourceTree = "<group>"; };
 		4A3F076AE2157B22DE43B91A /* G7PreviousSensorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7PreviousSensorView.swift; sourceTree = "<group>"; };
+		FD7D0BB0666B02D0D4EBCC81 /* G7SensorIdentityRows.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7SensorIdentityRows.swift; sourceTree = "<group>"; };
 		4CAA6FF14E0E9C16A25FD3B6 /* G7SessionMode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7SessionMode.swift; sourceTree = "<group>"; };
 		588CB2A449236A6A47F4579B /* G7SessionModeMigrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = G7SessionModeMigrationTests.swift; sourceTree = "<group>"; };
 		6180916611D0990A46355025 /* G7PeripheralManager+Handshake.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "G7PeripheralManager+Handshake.swift"; sourceTree = "<group>"; };
@@ -622,6 +624,7 @@
 				B85965DB1CB0331072FFC730 /* Onboarding */,
 				7244B8E7EFF1898AF50B85EB /* G7LifecycleBar.swift */,
 				4A3F076AE2157B22DE43B91A /* G7PreviousSensorView.swift */,
+				FD7D0BB0666B02D0D4EBCC81 /* G7SensorIdentityRows.swift */,
 				99878E3FDAD9DC23C298BD37 /* Calibration */,
 				A83C615FDD5582DDDBD42526 /* Share */,
 			);
@@ -1060,6 +1063,7 @@
 				276A1D9AF75BA8A64DA82CC0 /* G7SensorModel+Image.swift in Sources */,
 				3105BF303A53E64B9C14C4DE /* G7LifecycleBar.swift in Sources */,
 				310BA65F04D790184F86A2AF /* G7PreviousSensorView.swift in Sources */,
+				989B299CBB636C03C308CB1F /* G7SensorIdentityRows.swift in Sources */,
 				0C557E84497DE72C92503098 /* G7AlertsFromLoopView.swift in Sources */,
 				EF41639FF51B727324A04A49 /* G7NotificationPermissionsView.swift in Sources */,
 				86DE2F2A3F8F5B73AFED5E75 /* G7CalibrationFlowView.swift in Sources */,
