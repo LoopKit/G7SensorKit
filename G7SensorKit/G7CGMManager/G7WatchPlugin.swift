@@ -1,0 +1,22 @@
+//
+//  G7WatchPlugin.swift
+//  G7SensorKit
+//
+//  Copyright © 2026 LoopKit Authors. All rights reserved.
+//
+
+import Foundation
+import LoopKit
+
+/// The watch reads the sensor itself; the phone leaves the note to its own status display.
+extension G7CGMManager {
+    public var shortStatusNote: String? {
+        G7WatchDirectRead.needsCodeNote(for: needsCodeForSensor) ?? G7WatchDirectRead.searchingNote(isSearchingForSensor)
+    }
+}
+
+/// The watch loads this kit at run time, as the phone loads its plugins: this is the bundle's principal class.
+@objc(G7SensorWatchPlugin)
+final class G7SensorWatchPlugin: NSObject, CGMManagerPlugin {
+    var cgmManagerType: CGMManager.Type? { G7CGMManager.self }
+}
