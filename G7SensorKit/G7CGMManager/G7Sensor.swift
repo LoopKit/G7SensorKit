@@ -759,7 +759,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             // In direct mode we authenticate ourselves and the sensor drops the
             // link at the end of every reading cycle, so this would fire
             // constantly; session end is read from the algorithm state instead.
-            if mode == .eavesdropping, pendingAuth, wasRemoteDisconnect {
+            if mode == .eavesdropping, pendingAuth, wasRemoteDisconnect, !manager.readingReceivedOnCurrentLink {
                 suspectedEndOfSession = true // Normal disconnect without auth is likely that G7 app stopped this session
             } else {
                 suspectedEndOfSession = false
