@@ -202,4 +202,48 @@ final class G7DeviceHandoffTests: XCTestCase {
         _ = manager.sensor(manager.sensor, didDiscoverNewSensor: "DXCM77", activatedAt: Date(), peripheralIdentifier: UUID())
         XCTAssertEqual(manager.state.pairingCode, "1234")
     }
+
+    // MARK: - A new sensor from the controller that passed the configuration
+
+    func testANewSensorFromThePhoneKeepsTheSessionAndItsCentral() {
+        let manager = makeManager(state: G7CGMManagerState.adopted(from: phoneState.sharedState))
+        let central = manager.sensor.bluetoothManager
+        let session = manager.sensor
+
+        var next = phoneState
+        next.sensorID = "DXCM77"
+        next.pairingCode = "5678"
+        next.activatedAt = Date()
+        manager.adoptConfiguration(makeManager(state: next).exportConfiguration())
+
+        XCTAssertTrue(manager.sensor === session, "the same session")
+        XCTAssertTrue(manager.sensor.bluetoothManager === central,
+                      "the same central: only one per app may claim the restore identifier")
+        XCTAssertEqual(manager.sensor.sensorID, "DXCM77")
+        XCTAssertEqual(manager.sensor.credentials.pairingCode, "5678")
+        XCTAssertNil(manager.sensor.credentials.sharedKey)
+        XCTAssertNil(manager.sensor.credentials.peripheralIdentifier, "the old sensor's handle goes with it")
+        XCTAssertEqual(manager.state.sensorID, "DXCM77")
+        XCTAssertEqual(manager.state.pairingCode, "5678")
+        XCTAssertEqual(manager.state.sessionMode, .direct)
+        XCTAssertTrue(manager.state.configuredByAnotherController)
+        XCTAssertEqual(manager.state.displayType, .watch)
+    }
+
+    func testANewCodeForTheSameSensorIsTakenInPlace() {
+        let manager = makeManager(state: G7CGMManagerState.adopted(from: phoneState.sharedState))
+        var next = phoneState
+        next.pairingCode = "9999"
+        manager.adoptConfiguration(makeManager(state: next).exportConfiguration())
+        XCTAssertEqual(manager.sensor.sensorID, sensorID)
+        XCTAssertEqual(manager.sensor.credentials.pairingCode, "9999")
+    }
+
+    func testAManagerSetUpHereKeepsItsOwnSensor() {
+        let manager = makeManager(state: phoneState)
+        var next = phoneState
+        next.sensorID = "DXCM77"
+        manager.adoptConfiguration(makeManager(state: next).exportConfiguration())
+        XCTAssertEqual(manager.state.sensorID, sensorID)
+    }
 }

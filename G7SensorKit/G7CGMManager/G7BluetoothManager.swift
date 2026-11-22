@@ -139,6 +139,9 @@ protocol G7AcquisitionArm: AnyObject {
     func restored(_ peripheral: CBPeripheral)
     /// A reading's own sensor timestamp.
     func noteReading(at timestamp: Date)
+    /// The session let go of its sensor (a new sensor, or a forget): drop everything about the old one,
+    /// including a request or hold still out for it.
+    func sensorForgotten()
 }
 
 class G7BluetoothManager: NSObject {
@@ -283,6 +286,7 @@ class G7BluetoothManager: NSObject {
     func forgetPeripheral() {
         managerQueue.async {
             self.activePeripheralManager = nil
+            self.acquisitionArm?.sensorForgotten()
         }
     }
 
@@ -632,7 +636,14 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         switch central.state {
         case .poweredOn:
             managerQueue_scanForPeripheral()
-        case .resetting, .poweredOff, .unauthorized, .unknown, .unsupported:
+        case .unknown, .unsupported:
+            // Possibly CoreBluetooth's false report (see `schedulePoweredOnRecheck`): on a watch, a second
+            // central claiming the restore identifier gets `.unsupported` and no corrective update. Waiting
+            // for a scan request would wait for ever: nothing asks once this arrives.
+            reconnectLog("Bluetooth reported \(central.state == .unknown ? "unknown" : "unsupported") to the sensor connection; rechecking")
+            schedulePoweredOnRecheck()
+            fallthrough
+        case .resetting, .poweredOff, .unauthorized:
             fallthrough
         @unknown default:
             acquisitionArm?.radioDown()
