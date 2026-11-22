@@ -885,7 +885,6 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                     }
                 }
                 pendingAuth = false
-                manager.readingReceivedOnCurrentLink = true
                 handleGlucoseMessage(message: glucoseMessage, peripheralManager: peripheralManager)
             } else {
                 delegateQueue.async {
