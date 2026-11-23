@@ -319,12 +319,16 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
         log.debug("Received backfill response: %{public}@", response.hexadecimalString)
 
-        guard response.count == 9 else {
+        // 9-byte records; a G7 packs two to a notification.
+        guard response.count > 0, response.count % 9 == 0 else {
+            log.error("Ignoring backfill frame of unexpected length %d", response.count)
             return
         }
 
-        if let msg = G7BackfillMessage(data: response) {
-            backfillBuffer.append(msg)
+        for start in stride(from: response.startIndex, to: response.endIndex, by: 9) {
+            if let msg = G7BackfillMessage(data: response.subdata(in: start..<start + 9)) {
+                backfillBuffer.append(msg)
+            }
         }
     }
 
