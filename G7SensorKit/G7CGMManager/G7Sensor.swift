@@ -200,6 +200,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         }
 
         peripheralManager.perform { (peripheral) in
+            // Control first: the reading arrives there about half a second after the link comes up.
+            self.listenToControlBeforeAuthentication(peripheral)
             // .default so this survives into a sysdiagnose: info and debug are
             // memory-only and are not written to the log archive, which makes the
             // auth handshake invisible in field diagnostics.
@@ -207,7 +209,6 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             do {
                 try peripheral.listenToCharacteristic(.authentication)
                 self.pendingAuth = true
-                self.listenToControlBeforeAuthentication(peripheral)
             } catch let error {
                 self.delegateQueue.async {
                     self.delegate?.sensor(self, didError: error)
