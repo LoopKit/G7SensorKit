@@ -83,6 +83,8 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
 
     /// Used to detect connections that do not authenticate, signalling possible sensor switchover
     private var pendingAuth: Bool = false
+    /// The sensor answers on control only within an authenticated session.
+    private var controlResponseOnCurrentLink = false
 
     /// The backfill data buffer
     private var backfillBuffer: [G7BackfillMessage] = []
@@ -232,12 +234,13 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             let suspectedEndOfSession: Bool
 
             self.log.info("Sensor disconnected: wasRemoteDisconnect:%{public}@", String(describing: wasRemoteDisconnect))
-            if pendingAuth, wasRemoteDisconnect {
+            if pendingAuth, wasRemoteDisconnect, !controlResponseOnCurrentLink {
                 suspectedEndOfSession = true // Normal disconnect without auth is likely that G7 app stopped this session
             } else {
                 suspectedEndOfSession = false
             }
             pendingAuth = false
+            controlResponseOnCurrentLink = false
 
             delegateQueue.async {
                 self.delegate?.sensorDisconnected(self, suspectedEndOfSession: suspectedEndOfSession)
@@ -270,6 +273,7 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     func bluetoothManager(_ manager: G7BluetoothManager, peripheralManager: G7PeripheralManager, didReceiveControlResponse response: Data) {
 
         guard response.count > 0 else { return }
+        controlResponseOnCurrentLink = true
 
         log.default("Received control response: %{public}@", response.hexadecimalString)
 
