@@ -190,6 +190,10 @@ class G7BluetoothManager: NSObject {
             if self.activePeripheralIdentifier == nil {
                 self.log.default("Discovered peripheral from connectionEventDidOccur %{public}@", peripheral.identifier.uuidString)
                 self.handleDiscoveredPeripheral(peripheral)
+            } else if event == .peerConnected, peripheral.identifier == self.activePeripheralIdentifier,
+                      peripheral.state == .disconnected {
+                self.log.default("Connecting on peer-connected event")
+                self.handleDiscoveredPeripheral(peripheral)
             }
         }
     }
