@@ -399,12 +399,6 @@ class G7BluetoothManager: NSObject {
             return
         }
 
-        // Leave a pending (delayed) reconnect alone; a plain connect now could land in the advertising tail.
-        guard currentState != .connecting else {
-            log.default("Not scanning: active peripheral has a connect pending")
-            return
-        }
-
         if let peripheralID = activePeripheralIdentifier, let peripheral = centralManager.retrievePeripherals(withIdentifiers: [peripheralID]).first {
             log.default("Retrieved peripheral %{public}@", peripheral.identifier.uuidString)
             handleDiscoveredPeripheral(peripheral)
