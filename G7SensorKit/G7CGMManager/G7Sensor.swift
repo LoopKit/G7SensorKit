@@ -331,6 +331,16 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         beginSession(peripheralManager)
     }
 
+    /// Another controller moved to a different sensor (or code): the watch's counterpart of a pairing,
+    /// on this session and its central. A second session would build a second central, and only one
+    /// per app may claim the restore identifier: on the watch the second gets `.unsupported` for good.
+    func switchSensor(credentials: G7SensorCredentials) {
+        bluetoothManager.disconnect()
+        bluetoothManager.forgetPeripheral()
+        reconfigure(mode: .direct, credentials: credentials)
+        bluetoothManager.scanForPeripheral()
+    }
+
     public func scanForNewSensor() {
         // The pairing code and key belong to the sensor being replaced, not to
         // whatever comes next. Keeping them would make every candidate fail

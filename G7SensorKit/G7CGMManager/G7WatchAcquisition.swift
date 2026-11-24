@@ -77,6 +77,9 @@ final class G7WatchAcquisition: G7AcquisitionArm {
     /// A restored connect or close is being cancelled; its follow-up lodges.
     private var settlingRestoredPeripheral = false
     private var settlingRestoredClose = false
+    /// Counts sensors let go of. A hold, settle or backoff started for an earlier sensor stands down
+    /// when it comes back.
+    private var epoch = 0
 
     init(manager: G7BluetoothManager) {
         self.manager = manager
@@ -122,6 +125,9 @@ final class G7WatchAcquisition: G7AcquisitionArm {
     }
 
     func connected(_ peripheral: CBPeripheral) {
+        // A link to a sensor already let go of (its connect completed as the cancel went out) is not ours:
+        // it must not end the search for the new one.
+        guard peripheral.identifier == manager.activePeripheralIdentifier else { return }
         let waited = lodgedAt.map { Date().timeIntervalSince($0) }
         lodged = false; lodgedAt = nil
         linkUpAt = Date()
@@ -162,8 +168,9 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         case .backOff(let s):
             watchLog(String(format: "REFUSED %.2f s after the lodge (%@) — lodging again in %.0f s", sinceLodge, code, s))
             let id = peripheral.identifier
+            let started = epoch
             queue.asyncAfter(deadline: .now() + s) { [weak self] in
-                guard let self, !self.lodged,
+                guard let self, self.epoch == started, !self.lodged,
                       let p = self.central.retrievePeripherals(withIdentifiers: [id]).first, p.state == .disconnected else { return }
                 self.lodge(p, why: "after the refusal backoff")
             }
@@ -193,6 +200,22 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         lastReadingAt = timestamp
     }
 
+    /// The session let go of its sensor (the phone moved to a new one). The bluetooth manager has already
+    /// cancelled the old sensor's link or request; what remains out for it stands down on the epoch.
+    func sensorForgotten() {
+        dispatchPrecondition(condition: .onQueue(queue))
+        epoch += 1
+        lodged = false; lodgedAt = nil; linkUpAt = nil
+        holdPending = false
+        settlingRestoredPeripheral = false; settlingRestoredClose = false
+        bootstrapPass = false
+        bootstrapTimer?.cancel(); bootstrapTimer = nil
+        lastReadingAt = nil; lastBootstrapAt = nil
+        manager.setIsSearchingForSensor(false)
+        manager.setNeedsCodeForSensor(nil)
+        watchLog("sensor let go of — acquisition starts over")
+    }
+
     // MARK: - The request
 
     private func adopt(_ peripheral: CBPeripheral) {
@@ -215,9 +238,10 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         }
         holdPending = true
         watchLog(String(format: "%@ · holding the process %.1f s past the sensor's tail, then a plain connect", why, wait))
+        let started = epoch
         holdProcess(reason: "G7 re-lodge after the sensor's tail", upTo: wait) { [weak self] systemEnded in
             self?.queue.async {
-                guard let self else { return }
+                guard let self, self.epoch == started else { return }
                 self.holdPending = false
                 self.lodge(peripheral, why: systemEnded ? "hold ended by the system" : "hold over")
             }
@@ -271,9 +295,10 @@ final class G7WatchAcquisition: G7AcquisitionArm {
         central.cancelPeripheralConnection(peripheral)
         let id = peripheral.identifier
         let release = holdProcess(reason: "G7 settling a restored connection", upTo: 10)
+        let started = epoch
         func look(after delay: TimeInterval, last: Bool) {
             queue.asyncAfter(deadline: .now() + delay) { [weak self] in
-                guard let self else { return release() }
+                guard let self, self.epoch == started else { return release() }
                 let finish = { self.settlingRestoredPeripheral = false; self.settlingRestoredClose = false; release() }
                 // a callback or a request of our own came first
                 guard !self.lodged, !self.holdPending,
