@@ -123,6 +123,22 @@ extension G7BluetoothManagerDelegate {
     func bluetoothManagerStatusDidChange(_ manager: G7BluetoothManager) {}
 }
 
+/// performExpiringActivity, once-only: `onEnd` runs when `wait` elapses, when the system ends the
+/// hold, or when the returned release closure is called — whichever first, exactly once.
+@discardableResult
+func holdProcess(reason: String, upTo wait: TimeInterval, onEnd: @escaping (_ systemEnded: Bool) -> Void = { _ in }) -> () -> Void {
+    let gate = DispatchSemaphore(value: 0)
+    let once = NSLock(); var done = false
+    let end: (Bool) -> Void = { s in once.lock(); let first = !done; done = true; once.unlock(); if first { onEnd(s) } }
+    DispatchQueue.global(qos: .userInitiated).async {
+        ProcessInfo.processInfo.performExpiringActivity(withReason: reason) { expired in
+            if expired { end(true); gate.signal(); return }
+            _ = gate.wait(timeout: .now() + wait); end(false)
+        }
+    }
+    return { gate.signal() }
+}
+
 /// Takes over acquisition where a platform cannot use the stock steps (watchOS: the app sleeps
 /// between readings and its scanning is rationed). Called on the manager's queue.
 protocol G7AcquisitionArm: AnyObject {
@@ -237,6 +253,9 @@ class G7BluetoothManager: NSObject {
     private static let poweredOnRecheckInterval: TimeInterval = 3
     private static let poweredOnRechecksBeforeRecreating = 10
     private static let maximumCentralRecreations = 5
+
+    /// Keeps the app running from link-up until the reconnect is lodged. Confined to `managerQueue`.
+    private var releaseLinkHold: (() -> Void)?
 
     /// There is exactly one of these per session, and a pairing run borrows
     /// it rather than building a second: only one central per app may claim
@@ -504,9 +523,21 @@ class G7BluetoothManager: NSObject {
     private func resumeAfterLinkEnded(_ peripheral: CBPeripheral) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
         reconnectLog("Rescanning after a 2 s sleep")
-        DispatchQueue.global(qos: .utility).async {
-            Thread.sleep(forTimeInterval: 2)
-            self.scanForPeripheral()
+        holdLink(reason: "G7 reconnect", upTo: 10)
+        managerQueue.asyncAfter(deadline: .now() + 2) {
+            self.managerQueue_scanForPeripheral()
+            self.releaseLinkHold?()
+            self.releaseLinkHold = nil
+        }
+    }
+
+    private func holdLink(reason: String, upTo wait: TimeInterval) {
+        dispatchPrecondition(condition: .onQueue(managerQueue))
+        releaseLinkHold?()
+        releaseLinkHold = holdProcess(reason: reason, upTo: wait) { [weak self] systemEnded in
+            if systemEnded {
+                self?.reconnectLog("System ended the hold for \(reason)")
+            }
         }
     }
 
@@ -666,6 +697,10 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         acquisitionArm?.connected(peripheral)
 
         log.default("%{public}@: %{public}@", #function, peripheral)
+
+        if acquisitionArm == nil, peripheral == activePeripheral {
+            holdLink(reason: "G7 link", upTo: 30)
+        }
 
         if let peripheralManager = managedPeripherals[peripheral.identifier] {
             peripheralManager.centralManager(central, didConnect: peripheral)
