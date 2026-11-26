@@ -327,16 +327,13 @@ final class G7Authenticator {
                       precomputeSeconds * 1000, round3Seconds * 1000, deriveSeconds * 1000))
 
         // Advisory only: the sensor does not require us to check its proofs,
-        // and the AES challenge below is the real gate. On hardware they do
-        // not verify under the transcript format we use for our own (which
-        // the sensor accepts), so the sensor's side evidently hashes
-        // something differently; noted, not acted on.
+        // and the AES challenge below is the real gate.
         let proofsVerified = jpake.validateRound1Or2(sensorRound1)
             && jpake.validateRound1Or2(sensorRound2)
             && jpake.validateRound3(peerRound1: sensorRound1, peerRound3: sensorRound3)
-        if !proofsVerified {
-            report("Key exchange: the sensor's proofs did not verify under our transcript format (advisory)")
-        }
+        report(proofsVerified
+            ? "Key exchange: the sensor's proofs verified"
+            : "Key exchange: the sensor's proofs did not verify (advisory)")
         return secret.prefix(16)
     }
 
