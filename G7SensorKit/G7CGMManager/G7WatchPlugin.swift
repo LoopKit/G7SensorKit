@@ -13,6 +13,12 @@ extension G7CGMManager {
     public var shortStatusNote: String? {
         G7WatchDirectRead.needsCodeNote(for: needsCodeForSensor) ?? G7WatchDirectRead.searchingNote(isSearchingForSensor)
     }
+
+    public var directReadNeed: CGMDirectReadNeed? { passedSensorNeed }
+
+    public func readIsFromThisSensor(syncIdentifier: String) -> Bool? {
+        syncIdentifierNamesThisSensor(syncIdentifier)
+    }
 }
 
 /// The watch loads this kit at run time, as the phone loads its plugins: this is the bundle's principal class.

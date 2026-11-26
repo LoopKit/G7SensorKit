@@ -8,6 +8,9 @@
 
 import Foundation
 import CoreBluetooth
+#if os(watchOS)
+import WatchKit
+#endif
 import LoopKit
 import os.log
 
@@ -73,9 +76,19 @@ public protocol G7SensorDelegate: AnyObject {
     /// The key from a pairing whose Bluetooth bond was never confirmed was refused: the pairing did not
     /// finish. The key has been discarded and the next connection pairs again. Optional.
     func sensorPairingDidNotFinish(_ sensor: G7Sensor)
+
+    /// Direct mode only: whether the sensor has confirmed this display's Bluetooth bond, as of this
+    /// connection. Without the bond the sensor sends no readings. Optional.
+    func sensor(_ sensor: G7Sensor, bondIsConfirmed confirmed: Bool)
+
+    /// Direct mode only: the handshake on the link now up reached its bond step, so the person is being
+    /// asked to accept the system's pairing request, or will be once the app is on screen. Optional.
+    func sensorIsAwaitingPairingAcceptance(_ sensor: G7Sensor)
 }
 
 public extension G7SensorDelegate {
+    func sensor(_ sensor: G7Sensor, bondIsConfirmed confirmed: Bool) {}
+    func sensorIsAwaitingPairingAcceptance(_ sensor: G7Sensor) {}
     func sensor(_ sensor: G7Sensor, logEvent line: String) {}
     func sensor(_ sensor: G7Sensor, didAdoptPeripheral identifier: UUID?) {}
     func sensorStatusDidChange(_ sensor: G7Sensor) {}
@@ -180,6 +193,25 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     /// The last fresh pairing ended without the sensor confirming its Bluetooth bond.
     private var lastPairingBondUnconfirmed = false
 
+    /// A link the sensor is keeping while the person is asked to bring the app on screen: its handshake
+    /// stopped before the bond request. Emptied when the bond request goes out or the link closes.
+    private let lockedHeldBond = Locked<(peripheralManager: G7PeripheralManager, authenticator: G7Authenticator)?>(nil)
+
+    /// Links kept for the pairing request, in a row, that closed without the app coming on screen.
+    private let lockedUnansweredHolds = Locked(0)
+
+    /// After this many, a handshake waits for the app to be opened. One from the background can spend
+    /// part of what a watch allows a background app before it cuts the app's Bluetooth off (seen
+    /// 2026-11-24, after five).
+    static let maximumUnansweredHolds = 3
+
+    /// How long after the app comes on screen the held bond request goes out, so the system has the app
+    /// down as on screen when the sensor asks it to pair. The Dexcom app's went out 2 s after.
+    static let bondRequestDelayOnScreen: TimeInterval = 0.5
+
+    private let appPresence: G7AppPresence
+    private var appPresenceObserver: NSObjectProtocol?
+
     /// The backfill data buffer
     private var backfillBuffer: [G7BackfillMessage] = []
 
@@ -233,13 +265,23 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         self.init(mode: mode, credentials: credentials, bluetoothManager: G7BluetoothManager(), displayType: displayType)
     }
 
-    init(mode: G7SessionMode, credentials: G7SensorCredentials, bluetoothManager: G7BluetoothManager, displayType: G7DisplayType = .phone) {
+    init(mode: G7SessionMode, credentials: G7SensorCredentials, bluetoothManager: G7BluetoothManager, displayType: G7DisplayType = .phone, appPresence: G7AppPresence = .shared) {
         self.mode = mode
         self.displayType = displayType
         self.lockedCredentials = Locked(credentials)
         self.bluetoothManager = bluetoothManager
+        self.appPresence = appPresence
         bluetoothManager.delegate = self
         bluetoothManager.setActivePeripheralIdentifier(credentials.peripheralIdentifier)
+        appPresenceObserver = NotificationCenter.default.addObserver(forName: G7AppPresence.didComeOnScreen, object: appPresence, queue: nil) { [weak self] _ in
+            self?.appDidComeOnScreen()
+        }
+    }
+
+    deinit {
+        if let appPresenceObserver {
+            NotificationCenter.default.removeObserver(appPresenceObserver)
+        }
     }
 
     private func mutateCredentials(_ changes: (inout G7SensorCredentials) -> Void) {
@@ -549,6 +591,12 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             return
         }
 
+        let unansweredHolds = lockedUnansweredHolds.value
+        if unansweredHolds >= G7Sensor.maximumUnansweredHolds, !appPresence.canShowPairingRequest {
+            logToDevice("Not pairing from the background: the last \(unansweredHolds) connections were kept for the pairing request and none was answered. The next one with the app on screen pairs", type: .connection)
+            return
+        }
+
         pendingAuth = true
 
         let authenticator = G7Authenticator(
@@ -561,6 +609,13 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         )
         authenticator.logHandler = { [weak self] message in
             self?.logToDevice(message, type: .connection)
+        }
+        authenticator.shouldHoldBondRequest = { [appPresence] in !appPresence.canShowPairingRequest }
+        authenticator.bondStepHandler = { [weak self] in
+            guard let self = self else { return }
+            self.delegateQueue.async {
+                self.delegate?.sensorIsAwaitingPairingAcceptance(self)
+            }
         }
 
         authenticator.authenticate(peripheralManager: peripheralManager) { [weak self] result in
@@ -580,12 +635,68 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
                         )
                     }
                 }
+                self.reportBond(confirmed: !authResult.bondUnconfirmed)
+                if authResult.bondRequestHeld {
+                    self.holdBond(on: peripheralManager, authenticator: authenticator)
+                    return
+                }
                 self.beginSession(peripheralManager)
             case .failure(G7AuthenticatorError.linkLost):
                 // Nothing wrong with the sensor; the next connection retries.
                 self.pendingAuth = false
             case .failure(let error):
                 self.handleAuthenticationFailure(error)
+            }
+        }
+    }
+
+    private func reportBond(confirmed: Bool) {
+        if confirmed {
+            lockedUnansweredHolds.value = 0
+        }
+        delegateQueue.async {
+            self.delegate?.sensor(self, bondIsConfirmed: confirmed)
+        }
+    }
+
+    /// The handshake stopped before the bond request and the sensor is keeping the link. The bond request
+    /// goes out when the app comes on screen; if the link closes first, the next connection starts again.
+    private func holdBond(on peripheralManager: G7PeripheralManager, authenticator: G7Authenticator) {
+        lockedHeldBond.value = (peripheralManager, authenticator)
+        logToDevice("The sensor is keeping the link for the pairing request; waiting for the app to come on screen", type: .connection)
+        // The app may have come on screen while the handshake ran.
+        if appPresence.canShowPairingRequest {
+            requestHeldBond()
+        }
+    }
+
+    private func appDidComeOnScreen() {
+        lockedUnansweredHolds.value = 0
+        guard lockedHeldBond.value != nil else { return }
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + G7Sensor.bondRequestDelayOnScreen) { [weak self] in
+            self?.requestHeldBond()
+        }
+    }
+
+    private func requestHeldBond() {
+        var held: (peripheralManager: G7PeripheralManager, authenticator: G7Authenticator)?
+        _ = lockedHeldBond.mutate { value in
+            held = value
+            value = nil
+        }
+        guard let held = held else { return }
+        logToDevice("The app is on screen: sending the bond request on the kept link", type: .connection)
+        held.authenticator.requestHeldBond(peripheralManager: held.peripheralManager) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let confirmed):
+                self.reportBond(confirmed: confirmed)
+                if confirmed {
+                    self.lastPairingBondUnconfirmed = false
+                    self.beginSession(held.peripheralManager)
+                }
+            case .failure(let error):
+                self.logToDevice("The bond request on the kept link failed: \(error)", type: .error)
             }
         }
     }
@@ -779,6 +890,16 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
             pendingAuth = false
             controlResponseOnCurrentLink = false
             backfillRequestPending = false
+
+            var heldLinkClosed = false
+            _ = lockedHeldBond.mutate { held in
+                heldLinkClosed = held != nil
+                held = nil
+            }
+            if heldLinkClosed {
+                let unanswered = lockedUnansweredHolds.mutate { $0 += 1 }
+                logToDevice("The link kept for the pairing request closed without the app coming on screen (\(unanswered) in a row)", type: .connection)
+            }
 
             delegateQueue.async {
                 self.delegate?.sensorDisconnected(self, suspectedEndOfSession: suspectedEndOfSession)
@@ -1062,6 +1183,64 @@ fileprivate extension G7PeripheralManager {
             try setNotifyValue(true, for: characteristic)
         } catch let error {
             throw G7SensorError.controlError("Error enabling notification for \(characteristic): \(error)")
+        }
+    }
+}
+
+/// Whether the system can show its Bluetooth pairing request for this app now.
+///
+/// A sensor asks each new display for a Bluetooth bond, once. A watch shows that request only for the app
+/// on screen: for an app in the background it refuses at once, and the sensor closes the link (seen
+/// 2026-11-24: 24 of 24 refused in the background, 6 of 6 shown with the app in front). On a phone the
+/// handshake is as it was: this always says yes there.
+///
+/// Only direct mode pairs. The watch always reads the sensor directly, as a display of its own with its
+/// own key and bond, whether the phone runs alongside the Dexcom app or connects directly. A phone
+/// alongside the Dexcom app never pairs (the Dexcom app does); a phone connecting directly pairs on
+/// Loop's setup screen, with Loop in front.
+final class G7AppPresence {
+    static let shared = G7AppPresence()
+
+    /// Posted, with the presence as its object, when the app comes on screen.
+    static let didComeOnScreen = Notification.Name("com.loopkit.G7SensorKit.appDidComeOnScreen")
+
+    private let lockedOnScreen: Locked<Bool>
+
+    /// For tests: a presence set by hand.
+    init(onScreen: Bool) {
+        lockedOnScreen = Locked(onScreen)
+    }
+
+    private init() {
+        #if os(watchOS)
+        // Not known until the main queue has been asked; a bond request held back for a moment costs
+        // nothing, one sent from the background costs the connection.
+        lockedOnScreen = Locked(false)
+        let center = NotificationCenter.default
+        center.addObserver(forName: WKApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.setOnScreen(true)
+        }
+        center.addObserver(forName: WKApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.setOnScreen(false)
+        }
+        DispatchQueue.main.async {
+            self.setOnScreen(WKApplication.shared().applicationState == .active)
+        }
+        #else
+        lockedOnScreen = Locked(true)
+        #endif
+    }
+
+    var canShowPairingRequest: Bool { lockedOnScreen.value }
+
+    func setOnScreen(_ onScreen: Bool) {
+        var cameOnScreen = false
+        _ = lockedOnScreen.mutate { value in
+            cameOnScreen = onScreen && !value
+            value = onScreen
+        }
+        if cameOnScreen {
+            NotificationCenter.default.post(name: G7AppPresence.didComeOnScreen, object: self)
         }
     }
 }

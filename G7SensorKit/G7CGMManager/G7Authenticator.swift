@@ -127,6 +127,18 @@ final class G7Authenticator {
         /// The sensor dropped the link before confirming the Bluetooth bond. The key holds only if the
         /// system pairing went through; with the app in the background it can't, and the sensor discards it.
         var bondUnconfirmed = false
+        /// The handshake stopped before the bond request and asked the sensor to keep the link: the system
+        /// shows its pairing request only with the app on screen. `requestHeldBond` sends the rest.
+        var bondRequestHeld = false
+    }
+
+    enum BondOutcome {
+        /// The sensor confirmed the bond (`08`).
+        case confirmed
+        /// The bond request went out and no confirmation came back.
+        case unconfirmed
+        /// The bond request was held back; the sensor keeps the link.
+        case held
     }
 
     /// Per-step response deadline for a reconnect. Short: the link is up and
@@ -138,9 +150,18 @@ final class G7Authenticator {
     /// resolved by the pairing service's own watchdog than by failing here.
     static let pairingStepTimeout: TimeInterval = 60
 
-    /// How long to wait for the sensor's post-bond confirmation. Not fatal
-    /// when it never arrives; by then the key is already good.
-    static let bondConfirmationTimeout: TimeInterval = 20
+    /// How long to wait for the sensor's confirmation of the bond. The person has about 30 s to accept the
+    /// system's pairing request, after which the sensor closes the link (seen 2026-11-24), so the wait
+    /// ends with a confirmation or a closed link; this only bounds it.
+    static let bondConfirmationTimeout: TimeInterval = 40
+
+    /// The keep-alive sent before the bond request, as the Dexcom app sends it.
+    static let bondRequestKeepAlive: UInt8 = 0x1E
+
+    /// The keep-alive sent when the bond request is held back, as the Dexcom app sends it while it asks
+    /// the person to open it (seen 2026-11-25: the sensor then kept an idle link for 36 s, until the
+    /// bond request). Read as seconds, like the 25 the older transmitters take in the same message.
+    static let heldLinkKeepAlive: UInt8 = 0xFA
 
     private let log = OSLog(category: "G7Authenticator")
 
@@ -162,6 +183,15 @@ final class G7Authenticator {
     /// is only diagnosable if these are visible outside Xcode. Never carries
     /// the pairing code or key material.
     var logHandler: ((String) -> Void)?
+
+    /// Whether to hold the bond request back, asked when the handshake reaches it. The sensor answers a
+    /// bond request by asking the system to pair, and a system that cannot show its pairing request
+    /// refuses at once.
+    var shouldHoldBondRequest: () -> Bool = { false }
+
+    /// Called when the handshake reaches the bond step, held back or not: the person is about to be asked
+    /// to accept the system's pairing request.
+    var bondStepHandler: (() -> Void)?
 
     init(pairingCode: String?, storedSharedKey: Data?, stepTimeout: TimeInterval, displayType: G7DisplayType = .phone) {
         self.pairingCode = pairingCode
@@ -260,11 +290,11 @@ final class G7Authenticator {
         }
 
         report("Running the certificate exchange (auth=\(status.authStatus) bond=\(status.bondStatus))")
-        let bonded: Bool
+        let bond: BondOutcome
         do {
             try exchangeCertificates(peripheral, authentication: authentication)
             try answerKeyChallenge(peripheral, authentication: authentication)
-            bonded = try finalizeAndBond(peripheral, authentication: authentication)
+            bond = try finalizeAndBond(peripheral, authentication: authentication, sensorReportsBond: status.isBonded)
         } catch where !didExchangeKeys {
             // Authenticated but not bonded on a reconnect (05 01 02 after the system bond was lost): the key
             // still holds, so the certificate phase bonds again. If that fails, pair again as before.
@@ -279,8 +309,37 @@ final class G7Authenticator {
             deviceName: peripheral.peripheral.name,
             didExchangeKeys: didExchangeKeys,
             authenticity: authenticity,
-            bondUnconfirmed: !bonded
+            bondUnconfirmed: bond != .confirmed,
+            bondRequestHeld: bond == .held
         )
+    }
+
+    /// Sends the bond request a held handshake left out, on the same link, calling `completion` once on
+    /// the peripheral manager's queue with whether the sensor confirmed the bond.
+    func requestHeldBond(
+        peripheralManager: G7PeripheralManager,
+        completion: @escaping (Swift.Result<Bool, Error>) -> Void
+    ) {
+        peripheralManager.perform { peripheral in
+            guard peripheral.peripheral.state == .connected else {
+                self.report("The link closed before the bond request could be sent")
+                completion(.failure(G7AuthenticatorError.linkLost))
+                return
+            }
+            let authentication = G7AuthMessageBuffer()
+            peripheral.setValueUpdateHandler(for: .authentication) { [weak authentication] message in
+                authentication?.append(message)
+            }
+            defer {
+                peripheral.setValueUpdateHandler(for: .authentication, handler: nil)
+            }
+            do {
+                completion(.success(try self.requestBond(peripheral, authentication: authentication) == .confirmed))
+            } catch {
+                self.report("The bond request failed: \(error)")
+                completion(.failure(error))
+            }
+        }
     }
 
     /// Classifies the sensor from what it presented during this fresh pairing.
@@ -487,22 +546,35 @@ final class G7Authenticator {
 
     // MARK: - Finalize
 
-    /// - Returns: false when the sensor dropped the link before confirming the bond.
-    private func finalizeAndBond(_ peripheral: G7PeripheralManager, authentication: G7AuthMessageBuffer) throws -> Bool {
+    /// `sensorReportsBond`: the sensor's verdict said this device's Bluetooth bond is intact (a new key for a
+    /// sensor the system already paired with). The system then shows no pairing request, so there is nothing
+    /// to hold back and nobody to ask.
+    private func finalizeAndBond(_ peripheral: G7PeripheralManager, authentication: G7AuthMessageBuffer, sensorReportsBond: Bool) throws -> BondOutcome {
+        guard !sensorReportsBond else {
+            return try requestBond(peripheral, authentication: authentication)
+        }
+        bondStepHandler?()
+        guard shouldHoldBondRequest() else {
+            return try requestBond(peripheral, authentication: authentication)
+        }
+        report("Finalizing: holding the bond request back until the app is on screen, and asking the sensor to keep the link")
+        try peripheral.writeValue(Data([0x06, G7Authenticator.heldLinkKeepAlive]), for: .authentication, type: .withResponse)
+        _ = try waitForAuthentication(authentication, prefix: 0x06, step: "keep-alive")
+        return .held
+    }
+
+    private func requestBond(_ peripheral: G7PeripheralManager, authentication: G7AuthMessageBuffer) throws -> BondOutcome {
         report("Finalizing")
-        try peripheral.writeValue(Data([0x06, 0x1E]), for: .authentication, type: .withResponse)
+        try peripheral.writeValue(Data([0x06, G7Authenticator.bondRequestKeepAlive]), for: .authentication, type: .withResponse)
         _ = try waitForAuthentication(authentication, prefix: 0x06, step: "finalize")
 
         report("Finalizing: the sensor will start BLE pairing now, so expect the system pairing prompt")
         try peripheral.writeValue(Data([0x07]), for: .authentication, type: .withResponse)
         _ = try waitForAuthentication(authentication, prefix: 0x07, step: "bond request")
 
-        // The sensor confirms once the link is encrypted. Treat a silent
-        // sensor as success: the key and certificates are already accepted,
-        // and failing here would throw away a completed pairing. The sensor
-        // has been seen to drop the link a few seconds after 07 instead, so
-        // the wait is in short slices that stop as soon as the link is gone;
-        // the reconnect that follows uses the key just installed.
+        // The sensor confirms once the link is encrypted, which takes the person accepting the system's
+        // pairing request (or a bond the system already holds). Refused or unanswered, the sensor closes
+        // the link. The wait is in short slices that stop as soon as the link is gone.
         let deadline = Date().addingTimeInterval(G7Authenticator.bondConfirmationTimeout)
         var confirmation: (match: Data, discarded: [Data])?
         while confirmation == nil, Date() < deadline, peripheral.peripheral.state == .connected {
@@ -510,14 +582,15 @@ final class G7Authenticator {
         }
         if let confirmation = confirmation {
             report("Bonded (\(confirmation.match.hexadecimalString))")
-        } else if peripheral.peripheral.state != .connected {
+            return .confirmed
+        }
+        if peripheral.peripheral.state != .connected {
             report("The sensor dropped the link after the bond request. The key holds only if the Bluetooth pairing "
                 + "went through; if not, the next connection finds it refused and pairs again")
-            return false
         } else {
-            report("No bond confirmation arrived; continuing, since the handshake already succeeded")
+            report("No bond confirmation arrived; the bond is not counted as made")
         }
-        return true
+        return .unconfirmed
     }
 
     // MARK: - Waiting
