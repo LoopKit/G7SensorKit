@@ -15,7 +15,7 @@ import XCTest
 /// protocol and not merely agreeing with itself.
 private final class SimulatedSensor {
     /// The identifier the sensor attaches to its own proofs.
-    static let party: [UInt8] = [0x37, 0x56, 0x27, 0x67, 0x56, 0x27]
+    static let party = Array("server".utf8)
 
     private let pin: G7BigUInt
     private let privateKey1: G7BigUInt
@@ -159,6 +159,26 @@ class G7JPAKETests: XCTestCase {
         let result = try exchange(clientCode: "1155", sensorCode: "1155")
         XCTAssertTrue(result.clientJPAKE.validateRound1Or2(result.sensor1))
         XCTAssertTrue(result.clientJPAKE.validateRound3(peerRound1: result.sensor1, peerRound3: result.sensor3))
+    }
+
+    /// A round-1 proof as a sensor would make it, over the given party identifier.
+    private func sensorProof(party: [UInt8]) -> G7PCert {
+        let privateKey = G7BigUInt(7_654_321)
+        let randomizer = G7BigUInt(1_234_567)
+        let publicKey = G7P256.multiplyGenerator(by: privateKey)
+        let proofPoint = G7P256.multiplyGenerator(by: randomizer)
+        let challenge = SimulatedSensor.transcriptHash(
+            base: G7P256.generator, proofPoint: proofPoint, publicKey: publicKey, party: party
+        )
+        let proof = G7BigUInt.subMod(randomizer, G7BigUInt.mulMod(challenge, privateKey, G7P256.order), G7P256.order)
+        return G7PCert(publicKey: publicKey, proofPoint: proofPoint, proof: proof)
+    }
+
+    /// Proofs are checked against "server", and not against the byte-swapped form of it.
+    func testSensorProofsAreCheckedAgainstTheServerIdentifier() {
+        let jpake = G7JPAKE(pairingCode: "1155")
+        XCTAssertTrue(jpake.validateRound1Or2(sensorProof(party: Array("server".utf8))))
+        XCTAssertFalse(jpake.validateRound1Or2(sensorProof(party: [0x37, 0x56, 0x27, 0x67, 0x56, 0x27])))
     }
 
     func testTamperedSensorProofIsRejected() throws {
