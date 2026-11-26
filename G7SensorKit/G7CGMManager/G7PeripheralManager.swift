@@ -71,6 +71,13 @@ class G7PeripheralManager: NSObject {
     /// own write is still pending. Guarded by `commandLock`.
     private var valueUpdateHandlers: [CBUUID: (Data) -> Void] = [:]
 
+    /// Requests sent from the connect callback whose replies haven't arrived. A command for one
+    /// of these waits for that reply instead of sending its own. Guarded by `commandLock`.
+    private var earlyInFlight: Set<String> = []
+
+    /// Characteristics to subscribe to once early discovery finishes. Confined to the central's queue.
+    private var earlySubscriptions: [CBUUID]?
+
     private(set) weak var central: CBCentralManager?
 
     let configuration: Configuration
@@ -178,6 +185,46 @@ extension G7PeripheralManager {
             }
 
             block(self)
+        }
+    }
+
+    /// Sends discovery and the given subscriptions straight from the connect callback, each
+    /// as soon as the previous reply arrives, without waiting for the peripheral queue.
+    func startEarlySetup(subscribing characteristics: [CGMServiceCharacteristicUUID]) {
+        endEarlySetup()
+        earlySubscriptions = characteristics.map(\.cbUUID)
+        continueEarlySetup()
+    }
+
+    /// Replies to a closed link never arrive, so their requests mustn't stay marked in flight.
+    func endEarlySetup() {
+        earlySubscriptions = nil
+        commandLock.lock()
+        earlyInFlight.removeAll()
+        commandLock.unlock()
+    }
+
+    private func continueEarlySetup() {
+        guard let subscriptions = earlySubscriptions, peripheral.state == .connected else { return }
+        commandLock.lock()
+        defer { commandLock.unlock() }
+        guard let service = peripheral.services?.itemWithUUID(SensorServiceUUID.cgmService.cbUUID) else {
+            earlyInFlight.insert("services")
+            peripheral.discoverServices(Array(configuration.serviceCharacteristics.keys))
+            return
+        }
+        let missing = peripheral.characteristicsToDiscover(from: configuration.serviceCharacteristics[service.uuid] ?? [], for: service)
+        guard missing.isEmpty else {
+            earlyInFlight.insert("characteristics \(service.uuid.uuidString)")
+            peripheral.discoverCharacteristics(missing, for: service)
+            return
+        }
+        earlySubscriptions = nil
+        for uuid in subscriptions {
+            if let characteristic = service.characteristics?.itemWithUUID(uuid), !characteristic.isNotifying {
+                earlyInFlight.insert("notify \(uuid.uuidString)")
+                peripheral.setNotifyValue(true, for: characteristic)
+            }
         }
     }
 
@@ -346,7 +393,9 @@ extension G7PeripheralManager {
 
             log.debug("discoverServices %@", String(describing: serviceUUIDs))
 
-            peripheral.discoverServices(serviceUUIDs)
+            if !earlyInFlight.contains("services") {
+                peripheral.discoverServices(serviceUUIDs)
+            }
         }
     }
 
@@ -369,16 +418,22 @@ extension G7PeripheralManager {
             addCondition(.discoverCharacteristicsForService(serviceUUID: service.uuid))
 
             log.debug("Discovering characteristics %@ for %@", String(describing: characteristicsToDiscover), String(describing: peripheral))
-            peripheral.discoverCharacteristics(characteristicsToDiscover, for: service)
+            if !earlyInFlight.contains("characteristics \(service.uuid.uuidString)") {
+                peripheral.discoverCharacteristics(characteristicsToDiscover, for: service)
+            }
         }
     }
 
     /// - Throws: PeripheralManagerError
     func setNotifyValue(_ enabled: Bool, for characteristic: CBCharacteristic, timeout: TimeInterval) throws {
         try runCommand(timeout: timeout) {
+            let early = enabled && earlyInFlight.contains("notify \(characteristic.uuid.uuidString)")
+            guard early || characteristic.isNotifying != enabled else { return }
             addCondition(.notificationStateUpdate(characteristicUUID: characteristic.uuid, enabled: enabled))
             log.debug("Set notify %@ for %@", String(describing: enabled), String(describing: peripheral))
-            peripheral.setNotifyValue(enabled, for: characteristic)
+            if !early {
+                peripheral.setNotifyValue(enabled, for: characteristic)
+            }
         }
     }
 
@@ -423,7 +478,9 @@ extension G7PeripheralManager {
 extension G7PeripheralManager: CBPeripheralDelegate {
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+        defer { if error == nil { continueEarlySetup() } }
         commandLock.lock()
+        earlyInFlight.remove("services")
 
         if let index = commandConditions.firstIndex(where: { (condition) -> Bool in
             if case .discoverServices = condition {
@@ -444,7 +501,9 @@ extension G7PeripheralManager: CBPeripheralDelegate {
     }
 
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+        defer { if error == nil { continueEarlySetup() } }
         commandLock.lock()
+        earlyInFlight.remove("characteristics \(service.uuid.uuidString)")
 
         if let index = commandConditions.firstIndex(where: { (condition) -> Bool in
             if case .discoverCharacteristicsForService(serviceUUID: service.uuid) = condition {
@@ -483,6 +542,7 @@ extension G7PeripheralManager: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         reportGattError(error, during: "notification-state update", on: characteristic)
         commandLock.lock()
+        earlyInFlight.remove("notify \(characteristic.uuid.uuidString)")
 
         // On an error the state does not change, so match the characteristic
         // alone; otherwise the error is lost and the command only times out.

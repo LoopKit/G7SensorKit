@@ -113,6 +113,9 @@ protocol G7BluetoothManagerDelegate: AnyObject {
 
     /// `needsCodeForSensor` or `isSearchingForSensor` changed.
     func bluetoothManagerStatusDidChange(_ manager: G7BluetoothManager)
+
+    /// Characteristics to subscribe to straight from the connect callback, before the queued setup runs.
+    func bluetoothManagerEarlySubscriptions(_ manager: G7BluetoothManager) -> [CGMServiceCharacteristicUUID]
 }
 
 extension G7BluetoothManagerDelegate {
@@ -121,6 +124,7 @@ extension G7BluetoothManagerDelegate {
     func bluetoothManagerCanAuthenticate(_ manager: G7BluetoothManager) -> Bool { true }
     func bluetoothManager(_ manager: G7BluetoothManager, didAdoptPeripheral identifier: UUID?) {}
     func bluetoothManagerStatusDidChange(_ manager: G7BluetoothManager) {}
+    func bluetoothManagerEarlySubscriptions(_ manager: G7BluetoothManager) -> [CGMServiceCharacteristicUUID] { [] }
 }
 
 /// Takes over acquisition where a platform cannot use the stock steps (watchOS: the app sleeps
@@ -663,6 +667,11 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         dispatchPrecondition(condition: .onQueue(managerQueue))
+        // Start discovery before anything else; a shared link can end within a couple of seconds.
+        if acquisitionArm == nil, peripheral == activePeripheral, let peripheralManager = managedPeripherals[peripheral.identifier] {
+            peripheralManager.startEarlySetup(subscribing: delegate?.bluetoothManagerEarlySubscriptions(self) ?? [])
+        }
+
         acquisitionArm?.connected(peripheral)
 
         log.default("%{public}@: %{public}@", #function, peripheral)
@@ -690,6 +699,7 @@ extension G7BluetoothManager: CBCentralManagerDelegate {
         }
 
         if let peripheralManager = managedPeripherals[peripheral.identifier] {
+            peripheralManager.endEarlySetup()
             let remoteDisconnect: Bool
             if let error = error as NSError?, CBError(_nsError: error).code == .peripheralDisconnected {
                 remoteDisconnect = true

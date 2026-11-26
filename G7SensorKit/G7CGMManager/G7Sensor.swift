@@ -750,6 +750,11 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
         return shouldStopScanning
     }
 
+    // Control first: the reading arrives there about half a second after the link comes up.
+    func bluetoothManagerEarlySubscriptions(_ manager: G7BluetoothManager) -> [CGMServiceCharacteristicUUID] {
+        mode == .eavesdropping ? [.control, .authentication] : []
+    }
+
     func bluetoothManager(_ manager: G7BluetoothManager, readyingFailed peripheralManager: G7PeripheralManager, with error: Error) {
         delegateQueue.async {
             self.delegate?.sensor(self, didError: error)
