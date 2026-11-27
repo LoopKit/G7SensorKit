@@ -162,11 +162,12 @@ protocol G7PeripheralManagerDelegate: AnyObject {
 extension G7PeripheralManager {
     func configureAndRun(_ block: @escaping (_ manager: G7PeripheralManager) -> Void) -> (() -> Void) {
         return {
-            if !self.needsConfiguration && self.peripheral.services == nil {
-                self.log.error("Configured peripheral has no services. Reconfiguring…")
+            let undiscovered = self.hasUndiscoveredCharacteristics
+            if !self.needsConfiguration && undiscovered {
+                self.log.error("Configured peripheral has undiscovered characteristics. Reconfiguring…")
             }
 
-            if self.needsConfiguration || self.peripheral.services == nil {
+            if self.needsConfiguration || undiscovered {
                 do {
                     try self.applyConfiguration()
                     self.log.default("Peripheral configuration completed")
@@ -185,6 +186,15 @@ extension G7PeripheralManager {
             }
 
             block(self)
+        }
+    }
+
+    /// The early setup can leave a link with its services discovered and its characteristics not yet.
+    private var hasUndiscoveredCharacteristics: Bool {
+        guard let services = peripheral.services else { return true }
+        return configuration.serviceCharacteristics.contains { serviceUUID, characteristicUUIDs in
+            guard let service = services.itemWithUUID(serviceUUID) else { return true }
+            return !peripheral.characteristicsToDiscover(from: characteristicUUIDs, for: service).isEmpty
         }
     }
 
