@@ -183,6 +183,11 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     /// The backfill data buffer
     private var backfillBuffer: [G7BackfillMessage] = []
 
+    /// Frames on the backfill characteristic that are not records, counted
+    /// until the next flush and then logged as one line.
+    private var ignoredBackfillFrames = 0
+    private var ignoredBackfillBytes = 0
+
     /// When the newest reading we hold was taken. Sizes the backfill request
     /// after a direct-mode reconnect. Seeded by the manager from its saved
     /// state, so a relaunch asks for the gap rather than a default window.
@@ -958,6 +963,11 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     }
 
     func flushBackfillBuffer() {
+        if ignoredBackfillFrames > 0 {
+            logToDevice("Ignored \(ignoredBackfillFrames) backfill frames (\(ignoredBackfillBytes) bytes) that are not glucose records", type: .receive)
+            ignoredBackfillFrames = 0
+            ignoredBackfillBytes = 0
+        }
         if backfillBuffer.count > 0 {
             let backfill = backfillBuffer
             self.backfillBuffer = []
@@ -978,15 +988,20 @@ public final class G7Sensor: G7BluetoothManagerDelegate {
     func bluetoothManager(_ manager: G7BluetoothManager, didReceiveBackfillResponse response: Data) {
 
         log.debug("Received backfill response: %{public}@", response.hexadecimalString)
-        logToDevice("backfill \(response.hexadecimalString)", type: .receive)
 
         // Records are 9 bytes each. A G7 packs two to a notification; the
         // ONE+ (and the Dexcom app's own backfill, which eavesdropping
-        // overhears) sends one. Anything else is not a record frame.
+        // overhears) sends one. Anything else is not a record frame. The
+        // Dexcom app also reads a data log of its own over this
+        // characteristic, about 900 frames of up to 20 bytes every two hours,
+        // so those are counted and logged once rather than one line each.
         guard response.count % 9 == 0 else {
-            logToDevice("Backfill frame of unexpected length \(response.count) ignored", type: .error)
+            ignoredBackfillFrames += 1
+            ignoredBackfillBytes += response.count
             return
         }
+
+        logToDevice("backfill \(response.hexadecimalString)", type: .receive)
 
         for offset in stride(from: 0, to: response.count, by: 9) {
             if let msg = G7BackfillMessage(data: response.subdata(in: offset..<(offset + 9))) {

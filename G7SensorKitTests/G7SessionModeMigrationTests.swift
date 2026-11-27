@@ -197,6 +197,27 @@ final class G7SessionModeMigrationTests: XCTestCase {
         XCTAssertEqual(delegate.backfill.map(\.timestamp), [153807, 855794, 15862])
     }
 
+    func testFramesThatAreNotRecordsAreLoggedAsOneLine() {
+        let sensor = makeSensor(.eavesdropping, G7SensorCredentials(sensorID: "DXCM99", pairingCode: nil, sharedKey: nil, peripheralIdentifier: nil))
+        let delegate = BackfillRecordingDelegate()
+        sensor.delegate = delegate
+
+        // The Dexcom app reading its own data log: 20-byte frames, the last one short.
+        for _ in 0..<298 {
+            sensor.bluetoothManager(sensor.bluetoothManager, didReceiveBackfillResponse: Data(repeating: 0xa5, count: 20))
+        }
+        sensor.bluetoothManager(sensor.bluetoothManager, didReceiveBackfillResponse: Data(repeating: 0xa5, count: 8))
+        sensor.bluetoothManager(sensor.bluetoothManager, didReceiveBackfillResponse: Data(hexadecimalString: "f63d00008500061efe")!)
+        sensor.flushBackfillBuffer()
+
+        wait(for: [delegate.backfillArrived], timeout: 2)
+        XCTAssertEqual(delegate.backfill.map(\.timestamp), [15862])
+        XCTAssertEqual(delegate.logged.filter { $0.localizedCaseInsensitiveContains("backfill") }, [
+            "Ignored 299 backfill frames (5968 bytes) that are not glucose records",
+            "backfill f63d00008500061efe",
+        ].sorted())
+    }
+
     func testSwitchingBackToTheDexcomAppKeepsTheSensorAndDropsTheKey() {
         var state = G7CGMManagerState(rawValue: legacyRawState)
         state.sessionMode = .direct
@@ -505,12 +526,14 @@ final class G7SessionModeMigrationTests: XCTestCase {
 private final class BackfillRecordingDelegate: G7SensorDelegate {
     let backfillArrived = XCTestExpectation(description: "backfill delivered")
     var backfill: [G7BackfillMessage] = []
+    private(set) var logMessages: [String] = []
+    var logged: [String] { logMessages.sorted() }
 
     func sensorDidConnect(_ sensor: G7Sensor, name: String) {}
     func sensorDisconnected(_ sensor: G7Sensor, suspectedEndOfSession: Bool) {}
     func sensor(_ sensor: G7Sensor, didError error: Error) {}
     func sensor(_ sensor: G7Sensor, logComms comms: String) {}
-    func sensor(_ sensor: G7Sensor, log message: String, type: DeviceLogEntryType) {}
+    func sensor(_ sensor: G7Sensor, log message: String, type: DeviceLogEntryType) { logMessages.append(message) }
     func sensor(_ sensor: G7Sensor, didRead glucose: G7GlucoseMessage) {}
     func sensor(_ sensor: G7Sensor, didReadBackfill backfill: [G7BackfillMessage]) {
         self.backfill = backfill
