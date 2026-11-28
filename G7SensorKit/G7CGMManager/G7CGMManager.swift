@@ -87,8 +87,36 @@ public class G7CGMManager: CGMManager {
 
     private let statusObservers = WeakSynchronizedSet<CGMManagerStatusObserver>()
 
+    /// A link to the sensor is up, from its connection to its disconnection, readings or not.
+    private let lockedLinkUp = Locked(false)
+    var isLinkUp: Bool { lockedLinkUp.value }
+
+    /// The handshake on the link now up reached its bond step: the system's pairing request is showing,
+    /// or will once the app is on screen. Cleared by the bond and by the link closing.
+    private let lockedAwaitingPairingAcceptance = Locked(false)
+    var isAwaitingPairingAcceptance: Bool { lockedAwaitingPairingAcceptance.value }
+
+    /// For a manager passed its sensor by another controller (a watch): what it still needs before it can
+    /// read the sensor by itself. It can once it holds its own key and the sensor has confirmed its
+    /// Bluetooth bond: a manager built for another sensor, or from a new code, starts with neither, and a
+    /// key without the bond gets no readings. Such a manager always reads directly, whether the phone runs
+    /// alongside the Dexcom app or connects directly; alongside the Dexcom app the phone has no key to pass
+    /// on, so the pairing code has to be entered in Loop's G7 settings on the phone.
+    var passedSensorNeed: CGMDirectReadNeed? {
+        let state = self.state
+        guard state.configuredByAnotherController else { return nil }
+        if state.sharedKey == nil {
+            guard state.pairingCode != nil else { return .pairingCode }
+            if state.pairingCodeRejected { return .pairingCodeRejected }
+        } else if !state.bondPending {
+            return nil
+        }
+        if isAwaitingPairingAcceptance { return .pairingAcceptance }
+        return isLinkUp ? .checkingCode : .firstConnection
+    }
+
     /// What status observers were last told: they hear only of a change.
-    private let lockedReportedStatus = Locked<(status: CGMManagerStatus, searching: Bool, note: String?)?>(nil)
+    private let lockedReportedStatus = Locked<(status: CGMManagerStatus, searching: Bool, note: String?, need: CGMDirectReadNeed?)?>(nil)
 
     public weak var cgmManagerDelegate: CGMManagerDelegate? {
         get {
@@ -829,11 +857,12 @@ extension G7CGMManager {
     /// On a change of the status, or of the search or the note, which live in the sensor.
     private func notifyStatusObservers() {
         let status = cgmManagerStatus
-        let reported = (status: status, searching: isSearchingForSensor, note: shortStatusNote)
+        let reported = (status: status, searching: isSearchingForSensor, note: shortStatusNote, need: directReadNeed)
         var changed = false
         lockedReportedStatus.mutate { last in
             if let previous = last, previous.status == reported.status,
-               previous.searching == reported.searching, previous.note == reported.note { return }
+               previous.searching == reported.searching, previous.note == reported.note,
+               previous.need == reported.need { return }
             last = reported
             changed = true
         }
@@ -909,6 +938,7 @@ extension G7CGMManager: G7SensorDelegate {
             state.peripheralIdentifier = sensor.credentials.peripheralIdentifier
             state.lastAuthenticationFailure = nil
             state.lastAuthenticationFailureDate = nil
+            state.pairingCodeRejected = false
         }
     }
 
@@ -927,6 +957,31 @@ extension G7CGMManager: G7SensorDelegate {
         mutateState { state in
             state.sharedKey = nil
         }
+    }
+
+    public func sensor(_ sensor: G7Sensor, bondIsConfirmed confirmed: Bool) {
+        if confirmed {
+            lockedAwaitingPairingAcceptance.value = false
+        }
+        if state.bondPending == confirmed {
+            mutateState { $0.bondPending = !confirmed }
+            logDeviceCommunication(confirmed
+                ? "The sensor confirmed this device's Bluetooth bond"
+                : "This device has no Bluetooth bond with the sensor yet: no readings until its pairing request is accepted", type: .connection)
+        }
+        notifyStatusObservers()
+    }
+
+    /// The handshake reaches its bond step only when the sensor said this device's bond is missing, so the
+    /// bond is pending from here, before the handshake ends: with the app on screen it ends only once the
+    /// pairing request is answered or the link closes.
+    public func sensorIsAwaitingPairingAcceptance(_ sensor: G7Sensor) {
+        lockedAwaitingPairingAcceptance.value = true
+        if !state.bondPending {
+            mutateState { $0.bondPending = true }
+            logDeviceCommunication("This device has no Bluetooth bond with the sensor yet: no readings until its pairing request is accepted", type: .connection)
+        }
+        notifyStatusObservers()
     }
 
     public func sensorPairingDidNotFinish(_ sensor: G7Sensor) {
@@ -1066,6 +1121,14 @@ extension G7CGMManager: G7SensorDelegate {
     }
 
     /// Its own namespace, so a calibration never dedup-collides with a sensor reading.
+    /// Whether a reading's sync identifier names this manager's sensor. Readings and calibrations both
+    /// carry the sensor's name as their second word; nil when there is no sensor or no name to compare.
+    func syncIdentifierNamesThisSensor(_ syncIdentifier: String) -> Bool? {
+        let words = syncIdentifier.split(separator: " ")
+        guard let sensorID = state.sensorID, words.count >= 3 else { return nil }
+        return words[1] == sensorID
+    }
+
     private func calibrationSyncIdentifier(glucose: UInt16, date: Date) -> String {
         "calibration \(state.sensorID ?? "unknown") \(date.timeIntervalSince1970) \(glucose)"
     }
@@ -1120,6 +1183,7 @@ extension G7CGMManager: G7SensorDelegate {
     }
 
     public func sensorDidConnect(_ sensor: G7Sensor, name: String) {
+        lockedLinkUp.value = true
         mutateState { state in
             state.latestConnect = Date()
         }
@@ -1127,6 +1191,9 @@ extension G7CGMManager: G7SensorDelegate {
     }
 
     public func sensorDisconnected(_ sensor: G7Sensor, suspectedEndOfSession: Bool) {
+        lockedLinkUp.value = false
+        lockedAwaitingPairingAcceptance.value = false
+        notifyStatusObservers()
         logDeviceCommunication("Sensor disconnected: suspectedEndOfSession=\(suspectedEndOfSession)", type: .connection)
         if suspectedEndOfSession {
             scheduleScanAfterSuspectedSessionEnd()
@@ -1254,9 +1321,13 @@ extension G7CGMManager: G7SensorDelegate {
     public func sensor(_ sensor: G7Sensor, didError error: Error) {
         if let description = authenticationFailureDescription(for: error) {
             let isNew = state.lastAuthenticationFailure == nil
+            // With no key, a challenge mismatch means the code is not this sensor's (`G7AuthenticatorError`).
+            let codeRejected: Bool
+            if case G7AuthenticatorError.challengeMismatch = error { codeRejected = state.sharedKey == nil } else { codeRejected = false }
             mutateState { state in
                 state.lastAuthenticationFailure = description
                 state.lastAuthenticationFailureDate = Date()
+                if codeRejected, state.configuredByAnotherController { state.pairingCodeRejected = true }
             }
             if isNew {
                 issueLifecycleAlert(.connectionRefused)
@@ -1266,10 +1337,11 @@ extension G7CGMManager: G7SensorDelegate {
     }
 
     public func sensor(_ sensor: G7Sensor, didRead message: G7GlucoseMessage) {
-        if state.lastAuthenticationFailure != nil {
+        if state.lastAuthenticationFailure != nil || state.pairingCodeRejected {
             mutateState { state in
                 state.lastAuthenticationFailure = nil
                 state.lastAuthenticationFailureDate = nil
+                state.pairingCodeRejected = false
             }
             retractLifecycleAlert(.connectionRefused)
         }
